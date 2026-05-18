@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --brand:      #534AB7;
+  --brand-600:  #3C3489;
+  --text:       #18172B;
+  --text-muted: #6B6A8A;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+/* ── pure white background everywhere ────────────────────────── */
+body {
+  background-color: #ffffff;
+  color: var(--text);
+  font-family: 'Lexend Deca', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Lexend Deca on everything ────────────────────────────────── */
+h1, h2, h3, h4, h5, h6,
+p, a, span, button, input,
+label, li, td, th, div {
+  font-family: 'Lexend Deca', system-ui, sans-serif;
+}
+
+/* ── gradient text ────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #534AB7 0%, #7B6FE8 50%, #3C3489 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── card hover ───────────────────────────────────────────────── */
+.card-hover { transition: all 0.3s ease; }
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(83,74,183,0.10);
+  border-color: rgba(83,74,183,0.28);
+}
+
+/* ── primary button ───────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #534AB7 0%, #7B6FE8 100%);
+  transition: all 0.25s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(83,74,183,0.35);
+}
+.btn-primary:active { transform: translateY(0); }
+
+/* ── soft orbs ────────────────────────────────────────────────── */
+.orb {
+  border-radius: 50%;
+  position: absolute;
+  pointer-events: none;
+  filter: blur(80px);
+}
+
+/* ── float animation (card only, NOT header) ──────────────────── */
+.animate-float { animation: float 6s ease-in-out infinite; }
+
+/* ── fade-in used only for mobile menu ───────────────────────── */
+.animate-fade-in { animation: fadeIn 0.25s ease both; }
+
+@keyframes float {
+  0%,100% { transform: translateY(0);     }
+  50%     { transform: translateY(-12px); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: #ffffff; }
+::-webkit-scrollbar-thumb { background: #D5D3FD; border-radius: 3px; }
