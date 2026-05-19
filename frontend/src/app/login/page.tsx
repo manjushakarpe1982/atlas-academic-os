@@ -3,32 +3,67 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, CalendarCheck, Bell, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, AlertCircle, CalendarCheck, Bell, ShieldCheck } from "lucide-react";
+import { createClient } from "@/lib/supabase";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [showPass, setShowPass] = useState(false);
-  const [email,    setEmail]    = useState("");
-  const [password, setPassword] = useState("");
-  const [error,    setError]    = useState("");
-  const [loading,  setLoading]  = useState(false);
+  const [showPass,      setShowPass]      = useState(false);
+  const [email,         setEmail]         = useState("");
+  const [password,      setPassword]      = useState("");
+  const [error,         setError]         = useState("");
+  const [loading,       setLoading]       = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
+  /* ── Google sign-in ─────────────────────────────────────────── */
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    setError("");
+    try {
+      const supabase = createClient();
+
+      // signInWithOAuth redirects the browser to Google.
+      // After Google login, Google sends user back to /auth/callback.
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        setError("Could not start Google sign-in. Please try again.");
+        setGoogleLoading(false);
+      }
+      // If no error, browser is being redirected to Google — no more code runs here
+    } catch {
+      setError("Could not start Google sign-in. Please try again.");
+      setGoogleLoading(false);
+    }
+  };
+
+  /* ── Email + password login ─────────────────────────────────── */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) { setError("Please enter your email address."); return; }
     if (!password)     { setError("Please enter your password."); return; }
-    setError(""); setLoading(true);
+    setError("");
+    setLoading(true);
 
     try {
       const res  = await fetch(`${API}/api/auth/login`, {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body:    JSON.stringify({ email: email.trim(), password }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setError(data.detail || "Login failed. Please try again."); return; }
+
+      if (!res.ok) {
+        setError(data.detail || "Login failed. Please try again.");
+        return;
+      }
 
       localStorage.setItem("atlas_access_token",  data.access_token);
       localStorage.setItem("atlas_refresh_token", data.refresh_token);
@@ -43,9 +78,8 @@ export default function LoginPage() {
     }
   };
 
-  const inp = "w-full bg-white border border-[#E8E7F5] hover:border-[#ABA9FA] focus:border-[#534AB7] text-[#1A1A2E] placeholder:text-[#C5C3E8] rounded-xl px-4 py-3 text-sm outline-none transition-all font-medium";
+  const inp    = "w-full bg-white border border-[#E8E7F5] hover:border-[#ABA9FA] focus:border-[#534AB7] text-[#1A1A2E] placeholder:text-[#C5C3E8] rounded-xl px-4 py-3 text-sm outline-none transition-all font-medium";
   const inpErr = "w-full bg-white border-2 border-red-400 focus:border-red-500 text-[#1A1A2E] placeholder:text-[#C5C3E8] rounded-xl px-4 py-3 text-sm outline-none font-medium";
-
   const hasPassError = error.toLowerCase().includes("password") || error.toLowerCase().includes("incorrect");
 
   return (
@@ -55,7 +89,6 @@ export default function LoginPage() {
 
         {/* ── Left panel ──────────────────────────────────────── */}
         <div className="w-[340px] flex-shrink-0 bg-[#F5F4F0] p-8 flex flex-col">
-          {/* Logo */}
           <div className="flex items-center gap-2 mb-10">
             <div className="w-8 h-8 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md shadow-[#534AB7]/30">
               <span className="text-white font-bold text-sm">A</span>
@@ -70,12 +103,11 @@ export default function LoginPage() {
             Everything Atlas learned about your classes, grades, and mastery is right where you left it.
           </p>
 
-          {/* Bullets */}
           <div className="space-y-4 flex-1">
             {[
-              { icon: CalendarCheck, color: "text-[#534AB7]", bg: "bg-[#EEF0FF]", text: "Today's plan", sub: "updates the moment you log in" },
-              { icon: Bell,          color: "text-[#059669]", bg: "bg-[#E8FAF2]", text: "Exam alerts",  sub: "and deadline warnings ready"    },
-              { icon: ShieldCheck,   color: "text-[#0284C7]", bg: "bg-[#E8F4FD]", text: "Your data",   sub: "encrypted and private, always"   },
+              { icon: CalendarCheck, color: "text-[#534AB7]", bg: "bg-[#EEF0FF]", text: "Today's plan",  sub: "updates the moment you log in"   },
+              { icon: Bell,          color: "text-[#059669]", bg: "bg-[#E8FAF2]", text: "Exam alerts",   sub: "and deadline warnings ready"      },
+              { icon: ShieldCheck,   color: "text-[#0284C7]", bg: "bg-[#E8F4FD]", text: "Your data",    sub: "encrypted and private, always"    },
             ].map((f) => (
               <div key={f.text} className="flex items-start gap-3">
                 <div className={`w-7 h-7 rounded-lg ${f.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
@@ -88,7 +120,6 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* Testimonial */}
           <div className="mt-8 pt-6 border-t border-[#E8E7F5]">
             <p className="text-[12px] text-[#6B6A8A] italic leading-relaxed mb-2">
               &ldquo;It predicted I&apos;d score 87 on Exam 2. I scored 89. It&apos;s right enough that I trust it for the next one.&rdquo;
@@ -105,16 +136,29 @@ export default function LoginPage() {
             <Link href="/signup" className="text-[#534AB7] font-semibold hover:underline">Sign up free</Link>
           </p>
 
-          {/* Google */}
-          <button type="button"
-            className="w-full flex items-center justify-center gap-3 border border-[#E8E7F5] hover:border-[#ABA9FA] hover:bg-[#FAFAFE] text-[#1A1A2E] text-[13px] font-semibold py-3.5 rounded-xl transition-all mb-5">
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Continue with Google
+          {/* ── Google button — WORKING ──────────────────────────── */}
+          <button
+            type="button"
+            onClick={handleGoogle}
+            disabled={googleLoading}
+            className="w-full flex items-center justify-center gap-3 border border-[#E8E7F5] hover:border-[#ABA9FA] hover:bg-[#FAFAFE] text-[#1A1A2E] text-[13px] font-semibold py-3.5 rounded-xl transition-all mb-5 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {googleLoading ? (
+              <>
+                <span className="w-4 h-4 border-2 border-[#534AB7]/30 border-t-[#534AB7] rounded-full animate-spin" />
+                Redirecting to Google…
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+              </>
+            )}
           </button>
 
           <div className="flex items-center gap-3 mb-5">
@@ -132,29 +176,36 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
-            {/* Email */}
             <div>
-              <label className="block text-[11px] font-bold text-[#9B9AB5] mb-1.5 uppercase tracking-wide">Email address</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="jordan@university.edu" autoComplete="email"
-                className={inp} />
+              <label className="block text-[11px] font-bold text-[#9B9AB5] mb-1.5 uppercase tracking-wide">
+                Email address
+              </label>
+              <input
+                type="email" value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jordan@university.edu"
+                autoComplete="email"
+                className={inp}
+              />
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block text-[11px] font-bold text-[#9B9AB5] mb-1.5 uppercase tracking-wide">Password</label>
+              <label className="block text-[11px] font-bold text-[#9B9AB5] mb-1.5 uppercase tracking-wide">
+                Password
+              </label>
               <div className="relative">
-                <input type={showPass ? "text" : "password"} value={password}
+                <input
+                  type={showPass ? "text" : "password"} value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••" autoComplete="current-password"
-                  className={hasPassError ? inpErr + " pr-11" : inp + " pr-11"} />
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className={hasPassError ? inpErr + " pr-11" : inp + " pr-11"}
+                />
                 <button type="button" onClick={() => setShowPass(!showPass)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#C5C3E8] hover:text-[#534AB7] transition-colors">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-
-              {/* Inline password error + reset link */}
               {hasPassError && (
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
@@ -166,14 +217,12 @@ export default function LoginPage() {
               )}
             </div>
 
-            {/* Forgot password */}
             <div className="flex justify-end -mt-1">
               <a href="#" className="text-[12px] font-semibold text-[#9B9AB5] hover:text-[#534AB7] transition-colors">
                 Forgot password?
               </a>
             </div>
 
-            {/* Submit */}
             <button type="submit" disabled={loading}
               className="w-full bg-[#534AB7] hover:bg-[#3C3489] disabled:opacity-60 text-white font-bold py-3.5 rounded-xl text-[14px] flex items-center justify-center gap-2 shadow-lg shadow-[#534AB7]/20 transition-all">
               {loading
