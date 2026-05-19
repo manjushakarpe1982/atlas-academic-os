@@ -3,723 +3,421 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRight, ArrowLeft, Check, GraduationCap,
-  Upload, Clock, Calendar, Sparkles, X, Plus,
-  Moon, Sun, BookOpen, Target,
+  ArrowRight, Check, GraduationCap, BookOpen,
+  FlaskConical, Briefcase, Shield, HelpCircle,
+  ChevronDown, Bot, BarChart2, FileText, TrendingUp,
+  Target, Sliders, User, Star, Plus, X, Clock, Moon,
 } from "lucide-react";
 
-/* ── helpers ──────────────────────────────────────────────────── */
-const inputCls =
-  "w-full bg-[#FAFAFE] border border-[#D5D3FD] hover:border-[#ABA9FA] focus:border-[#534AB7] focus:bg-white text-[#18172B] placeholder:text-[#C5C3E8] rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200 font-medium";
-
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+type Role = "student" | "teacher" | "researcher" | "professional" | null;
 
 const STEPS = [
-  { n: 1, label: "Your account"  },
-  { n: 2, label: "Add classes"   },
-  { n: 3, label: "Upload syllabi"},
-  { n: 4, label: "Your schedule" },
-  { n: 5, label: "Ready"         },
+  { n: 1, label: "Welcome",           sub: "Let's get to know you",        icon: User          },
+  { n: 2, label: "Academic Profile",  sub: "Tell us about your studies",   icon: GraduationCap },
+  { n: 3, label: "Goals & Interests", sub: "What do you want to achieve?", icon: Target        },
+  { n: 4, label: "Preferences",       sub: "Customize your experience",    icon: Sliders       },
+  { n: 5, label: "Complete",          sub: "You're all set!",              icon: Check         },
 ];
 
-/* ── Step tracker ─────────────────────────────────────────────── */
-function StepTrack({ current }: { current: number }) {
+const ROLES = [
+  { id: "student"      as Role, label: "Student",      desc: "I want to learn better and improve my academic performance.", icon: GraduationCap, bg: "bg-[#EEF0FF]", iconC: "text-[#534AB7]" },
+  { id: "teacher"      as Role, label: "Teacher",      desc: "I want to streamline teaching and support my students.",      icon: BookOpen,      bg: "bg-[#E8FAF2]", iconC: "text-[#059669]" },
+  { id: "researcher"   as Role, label: "Researcher",   desc: "I want to accelerate my research and discover insights.",     icon: FlaskConical,  bg: "bg-[#E8F4FD]", iconC: "text-[#0284C7]" },
+  { id: "professional" as Role, label: "Professional", desc: "I want to upskill and advance my career.",                    icon: Briefcase,     bg: "bg-[#FFF4E5]", iconC: "text-[#D97706]" },
+];
+
+const FEATURES = [
+  { icon: Bot,        bg: "bg-[#EEF0FF]", color: "text-[#534AB7]", label: "AI-Powered Recommendations" },
+  { icon: BarChart2,  bg: "bg-[#E8FAF2]", color: "text-[#059669]", label: "Smart Study Planning"       },
+  { icon: FileText,   bg: "bg-[#E8F4FD]", color: "text-[#0284C7]", label: "Document Analysis"          },
+  { icon: TrendingUp, bg: "bg-[#FFF4E5]", color: "text-[#D97706]", label: "Progress Tracking"          },
+];
+
+/* ── Step 1 ──────────────────────────────────────────────────── */
+function Step1({ role, setRole }: { role: Role; setRole: (r: Role) => void }) {
   return (
-    <div className="bg-white border-b border-[#EEEDFE] px-6 py-0 flex items-center gap-0 h-12 overflow-x-auto">
-      {STEPS.map((s, i) => (
-        <div key={s.n} className="flex items-center">
-          <div className={`flex items-center gap-2 px-3 h-12 border-b-2 transition-all whitespace-nowrap ${
-            s.n === current
-              ? "border-[#534AB7]"
-              : "border-transparent"
-          }`}>
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-              s.n < current
-                ? "bg-[#534AB7] text-white"
-                : s.n === current
-                ? "bg-[#534AB7] text-white"
-                : "bg-[#EEEDFE] text-[#9B9AB5]"
+    <div className="flex-1 flex flex-col">
+      {/* Header row */}
+      <div className="flex items-start justify-between mb-7">
+        <div>
+          <h1 className="text-[2.6rem] font-extrabold text-[#1A1A2E] leading-tight tracking-tight mb-2">
+            Welcome to ATLAS! 👋
+          </h1>
+          <p className="text-[#6B6A8A] text-[15px] font-light leading-relaxed max-w-[420px]">
+            Your AI-powered academic companion is ready to help you learn smarter, not harder.
+          </p>
+        </div>
+
+        {/* Floating cards top-right */}
+        <div className="hidden lg:flex flex-col gap-2.5 flex-shrink-0">
+          {[
+            { icon: Star,      bg: "bg-[#EEF0FF]", ic: "text-[#534AB7]", label: "AI Study Assistant",  bars: ["w-20","w-14"] },
+            { icon: BarChart2, bg: "bg-[#E8FAF2]", ic: "text-[#059669]", label: "Smart Insights",      bars: ["w-16","w-10"] },
+            { icon: BarChart2, bg: "bg-[#E8F4FD]", ic: "text-[#0284C7]", label: "Personalized Plan",   bars: ["w-14","w-8","w-5"] },
+          ].map((c) => (
+            <div key={c.label}
+              className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(83,74,183,0.10)] px-3.5 py-2.5 flex items-center gap-2.5 min-w-[196px]">
+              <div className={`w-8 h-8 rounded-xl ${c.bg} flex items-center justify-center flex-shrink-0`}>
+                <c.icon className={`w-4 h-4 ${c.ic}`} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#1A1A2E]">{c.label}</p>
+                <div className="flex gap-1 mt-1 items-center">
+                  {c.bars.map((w, i) => (
+                    <div key={i} className={`h-1.5 rounded-full ${w} ${i===0?"bg-[#534AB7]":i===1?"bg-[#ABA9FA]":"bg-[#D5D3FD]"}`} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Role picker */}
+      <p className="text-[#534AB7] text-[13px] font-bold mb-1 tracking-wide">Let&apos;s get started</p>
+      <p className="text-[#1A1A2E] font-bold text-[15px] mb-4">What best describes you?</p>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {ROLES.map((r) => (
+          <button key={r.id} onClick={() => setRole(r.id)}
+            className={`relative rounded-2xl border-2 p-4 text-left transition-all duration-200 ${
+              role === r.id
+                ? "border-[#534AB7] bg-[#F5F4FF] shadow-lg shadow-[#534AB7]/12"
+                : "border-[#E8E7F5] bg-white hover:border-[#ABA9FA] hover:shadow-md"
             }`}>
-              {s.n < current ? <Check className="w-3 h-3" /> : s.n}
+            {/* Radio */}
+            <div className={`absolute top-3 right-3 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+              role === r.id ? "border-[#534AB7]" : "border-[#C5C3E8]"
+            }`}>
+              {role === r.id && <div className="w-2 h-2 rounded-full bg-[#534AB7]" />}
             </div>
-            <span className={`text-xs font-semibold ${
-              s.n === current ? "text-[#534AB7]" : s.n < current ? "text-[#9B9AB5]" : "text-[#C5C3E8]"
-            }`}>{s.label}</span>
-          </div>
-          {i < STEPS.length - 1 && (
-            <div className="w-8 h-px bg-[#EEEDFE] flex-shrink-0" />
-          )}
-        </div>
-      ))}
-      <div className="ml-auto pl-4 flex-shrink-0">
-        <span className="text-[11px] font-medium text-[#9B9AB5] flex items-center gap-1.5 whitespace-nowrap">
-          <Clock className="w-3 h-3" /> ~2 min to finish
-        </span>
-      </div>
-    </div>
-  );
-}
 
-/* ── STEP 1 — Account info ────────────────────────────────────── */
-function Step1({ onNext }: { onNext: () => void }) {
-  const [name,    setName]    = useState("");
-  const [sem,     setSem]     = useState("Fall 2026");
-  const [gpa,     setGpa]     = useState("3.70");
-
-  useEffect(() => {
-    const n = localStorage.getItem("atlas_full_name");
-    if (n) setName(n);
-  }, []);
-
-  return (
-    <div className="flex gap-6">
-      <div className="flex-1">
-        <h2 className="text-xl font-extrabold text-[#18172B] mb-1">Welcome to Atlas</h2>
-        <p className="text-sm text-[#6B6A8A] font-light mb-6">Let's confirm a few details to get you started.</p>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-[#6B6A8A] mb-1.5 uppercase tracking-wide">Your name</label>
-            <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="Jordan Patel" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-[#6B6A8A] mb-1.5 uppercase tracking-wide">Current semester</label>
-              <select className={inputCls} value={sem} onChange={(e) => setSem(e.target.value)}>
-                {["Spring 2026","Summer 2026","Fall 2026","Spring 2027"].map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
+            <div className={`w-12 h-12 rounded-2xl ${r.bg} flex items-center justify-center mb-3`}>
+              <r.icon className={`w-6 h-6 ${r.iconC}`} />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-[#6B6A8A] mb-1.5 uppercase tracking-wide">Target GPA</label>
-              <select className={inputCls} value={gpa} onChange={(e) => setGpa(e.target.value)}>
-                {["4.00","3.90","3.80","3.70","3.60","3.50","3.00"].map((g) => (
-                  <option key={g}>{g}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 bg-green-50 border border-green-100 rounded-xl p-3 mt-5">
-          <Sparkles className="w-4 h-4 text-green-600 flex-shrink-0" />
-          <p className="text-[11px] font-medium text-green-700">
-            No ads · No data selling · FERPA compliant
-          </p>
-        </div>
-
-        <div className="flex justify-end mt-6">
-          <button onClick={onNext}
-            className="btn-primary text-white font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 shadow-md shadow-[#534AB7]/20">
-            Next — add your classes <ArrowRight className="w-4 h-4" />
+            <p className="text-[13px] font-extrabold text-[#1A1A2E] mb-1">{r.label}</p>
+            <p className="text-[11px] text-[#6B6A8A] font-light leading-relaxed">{r.desc}</p>
           </button>
-        </div>
+        ))}
       </div>
 
-      {/* Preview */}
-      <div className="w-52 flex-shrink-0 hidden md:block">
-        <div className="bg-[#FAFAFE] border border-[#EEEDFE] rounded-2xl p-4">
-          <p className="text-[10px] font-bold text-[#9B9AB5] uppercase tracking-wide mb-3">Your semester</p>
-          <div className="space-y-2.5">
-            {[
-              { k: "Name",     v: name || "—" },
-              { k: "Semester", v: sem },
-              { k: "Target GPA", v: gpa, color: true },
-            ].map((r) => (
-              <div key={r.k} className="flex justify-between text-xs">
-                <span className="text-[#9B9AB5] font-medium">{r.k}</span>
-                <span className={`font-bold ${r.color ? "text-[#534AB7]" : "text-[#18172B]"}`}>{r.v}</span>
+      {/* Features strip */}
+      <div className="bg-white/70 border border-[#EEEDFE] rounded-2xl p-4 mt-auto">
+        <p className="text-[13px] font-bold text-[#1A1A2E] mb-3">What you&apos;ll get with ATLAS</p>
+        <div className="flex flex-wrap gap-5">
+          {FEATURES.map((f) => (
+            <div key={f.label} className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-xl ${f.bg} flex items-center justify-center`}>
+                <f.icon className={`w-4 h-4 ${f.color}`} />
               </div>
-            ))}
-          </div>
-        </div>
-        <p className="text-[11px] text-[#9B9AB5] mt-3 font-light leading-relaxed">
-          You'll add classes and syllabi in the next two steps.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* ── STEP 2 — Add classes ─────────────────────────────────────── */
-type ClassEntry = {
-  id: number;
-  name: string;
-  professor: string;
-  time: string;
-  credits: string;
-  days: string[];
-};
-
-function Step2({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
-  const [classes, setClasses] = useState<ClassEntry[]>([
-    { id: 1, name: "", professor: "", time: "10:00 AM", credits: "3", days: [] },
-  ]);
-  const [active, setActive] = useState(1);
-
-  const addCls = () => {
-    const id = Date.now();
-    setClasses((p) => [...p, { id, name: "", professor: "", time: "10:00 AM", credits: "3", days: [] }]);
-    setActive(id);
-  };
-
-  const removeCls = (id: number) => {
-    if (classes.length === 1) return;
-    setClasses((p) => p.filter((c) => c.id !== id));
-    setActive(classes[0].id);
-  };
-
-  const updateCls = (id: number, field: keyof ClassEntry, val: string | string[]) =>
-    setClasses((p) => p.map((c) => (c.id === id ? { ...c, [field]: val } : c)));
-
-  const toggleDay = (id: number, day: string) => {
-    const cls = classes.find((c) => c.id === id)!;
-    const days = cls.days.includes(day)
-      ? cls.days.filter((d) => d !== day)
-      : [...cls.days, day];
-    updateCls(id, "days", days);
-  };
-
-  const DOTS = ["#534AB7","#1D9E75","#EF9F27","#D85A30","#A32D2D","#0F6E56"];
-
-  return (
-    <div className="flex gap-6">
-      <div className="flex-1">
-        <h2 className="text-xl font-extrabold text-[#18172B] mb-1">Add your classes</h2>
-        <p className="text-sm text-[#6B6A8A] font-light mb-5">
-          Enter each class. You'll upload syllabi in the next step — Atlas fills in the details.
-        </p>
-
-        <div className="space-y-3">
-          {classes.map((cls, i) => (
-            <div key={cls.id}
-              className={`rounded-2xl border p-4 cursor-pointer transition-all ${
-                active === cls.id ? "border-[#534AB7] bg-[#FAFAFE]" : "border-[#EEEDFE] bg-white"
-              }`}
-              onClick={() => setActive(cls.id)}>
-
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: DOTS[i % DOTS.length] }} />
-                <input
-                  className="flex-1 bg-transparent text-sm font-bold text-[#18172B] outline-none placeholder:text-[#C5C3E8]"
-                  value={cls.name}
-                  onChange={(e) => updateCls(cls.id, "name", e.target.value)}
-                  placeholder="Class name (e.g. Biology 101)"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                {classes.length > 1 && (
-                  <button onClick={(e) => { e.stopPropagation(); removeCls(cls.id); }}
-                    className="text-[#C5C3E8] hover:text-red-400 transition-colors p-0.5">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {active === cls.id && (
-                <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-bold text-[#9B9AB5] mb-1 uppercase tracking-wide">Professor</label>
-                      <input className={inputCls + " py-2 text-xs"} value={cls.professor}
-                        onChange={(e) => updateCls(cls.id, "professor", e.target.value)}
-                        placeholder="Dr. Smith" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-[#9B9AB5] mb-1 uppercase tracking-wide">Time</label>
-                      <input className={inputCls + " py-2 text-xs"} value={cls.time}
-                        onChange={(e) => updateCls(cls.id, "time", e.target.value)}
-                        placeholder="10:00 AM" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-[#9B9AB5] mb-1 uppercase tracking-wide">Credits</label>
-                      <select className={inputCls + " py-2 text-xs"} value={cls.credits}
-                        onChange={(e) => updateCls(cls.id, "credits", e.target.value)}>
-                        {["1","2","3","4","5","6"].map((n) => <option key={n}>{n}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-[#9B9AB5] mb-2 uppercase tracking-wide">Meeting days</label>
-                    <div className="flex gap-1.5">
-                      {DAYS.map((d) => (
-                        <button key={d}
-                          type="button"
-                          onClick={() => toggleDay(cls.id, d)}
-                          className={`w-9 h-8 rounded-lg text-[11px] font-bold transition-all ${
-                            cls.days.includes(d)
-                              ? "bg-[#534AB7] text-white"
-                              : "bg-[#EEEDFE] text-[#9B9AB5] hover:bg-[#D5D3FD]"
-                          }`}>
-                          {d[0]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {active !== cls.id && (
-                <p className="text-xs text-[#9B9AB5]">
-                  {[cls.professor, cls.time, cls.credits && `${cls.credits} credits`].filter(Boolean).join(" · ") || "Click to edit"}
-                </p>
-              )}
+              <span className="text-[12px] font-semibold text-[#1A1A2E]">{f.label}</span>
             </div>
           ))}
         </div>
-
-        <button onClick={addCls}
-          className="w-full mt-3 flex items-center justify-center gap-2 border border-dashed border-[#ABA9FA] rounded-2xl py-3 text-sm font-semibold text-[#534AB7] hover:bg-[#EEEDFE] transition-all">
-          <Plus className="w-4 h-4" /> Add another class
-        </button>
-
-        <div className="flex justify-between mt-6">
-          <button onClick={onBack}
-            className="flex items-center gap-2 text-sm font-semibold text-[#9B9AB5] hover:text-[#534AB7] transition-colors px-4 py-3 rounded-xl hover:bg-[#EEEDFE]">
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
-          <button onClick={onNext}
-            className="btn-primary text-white font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 shadow-md shadow-[#534AB7]/20">
-            Next — upload syllabi <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Preview */}
-      <div className="w-52 flex-shrink-0 hidden md:block">
-        <div className="bg-[#FAFAFE] border border-[#EEEDFE] rounded-2xl p-4">
-          <p className="text-[10px] font-bold text-[#9B9AB5] uppercase tracking-wide mb-3">Classes added</p>
-          <div className="space-y-2">
-            {classes.map((c, i) => (
-              <div key={c.id} className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: DOTS[i % DOTS.length] }} />
-                <p className="text-xs font-semibold text-[#18172B] truncate">{c.name || "Unnamed class"}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 pt-3 border-t border-[#EEEDFE]">
-            <p className="text-xs text-[#9B9AB5]">
-              {classes.length} {classes.length === 1 ? "class" : "classes"} ·{" "}
-              {classes.reduce((s, c) => s + Number(c.credits || 0), 0)} credits
-            </p>
-          </div>
-        </div>
-        <p className="text-[11px] text-[#9B9AB5] mt-3 font-light leading-relaxed">
-          Upload a syllabus in step 3 and Atlas fills in professor info, deadlines, and grade weights.
-        </p>
       </div>
     </div>
   );
 }
 
-/* ── STEP 3 — Upload syllabi ──────────────────────────────────── */
-function Step3({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
-  const [parsed, setParsed]   = useState(false);
-  const [parsing, setParsing] = useState(false);
-
-  const simulateParse = () => {
-    setParsing(true);
-    setTimeout(() => { setParsing(false); setParsed(true); }, 1800);
-  };
-
-  const classes = [
-    { name: "Biology 101",   color: "#534AB7", status: parsed ? "parsed" : parsing ? "parsing" : "waiting" },
-    { name: "Statistics 201",color: "#1D9E75", status: "waiting" },
-    { name: "English 110",   color: "#EF9F27", status: "waiting" },
-    { name: "History 105",   color: "#D85A30", status: "waiting" },
-  ];
-
+/* ── Step 2 ──────────────────────────────────────────────────── */
+function Step2() {
   return (
-    <div className="flex gap-6">
-      <div className="flex-1">
-        <h2 className="text-xl font-extrabold text-[#18172B] mb-1">Upload your syllabi</h2>
-        <p className="text-sm text-[#6B6A8A] font-light mb-5">
-          Atlas extracts deadlines, grade weights, and professor info in seconds. You can skip and upload later.
-        </p>
-
-        {/* Class list */}
-        <div className="border border-[#EEEDFE] rounded-2xl overflow-hidden mb-4">
-          {classes.map((cls, i) => (
-            <div key={cls.name}
-              className={`flex items-center gap-3 px-4 py-3.5 ${i < classes.length - 1 ? "border-b border-[#EEEDFE]" : ""} ${
-                cls.status === "parsing" ? "bg-[#EEEDFE]/30" : "bg-white"
-              }`}>
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cls.color }} />
-              <span className="text-sm font-semibold text-[#18172B] flex-1">{cls.name}</span>
-              {cls.status === "parsed" && (
-                <span className="text-[10px] font-bold bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <Check className="w-2.5 h-2.5" /> Parsed
-                </span>
-              )}
-              {cls.status === "parsing" && (
-                <span className="text-[10px] font-bold bg-[#EEEDFE] text-[#534AB7] border border-[#ABA9FA]/40 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 border border-[#534AB7] border-t-transparent rounded-full animate-spin" />
-                  Parsing…
-                </span>
-              )}
-              {cls.status === "waiting" && (
-                <span className="text-[10px] font-medium text-[#9B9AB5] border border-dashed border-[#C5C3E8] px-2 py-0.5 rounded-full">
-                  Drop syllabus
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Parsed preview */}
-        {parsed && (
-          <div className="bg-[#FAFAFE] border border-[#EEEDFE] rounded-xl p-4 mb-4">
-            <p className="text-[10px] font-bold text-[#9B9AB5] uppercase tracking-wide mb-2">Extracted from Biology 101</p>
-            <div className="space-y-1.5">
-              {[
-                ["Professor",    "Dr. Sarah Smith"],
-                ["Grade weights","Exams 50% · Quizzes 25% · HW 20%"],
-                ["Next deadline","Quiz 4 · Nov 24"],
-                ["Final exam",   "Dec 15 · 9am"],
-              ].map(([k, v]) => (
-                <div key={k} className="flex justify-between text-xs">
-                  <span className="text-[#9B9AB5]">{k}</span>
-                  <span className="font-semibold text-[#18172B]">{v}</span>
-                </div>
-              ))}
-            </div>
-            <button className="text-[11px] text-[#534AB7] mt-2 font-semibold">Edit extracted data →</button>
+    <div className="flex-1">
+      <h1 className="text-3xl font-extrabold text-[#1A1A2E] mb-1.5">Academic Profile</h1>
+      <p className="text-[#6B6A8A] text-sm font-light mb-7">Tell us about your studies so Atlas can personalise everything for you.</p>
+      <div className="space-y-4 max-w-lg">
+        {[
+          { l: "Institution / University",  p: "e.g. MIT, Stanford, Local Community College" },
+          { l: "Field of study / Major",     p: "e.g. Computer Science, Biology, Business"   },
+          { l: "Current year / Level",       p: "e.g. Sophomore, Graduate Year 2"             },
+        ].map((f) => (
+          <div key={f.l}>
+            <label className="block text-[11px] font-bold text-[#6B6A8A] mb-1.5 uppercase tracking-wider">{f.l}</label>
+            <input placeholder={f.p}
+              className="w-full bg-[#FAFAFE] border border-[#D5D3FD] hover:border-[#ABA9FA] focus:border-[#534AB7] focus:bg-white text-[#1A1A2E] placeholder:text-[#C5C3E8] rounded-xl px-4 py-3 text-sm outline-none transition-all font-medium" />
           </div>
-        )}
-
-        {/* Drop zone */}
-        <div
-          onClick={simulateParse}
-          className="border-2 border-dashed border-[#D5D3FD] hover:border-[#534AB7] rounded-2xl p-8 text-center cursor-pointer transition-all hover:bg-[#EEEDFE]/20 mb-5">
-          <Upload className="w-6 h-6 text-[#9B9AB5] mx-auto mb-2" />
-          <p className="text-sm font-semibold text-[#18172B] mb-1">Drop syllabus files here</p>
-          <p className="text-xs text-[#9B9AB5]">PDF, DOCX, TXT · Atlas matches each file to the right class</p>
-          <div className="flex justify-center gap-2 mt-3">
-            {["PDF","DOCX","TXT"].map((t) => (
-              <span key={t} className="text-[10px] font-bold bg-[#EEEDFE] text-[#534AB7] px-2 py-0.5 rounded-md">{t}</span>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <div className="flex gap-3">
-            <button onClick={onBack}
-              className="flex items-center gap-2 text-sm font-semibold text-[#9B9AB5] hover:text-[#534AB7] transition-colors px-4 py-3 rounded-xl hover:bg-[#EEEDFE]">
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-            <button onClick={onNext}
-              className="text-sm font-semibold text-[#9B9AB5] px-4 py-3 rounded-xl hover:bg-[#EEEDFE] hover:text-[#534AB7] transition-all">
-              Skip this step
-            </button>
-          </div>
-          <button onClick={onNext}
-            className="btn-primary text-white font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 shadow-md shadow-[#534AB7]/20">
-            Next — your schedule <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Preview */}
-      <div className="w-52 flex-shrink-0 hidden md:block">
-        <div className="bg-[#FAFAFE] border border-[#EEEDFE] rounded-2xl p-4">
-          <p className="text-[10px] font-bold text-[#9B9AB5] uppercase tracking-wide mb-3">Extracted so far</p>
-          <div className="space-y-2">
-            {[
-              { k: "Deadlines found",  v: parsed ? "14" : "0",   color: parsed },
-              { k: "Grade categories", v: parsed ? "4" : "0",    color: parsed },
-              { k: "Professors loaded",v: parsed ? "1" : "0",    color: parsed },
-              { k: "Classes parsed",   v: parsed ? "1 / 4" : "0 / 4", color: parsed },
-            ].map((r) => (
-              <div key={r.k} className="flex justify-between text-xs">
-                <span className="text-[#9B9AB5]">{r.k}</span>
-                <span className={`font-bold ${r.color ? "text-[#534AB7]" : "text-[#C5C3E8]"}`}>{r.v}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mt-3">
-          <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
-            💡 You can skip syllabi now and upload them any time from the class workspace.
-          </p>
-        </div>
+        ))}
       </div>
     </div>
   );
 }
 
-/* ── STEP 4 — Schedule ────────────────────────────────────────── */
-function Step4({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
-  const [sleepStart, setSleepStart] = useState("11:00 PM");
-  const [sleepEnd,   setSleepEnd]   = useState("7:30 AM");
-  const [weekday,    setWeekday]    = useState(2.5);
-  const [weekend,    setWeekend]    = useState(4.0);
+/* ── Step 3 ──────────────────────────────────────────────────── */
+function Step3() {
+  const goals = ["Improve grades","Better time management","Exam preparation","Research skills","Career preparation","Learn new skills","Build study habits","Reduce stress"];
+  const [sel, setSel] = useState<string[]>([]);
+  const toggle = (g: string) => setSel((p) => p.includes(g) ? p.filter((x) => x !== g) : [...p, g]);
+  return (
+    <div className="flex-1">
+      <h1 className="text-3xl font-extrabold text-[#1A1A2E] mb-1.5">Goals & Interests</h1>
+      <p className="text-[#6B6A8A] text-sm font-light mb-6">Select all that apply — Atlas builds your experience around these.</p>
+      <div className="flex flex-wrap gap-2.5 max-w-xl">
+        {goals.map((g) => (
+          <button key={g} onClick={() => toggle(g)}
+            className={`px-4 py-2.5 rounded-xl text-[13px] font-semibold border-2 transition-all ${
+              sel.includes(g)
+                ? "border-[#534AB7] bg-[#EEF0FF] text-[#534AB7]"
+                : "border-[#E8E7F5] bg-white text-[#6B6A8A] hover:border-[#ABA9FA] hover:text-[#534AB7]"
+            }`}>
+            {g}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Step 4 ──────────────────────────────────────────────────── */
+function Step4() {
+  const [studyTime, setStudyTime] = useState("Evening");
   const [sessionLen, setSessionLen] = useState("45–60 min");
-  const [events,     setEvents]     = useState(["🏃 Gym · Mon/Thu", "🚗 Commute · 30 min"]);
-
-  const totalWeekly = weekday * 5 + weekend * 2;
-
+  const [events, setEvents] = useState(["🏃 Gym · Mon/Thu","🚗 Commute · 30 min"]);
   return (
-    <div className="flex gap-6">
-      <div className="flex-1">
-        <h2 className="text-xl font-extrabold text-[#18172B] mb-1">Tell Atlas about your day</h2>
-        <p className="text-sm text-[#6B6A8A] font-light mb-5">
-          Atlas builds a plan that fits your real life — not just your class schedule.
-        </p>
-
-        <div className="space-y-4">
-          {/* Sleep window */}
-          <div className="bg-white border border-[#EEEDFE] rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Moon className="w-4 h-4 text-[#534AB7]" />
-              <span className="text-sm font-bold text-[#18172B]">Sleep window</span>
-            </div>
-            <p className="text-xs text-[#9B9AB5] mb-3 font-light">No notifications or study blocks during this time</p>
-            <div className="flex items-center gap-3">
-              <input className={inputCls + " py-2 text-xs"} value={sleepStart}
-                onChange={(e) => setSleepStart(e.target.value)} placeholder="11:00 PM" />
-              <span className="text-sm text-[#9B9AB5] font-medium">to</span>
-              <input className={inputCls + " py-2 text-xs"} value={sleepEnd}
-                onChange={(e) => setSleepEnd(e.target.value)} placeholder="7:30 AM" />
-            </div>
+    <div className="flex-1">
+      <h1 className="text-3xl font-extrabold text-[#1A1A2E] mb-1.5">Preferences</h1>
+      <p className="text-[#6B6A8A] text-sm font-light mb-6">Customise how Atlas fits into your day.</p>
+      <div className="space-y-5 max-w-lg">
+        {/* Study time */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-4 h-4 text-[#534AB7]" />
+            <label className="text-[13px] font-bold text-[#1A1A2E]">Preferred study time</label>
           </div>
-
-          {/* Study hours */}
-          <div className="bg-white border border-[#EEEDFE] rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-4 h-4 text-[#534AB7]" />
-              <span className="text-sm font-bold text-[#18172B]">Daily study hours</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: "Weekdays", val: weekday, set: setWeekday },
-                { label: "Weekends", val: weekend, set: setWeekend },
-              ].map((s) => (
-                <div key={s.label}>
-                  <p className="text-[11px] font-bold text-[#9B9AB5] mb-2 uppercase tracking-wide">{s.label}</p>
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => s.set(Math.max(0.5, s.val - 0.5))}
-                      className="w-8 h-8 rounded-lg bg-[#EEEDFE] text-[#534AB7] font-bold text-base hover:bg-[#D5D3FD] transition-all">−</button>
-                    <span className="text-lg font-bold text-[#534AB7] min-w-[2.5rem] text-center">{s.val}</span>
-                    <button onClick={() => s.set(Math.min(12, s.val + 0.5))}
-                      className="w-8 h-8 rounded-lg bg-[#EEEDFE] text-[#534AB7] font-bold text-base hover:bg-[#D5D3FD] transition-all">+</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Fixed events */}
-          <div className="bg-white border border-[#EEEDFE] rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="w-4 h-4 text-[#534AB7]" />
-              <span className="text-sm font-bold text-[#18172B]">Fixed weekly events</span>
-            </div>
-            <p className="text-xs text-[#9B9AB5] mb-3 font-light">Atlas won&apos;t schedule study sessions over these</p>
-            <div className="flex flex-wrap gap-2">
-              {events.map((ev) => (
-                <div key={ev}
-                  className="flex items-center gap-1.5 bg-[#FAFAFE] border border-[#EEEDFE] rounded-full px-3 py-1.5 text-xs font-medium text-[#18172B]">
-                  {ev}
-                  <button onClick={() => setEvents((p) => p.filter((e) => e !== ev))}
-                    className="text-[#C5C3E8] hover:text-red-400 ml-0.5">
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={() => setEvents((p) => [...p, "📚 Study group"])}
-                className="flex items-center gap-1 border border-dashed border-[#ABA9FA] rounded-full px-3 py-1.5 text-xs font-semibold text-[#534AB7] hover:bg-[#EEEDFE] transition-all">
-                <Plus className="w-3 h-3" /> Add event
+          <div className="flex gap-2 flex-wrap">
+            {["Morning","Afternoon","Evening","Late night"].map((o) => (
+              <button key={o} onClick={() => setStudyTime(o)}
+                className={`px-4 py-2 rounded-xl text-[12px] font-semibold border-2 transition-all ${studyTime===o?"border-[#534AB7] bg-[#EEF0FF] text-[#534AB7]":"border-[#E8E7F5] bg-white text-[#6B6A8A] hover:border-[#ABA9FA]"}`}>
+                {o}
               </button>
-            </div>
-          </div>
-
-          {/* Session length */}
-          <div className="bg-white border border-[#EEEDFE] rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="w-4 h-4 text-[#534AB7]" />
-              <span className="text-sm font-bold text-[#18172B]">Preferred session length</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {["30 min", "45–60 min", "90 min", "2+ hours"].map((opt) => (
-                <button key={opt} onClick={() => setSessionLen(opt)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                    sessionLen === opt
-                      ? "bg-[#534AB7] text-white shadow-md shadow-[#534AB7]/20"
-                      : "bg-[#FAFAFE] border border-[#EEEDFE] text-[#6B6A8A] hover:border-[#ABA9FA]"
-                  }`}>
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-between mt-6">
-          <button onClick={onBack}
-            className="flex items-center gap-2 text-sm font-semibold text-[#9B9AB5] hover:text-[#534AB7] transition-colors px-4 py-3 rounded-xl hover:bg-[#EEEDFE]">
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
-          <button onClick={onNext}
-            className="btn-primary text-white font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 shadow-md shadow-[#534AB7]/20">
-            Almost done — see your plan <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Preview */}
-      <div className="w-52 flex-shrink-0 hidden md:block">
-        <div className="bg-[#FAFAFE] border border-[#EEEDFE] rounded-2xl p-4">
-          <p className="text-[10px] font-bold text-[#9B9AB5] uppercase tracking-wide mb-3">Your available time</p>
-          <div className="space-y-2">
-            {[
-              { k: "Weekdays",     v: `${weekday} hrs/day` },
-              { k: "Weekends",     v: `${weekend} hrs/day` },
-              { k: "Weekly total", v: `${totalWeekly.toFixed(1)} hrs`, color: true },
-              { k: "Quiet hours",  v: `${sleepStart} – ${sleepEnd}` },
-            ].map((r) => (
-              <div key={r.k} className="flex justify-between text-xs">
-                <span className="text-[#9B9AB5]">{r.k}</span>
-                <span className={`font-bold ${r.color ? "text-[#534AB7]" : "text-[#18172B]"}`}>{r.v}</span>
-              </div>
             ))}
           </div>
         </div>
-        <div className="bg-[#EEEDFE] rounded-xl p-3 mt-3">
-          <p className="text-[11px] text-[#534AB7] font-medium leading-relaxed">
-            Atlas will never suggest studying during your sleep window or fixed events.
-          </p>
+        {/* Session length */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Target className="w-4 h-4 text-[#534AB7]" />
+            <label className="text-[13px] font-bold text-[#1A1A2E]">Session length</label>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {["30 min","45–60 min","90 min","2+ hours"].map((o) => (
+              <button key={o} onClick={() => setSessionLen(o)}
+                className={`px-4 py-2 rounded-xl text-[12px] font-semibold border-2 transition-all ${sessionLen===o?"border-[#534AB7] bg-[#EEF0FF] text-[#534AB7]":"border-[#E8E7F5] bg-white text-[#6B6A8A] hover:border-[#ABA9FA]"}`}>
+                {o}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Fixed events */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Moon className="w-4 h-4 text-[#534AB7]" />
+            <label className="text-[13px] font-bold text-[#1A1A2E]">Fixed weekly events</label>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {events.map((ev) => (
+              <div key={ev} className="flex items-center gap-1.5 bg-[#F5F4FF] border border-[#D5D3FD] rounded-full px-3 py-1.5 text-[12px] font-medium text-[#1A1A2E]">
+                {ev}
+                <button onClick={() => setEvents((p) => p.filter((e) => e !== ev))} className="text-[#C5C3E8] hover:text-red-400 ml-0.5">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+            <button onClick={() => setEvents((p) => [...p, "📚 Study group"])}
+              className="flex items-center gap-1 border border-dashed border-[#ABA9FA] rounded-full px-3 py-1.5 text-[12px] font-semibold text-[#534AB7] hover:bg-[#EEF0FF] transition-all">
+              <Plus className="w-3 h-3" /> Add event
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/* ── STEP 5 — Ready ───────────────────────────────────────────── */
+/* ── Step 5 ──────────────────────────────────────────────────── */
 function Step5() {
-  const router   = useRouter();
+  const router = useRouter();
   const [name, setName] = useState("Jordan");
-
   useEffect(() => {
     const n = localStorage.getItem("atlas_full_name");
     if (n) setName(n.split(" ")[0]);
   }, []);
 
   return (
-    <div className="text-center py-4">
-      {/* Success icon */}
-      <div className="w-16 h-16 rounded-full bg-green-100 border-2 border-green-300 flex items-center justify-center mx-auto mb-5">
-        <Check className="w-8 h-8 text-green-600" />
+    <div className="flex-1 flex flex-col items-center justify-center text-center py-4">
+      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#534AB7] to-[#7B6FE8] flex items-center justify-center mb-5 shadow-2xl shadow-[#534AB7]/30">
+        <Check className="w-10 h-10 text-white" strokeWidth={3} />
       </div>
-
-      <h2 className="text-3xl font-extrabold text-[#18172B] mb-2">
-        You&apos;re all set, {name}.
-      </h2>
-      <p className="text-[#6B6A8A] max-w-md mx-auto font-light mb-8 leading-relaxed">
-        Atlas has read your syllabi, mapped your deadlines, and built your first study plan.
-        Here&apos;s what it found.
+      <h1 className="text-3xl font-extrabold text-[#1A1A2E] mb-2">You&apos;re all set, {name}! 🎉</h1>
+      <p className="text-[#6B6A8A] max-w-md font-light mb-8 leading-relaxed">
+        Your personalised ATLAS workspace is ready. Your AI study companion is waiting.
       </p>
-
-      {/* Stats */}
-      <div className="flex justify-center gap-4 mb-8 flex-wrap">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8 w-full max-w-xl">
         {[
-          { n: "4",  label: "Classes set up"    },
-          { n: "47", label: "Deadlines found"   },
-          { n: "18", label: "Topics detected"   },
-          { n: "2",  label: "Exams this month"  },
+          { n: "4",  l: "Classes ready"    },
+          { n: "47", l: "Deadlines mapped" },
+          { n: "18", l: "Topics detected"  },
+          { n: "2",  l: "Exams this month" },
         ].map((s) => (
-          <div key={s.label}
-            className="bg-white border border-[#EEEDFE] rounded-2xl px-5 py-3.5 text-center"
-            style={{ boxShadow: "0 2px 12px rgba(83,74,183,0.06)" }}>
+          <div key={s.l} className="bg-white rounded-2xl border border-[#EEEDFE] p-4 shadow-sm">
             <p className="text-2xl font-extrabold text-[#534AB7]">{s.n}</p>
-            <p className="text-xs font-medium text-[#9B9AB5] mt-0.5">{s.label}</p>
+            <p className="text-[11px] text-[#9B9AB5] mt-0.5 font-medium">{s.l}</p>
           </div>
         ))}
       </div>
-
-      {/* Plan preview */}
-      <div className="bg-white border border-[#EEEDFE] rounded-2xl p-5 max-w-sm mx-auto mb-8 text-left"
-        style={{ boxShadow: "0 4px 20px rgba(83,74,183,0.08)" }}>
-        <p className="text-[10px] font-bold text-[#9B9AB5] uppercase tracking-wide mb-3">
-          Your first study plan — today
-        </p>
-        <div className="bg-[#EEEDFE] border border-[#ABA9FA]/40 rounded-xl p-3 mb-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-bold text-[#534AB7] uppercase tracking-widest">Biology 101</span>
-            <span className="text-[10px] text-[#9B9AB5]">45 min</span>
-          </div>
-          <p className="text-sm font-bold text-[#18172B]">Review Mitosis</p>
-          <p className="text-[11px] text-[#6B6A8A] mt-0.5">Exam Thursday · weakest topic · on review sheet</p>
-        </div>
-        {[
-          { c: "Statistics", t: "Problem set #4", m: "40m" },
-          { c: "English",    t: "Essay 2 outline", m: "20m" },
-          { c: "History",    t: "Skim chapter 7",  m: "15m" },
-        ].map((r, i) => (
-          <div key={i} className="flex items-center gap-3 py-2 border-t border-[#EEEDFE]">
-            <div className="w-5 h-5 rounded-full border border-[#D5D3FD] flex items-center justify-center text-[10px] text-[#9B9AB5] font-bold flex-shrink-0">
-              {i + 2}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-[#18172B] truncate">{r.c} — {r.t}</p>
-            </div>
-            <span className="text-[10px] text-[#9B9AB5] flex-shrink-0">{r.m}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Go to plan */}
-      <button
-        onClick={() => router.push("/home")}
-        className="btn-primary text-white font-bold px-10 py-4 rounded-2xl text-base flex items-center gap-2.5 mx-auto shadow-xl shadow-[#534AB7]/20">
-        <BookOpen className="w-5 h-5" />
-        Go to my plan
-        <ArrowRight className="w-5 h-5" />
+      <button onClick={() => router.push("/home")}
+        className="bg-[#534AB7] hover:bg-[#3C3489] text-white font-bold px-10 py-4 rounded-2xl text-[15px] flex items-center gap-2.5 mx-auto shadow-xl shadow-[#534AB7]/25 transition-all">
+        Go to my Dashboard <ArrowRight className="w-5 h-5" />
       </button>
-
-      <p className="text-xs font-medium text-[#9B9AB5] mt-4">
-        You can upload more files, add grades, and refine your schedule any time.
-      </p>
     </div>
   );
 }
 
-/* ── Main onboarding page ─────────────────────────────────────── */
+/* ── Main page ───────────────────────────────────────────────── */
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
+  const [role, setRole] = useState<Role>(null);
+  const router = useRouter();
+  const [userName, setUserName] = useState("Pooja");
+
+  useEffect(() => {
+    const n = localStorage.getItem("atlas_full_name");
+    if (n) setUserName(n.split(" ")[0]);
+  }, []);
 
   const next = () => setStep((s) => Math.min(5, s + 1));
-  const back = () => setStep((s) => Math.max(1, s - 1));
+  const prev = () => setStep((s) => Math.max(1, s - 1));
+  const progressPct = ((step - 1) / (STEPS.length - 1)) * 100;
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-white border-b border-[#EEEDFE] px-6 h-14 flex items-center justify-between"
-        style={{ boxShadow: "0 1px 8px rgba(83,74,183,0.05)" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg,#F0EFFE 0%,#F8F7FF 50%,#EEF3FF 100%)" }}>
+
+      {/* Navbar */}
+      <header className="bg-white/80 backdrop-blur-xl border-b border-[#EEEDFE] h-[60px] flex items-center px-6 justify-between flex-shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl btn-primary flex items-center justify-center shadow-md shadow-[#534AB7]/20">
-            <span className="text-white font-bold text-sm">A</span>
+          <svg viewBox="0 0 32 32" className="w-9 h-9">
+            <polygon points="16,2 28,9 28,23 16,30 4,23 4,9" fill="none" stroke="#534AB7" strokeWidth="2.2"/>
+            <polygon points="16,7 24,11.5 24,20.5 16,25 8,20.5 8,11.5" fill="#534AB7" opacity="0.12"/>
+            <text x="16" y="21" textAnchor="middle" fontSize="11" fontWeight="800" fill="#534AB7">A</text>
+          </svg>
+          <div>
+            <p className="text-[13px] font-extrabold text-[#1A1A2E] leading-none tracking-wide">ATLAS</p>
+            <p className="text-[10px] text-[#9B9AB5] font-medium tracking-wide">Academic OS</p>
           </div>
-          <span className="font-bold text-base text-[#18172B] tracking-tight">Atlas</span>
         </div>
-        <button
-          onClick={() => { if (confirm("Skip setup? You can complete it later.")) window.location.href = "/home"; }}
-          className="text-xs font-semibold text-[#9B9AB5] hover:text-[#534AB7] transition-colors px-3 py-1.5 rounded-lg hover:bg-[#EEEDFE]">
-          Skip setup
-        </button>
-      </div>
+        <div className="flex items-center gap-4">
+          <button className="flex items-center gap-1.5 text-[12px] font-medium text-[#6B6A8A] hover:text-[#534AB7] transition-colors">
+            <HelpCircle className="w-4 h-4" /> Need help?
+          </button>
+          <div className="flex items-center gap-2 cursor-pointer">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#534AB7] to-[#7B6FE8] flex items-center justify-center text-white text-xs font-bold shadow-md">
+              {userName[0]?.toUpperCase()}
+            </div>
+            <span className="text-[13px] font-semibold text-[#1A1A2E]">{userName}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-[#9B9AB5]" />
+          </div>
+        </div>
+      </header>
 
-      {/* Step tracker */}
-      <StepTrack current={step} />
+      {/* Body */}
+      <div className="flex flex-1 overflow-hidden">
 
-      {/* Content */}
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        {step === 1 && <Step1 onNext={next} />}
-        {step === 2 && <Step2 onNext={next} onBack={back} />}
-        {step === 3 && <Step3 onNext={next} onBack={back} />}
-        {step === 4 && <Step4 onNext={next} onBack={back} />}
-        {step === 5 && <Step5 />}
+        {/* Sidebar */}
+        <aside className="w-[280px] bg-white/60 backdrop-blur-xl border-r border-[#EEEDFE] flex flex-col p-5 flex-shrink-0">
+          {/* Progress bar */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[12px] font-bold text-[#1A1A2E]">Onboarding Progress</span>
+              <span className="text-[11px] font-semibold text-[#9B9AB5]">{step} of {STEPS.length}</span>
+            </div>
+            <div className="h-2 bg-[#EEEDFE] rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-[#534AB7] to-[#7B6FE8] rounded-full transition-all duration-500"
+                style={{ width: `${progressPct}%` }} />
+            </div>
+          </div>
+
+          {/* Steps */}
+          <div className="flex flex-col gap-1.5 flex-1">
+            {STEPS.map((s) => {
+              const done   = step > s.n;
+              const active = step === s.n;
+              return (
+                <div key={s.n}
+                  onClick={() => done && setStep(s.n)}
+                  className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all ${
+                    active ? "bg-gradient-to-r from-[#534AB7] to-[#6B5FE8] shadow-lg shadow-[#534AB7]/20 cursor-default"
+                    : done  ? "bg-[#F0EFFE] cursor-pointer hover:bg-[#E8E6FD]"
+                    :         "hover:bg-white/60 cursor-default"
+                  }`}>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    active ? "bg-white/20"
+                    : done  ? "bg-[#534AB7]"
+                    :         "bg-[#F0EFFE] border-2 border-[#D5D3FD]"
+                  }`}>
+                    {done
+                      ? <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
+                      : <s.icon className={`w-4 h-4 ${active ? "text-white" : "text-[#9B9AB5]"}`} />
+                    }
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-[13px] font-semibold leading-none mb-0.5 ${active ? "text-white" : "text-[#1A1A2E]"}`}>
+                      {s.n}. {s.label}
+                    </p>
+                    <p className={`text-[11px] font-light truncate ${active ? "text-white/65" : "text-[#9B9AB5]"}`}>
+                      {s.sub}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Security badge */}
+          <div className="mt-4 bg-gradient-to-br from-[#F0EFFE] to-[#E8E6FD] border border-[#D5D3FD] rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-6 h-6 rounded-lg bg-white/60 flex items-center justify-center">
+                <Shield className="w-3.5 h-3.5 text-[#534AB7]" />
+              </div>
+              <span className="text-[12px] font-bold text-[#1A1A2E]">Your Data is Safe</span>
+            </div>
+            <p className="text-[11px] text-[#6B6A8A] font-light leading-relaxed">
+              We use enterprise-grade security to protect your data and privacy.
+            </p>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main className="flex-1 flex flex-col p-8 overflow-y-auto">
+          <div className="flex-1 flex flex-col">
+            {step === 1 && <Step1 role={role} setRole={setRole} />}
+            {step === 2 && <Step2 />}
+            {step === 3 && <Step3 />}
+            {step === 4 && <Step4 />}
+            {step === 5 && <Step5 />}
+          </div>
+
+          {/* Bottom bar */}
+          {step < 5 && (
+            <div className="flex items-center justify-between pt-6 mt-6 border-t border-[#EEEDFE]">
+              {step > 1 ? (
+                <button onClick={prev}
+                  className="text-[13px] font-semibold text-[#6B6A8A] hover:text-[#534AB7] px-5 py-3 rounded-xl border border-[#D5D3FD] hover:border-[#534AB7] hover:bg-[#F0EFFE] transition-all">
+                  ← Back
+                </button>
+              ) : (
+                <button onClick={() => { if (confirm("Skip setup?")) router.push("/home"); }}
+                  className="text-[13px] font-medium text-[#9B9AB5] hover:text-[#534AB7] transition-colors">
+                  Skip setup
+                </button>
+              )}
+
+              <button onClick={next} disabled={step === 1 && !role}
+                className="bg-gradient-to-r from-[#534AB7] to-[#6B5FE8] hover:from-[#3C3489] hover:to-[#534AB7] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-8 py-3.5 rounded-2xl text-[14px] flex items-center gap-2 shadow-xl shadow-[#534AB7]/25 transition-all">
+                Continue <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </main>
       </div>
-    </main>
+    </div>
   );
 }
