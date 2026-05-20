@@ -1,18 +1,54 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { CheckCircle2, Camera, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import SettingsLayout from '@/components/layout/SettingsLayout';
+import {
+  CheckCircle2, AlertCircle, Eye, EyeOff,
+  Camera, User, Mail, GraduationCap,
+  Globe, BookOpen, Lock, Pencil,
+} from 'lucide-react';
 
-/* ─── Reusable field components ──────────────────────────────── */
-function Field({
-  label, hint, children,
-}: {
+/* ─── Save toast ─────────────────────────────────────────────── */
+function SaveToast({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <div className="fixed bottom-6 right-6 flex items-center gap-2.5 bg-gray-900 text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-2xl z-50 animate-fade-in">
+      <CheckCircle2 className="w-4 h-4 text-green-400" />
+      Changes saved successfully
+    </div>
+  );
+}
+
+/* ─── Section card ───────────────────────────────────────────── */
+function Card({ title, icon: Icon, iconBg, children }: {
+  title: string; icon: typeof User; iconBg: string; children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+      {/* Card header */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-50">
+        <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
+          <Icon className="w-4 h-4 text-white" />
+        </div>
+        <p className="text-sm font-bold text-gray-900">{title}</p>
+      </div>
+      <div className="px-6 py-5">{children}</div>
+    </div>
+  );
+}
+
+/* ─── Input field ────────────────────────────────────────────── */
+const INP =
+  'w-full bg-gray-50 border border-gray-200 hover:border-indigo-300 ' +
+  'focus:border-indigo-500 focus:bg-white text-gray-900 placeholder:text-gray-300 ' +
+  'rounded-xl px-4 py-2.5 text-sm outline-none transition-all duration-200 font-medium';
+
+function Field({ label, hint, children }: {
   label: string; hint?: string; children: React.ReactNode;
 }) {
   return (
     <div>
-      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+      <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
         {label}
       </label>
       {children}
@@ -21,38 +57,51 @@ function Field({
   );
 }
 
-const INP =
-  'w-full bg-[#FAFAFE] border border-gray-200 hover:border-indigo-300 ' +
-  'focus:border-indigo-500 focus:bg-white text-gray-900 placeholder:text-gray-300 ' +
-  'rounded-xl px-4 py-2.5 text-sm outline-none transition-all font-medium';
-
-/* ─── Save toast ─────────────────────────────────────────────── */
-function SaveToast({ show }: { show: boolean }) {
-  if (!show) return null;
+/* ─── Password strength ──────────────────────────────────────── */
+function PassStrength({ password }: { password: string }) {
+  const score =
+    (password.length >= 8          ? 1 : 0) +
+    (/[A-Z]/.test(password)        ? 1 : 0) +
+    (/[0-9]/.test(password)        ? 1 : 0) +
+    (/[^A-Za-z0-9]/.test(password) ? 1 : 0);
+  if (!password) return null;
+  const colors = ['bg-red-400','bg-orange-400','bg-yellow-400','bg-green-500'];
+  const labels = ['Weak','Fair','Good','Strong'];
+  const textC  = ['text-red-500','text-orange-500','text-yellow-600','text-green-600'];
   return (
-    <div className="fixed bottom-6 right-6 flex items-center gap-2.5 bg-gray-900 text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-2xl z-50 animate-fade-in">
-      <CheckCircle2 className="w-4 h-4 text-green-400" />
-      Changes saved
+    <div className="mt-2">
+      <div className="flex gap-1 mb-1">
+        {[0,1,2,3].map((i) => (
+          <div key={i} className={`h-1 flex-1 rounded-full ${i < score ? colors[score-1] : 'bg-gray-200'}`} />
+        ))}
+      </div>
+      <p className={`text-[11px] font-semibold ${textC[score-1] || 'text-gray-400'}`}>{labels[score-1]}</p>
     </div>
   );
 }
 
 /* ─── Main page ──────────────────────────────────────────────── */
 export default function ProfileSettings() {
-  const [firstName,    setFirstName]    = useState('Jordan');
-  const [lastName,     setLastName]     = useState('Patel');
-  const [email,        setEmail]        = useState('jordan@university.edu');
-  const [institution,  setInstitution]  = useState('State University');
-  const [fieldStudy,   setFieldStudy]   = useState('Biology / Pre-med');
-  const [yearLevel,    setYearLevel]    = useState('Sophomore (Year 2)');
-  const [timezone,     setTimezone]     = useState('America/New_York');
-  const [bio,          setBio]          = useState('');
-  const [showPass,     setShowPass]     = useState(false);
-  const [currentPass,  setCurrentPass]  = useState('');
-  const [newPass,      setNewPass]      = useState('');
-  const [confirmPass,  setConfirmPass]  = useState('');
-  const [passError,    setPassError]    = useState('');
-  const [saved,        setSaved]        = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const [firstName,   setFirstName]   = useState('Jordan');
+  const [lastName,    setLastName]    = useState('Patel');
+  const [email,       setEmail]       = useState('jordan@university.edu');
+  const [institution, setInstitution] = useState('State University');
+  const [fieldStudy,  setFieldStudy]  = useState('Biology / Pre-med');
+  const [yearLevel,   setYearLevel]   = useState('Sophomore (Year 2)');
+  const [timezone,    setTimezone]    = useState('America/New_York');
+  const [bio,         setBio]         = useState('');
+  const [avatar,      setAvatar]      = useState<string | null>(null);
+
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew,     setShowNew]     = useState(false);
+  const [currentPass, setCurrentPass] = useState('');
+  const [newPass,     setNewPass]     = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [passError,   setPassError]   = useState('');
+  const [passSuccess, setPassSuccess] = useState(false);
+  const [saved,       setSaved]       = useState(false);
 
   useEffect(() => {
     const n = localStorage.getItem('atlas_full_name') || '';
@@ -63,6 +112,16 @@ export default function ProfileSettings() {
     if (e) setEmail(e);
   }, []);
 
+  /* ── Photo upload ────────────────────────────────────────── */
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Photo must be under 5 MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => setAvatar(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const save = () => {
     localStorage.setItem('atlas_full_name', `${firstName} ${lastName}`.trim());
     setSaved(true);
@@ -70,43 +129,67 @@ export default function ProfileSettings() {
   };
 
   const changePassword = () => {
-    if (!currentPass)       { setPassError('Enter your current password.'); return; }
-    if (newPass.length < 8) { setPassError('New password must be at least 8 characters.'); return; }
+    setPassError(''); setPassSuccess(false);
+    if (!currentPass)           { setPassError('Please enter your current password.'); return; }
+    if (newPass.length < 8)     { setPassError('New password must be at least 8 characters.'); return; }
     if (newPass !== confirmPass) { setPassError('Passwords do not match.'); return; }
-    setPassError('');
     setCurrentPass(''); setNewPass(''); setConfirmPass('');
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setPassSuccess(true);
+    setTimeout(() => setPassSuccess(false), 3000);
   };
+
+  const initials = `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase();
 
   return (
     <SettingsLayout>
       <div className="space-y-5">
 
-        {/* ── Avatar + name header ────────────────────────── */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-base font-bold text-gray-900 mb-5">Public profile</h2>
+        {/* ── Avatar card ──────────────────────────────────── */}
+        <Card title="Your Profile" icon={User} iconBg="bg-indigo-500">
 
-          {/* Avatar */}
-          <div className="flex items-center gap-5 mb-6">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white text-2xl font-extrabold shadow-lg shadow-indigo-500/25">
-                {firstName[0]?.toUpperCase()}{lastName[0]?.toUpperCase()}
+          {/* Avatar row */}
+          <div className="flex items-center gap-5 mb-6 pb-6 border-b border-gray-50">
+            {/* Avatar circle */}
+            <div className="relative flex-shrink-0">
+              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                {avatar
+                  ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
+                  : <span className="text-3xl font-extrabold text-white">{initials}</span>
+                }
               </div>
-              <button className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:border-indigo-400 transition-all">
-                <Camera className="w-3 h-3 text-gray-500" />
+              {/* Camera overlay */}
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="absolute inset-0 rounded-2xl bg-black/0 hover:bg-black/40 flex items-center justify-center transition-all group">
+                <Camera className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
+              {/* Hidden file input */}
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
             </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">{firstName} {lastName}</p>
-              <p className="text-xs text-gray-400">{email}</p>
-              <button className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 mt-1 transition-colors">
-                Upload photo
-              </button>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-extrabold text-gray-900">{firstName} {lastName}</p>
+              <p className="text-xs text-gray-400 mb-2">{email}</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg transition-all shadow-sm shadow-indigo-500/20">
+                  <Camera className="w-3.5 h-3.5" /> Upload photo
+                </button>
+                {avatar && (
+                  <button
+                    onClick={() => setAvatar(null)}
+                    className="text-xs font-semibold text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition-all">
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1.5">JPG, PNG or GIF · Max 5 MB</p>
             </div>
           </div>
 
-          {/* Name */}
+          {/* Name fields */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <Field label="First name">
               <input className={INP} value={firstName}
@@ -118,39 +201,53 @@ export default function ProfileSettings() {
             </Field>
           </div>
 
-          <Field label="Bio (optional)" hint="Shown on your Atlas profile. Max 160 characters.">
+          {/* Bio */}
+          <Field label="Bio" hint="A short intro about yourself. Max 160 characters.">
             <textarea
               className={INP + ' resize-none'}
               rows={2}
               value={bio}
-              onChange={(e) => setBio(e.target.value.slice(0, 160))}
-              placeholder="Pre-med student, Biology major…"
+              maxLength={160}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Pre-med student passionate about biology and research…"
             />
-            <p className="text-[10px] text-gray-300 text-right mt-0.5">{bio.length}/160</p>
+            <div className="flex justify-end">
+              <p className={`text-[10px] font-medium mt-0.5 ${bio.length > 140 ? 'text-orange-500' : 'text-gray-300'}`}>
+                {bio.length}/160
+              </p>
+            </div>
           </Field>
-        </div>
+        </Card>
 
-        {/* ── Account details ──────────────────────────────── */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-base font-bold text-gray-900 mb-5">Account details</h2>
+        {/* ── Academic details ─────────────────────────────── */}
+        <Card title="Academic Details" icon={GraduationCap} iconBg="bg-green-500">
           <div className="space-y-4">
 
-            <Field label="University email" hint="Used for login — contact support to change.">
-              <input className={INP + ' opacity-60 cursor-not-allowed'} value={email}
-                readOnly />
+            {/* Email — read only */}
+            <Field label="University email" hint="To change your email contact support.">
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                <input
+                  className={INP + ' pl-9 opacity-60 cursor-not-allowed bg-gray-100'}
+                  value={email} readOnly />
+              </div>
             </Field>
 
+            {/* Institution */}
             <Field label="Institution / University">
-              <input className={INP} value={institution}
-                onChange={(e) => setInstitution(e.target.value)}
-                placeholder="e.g. MIT, Stanford…" />
+              <div className="relative">
+                <BookOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input className={INP + ' pl-9'} value={institution}
+                  onChange={(e) => setInstitution(e.target.value)}
+                  placeholder="e.g. MIT, Stanford, State University" />
+              </div>
             </Field>
 
             <div className="grid grid-cols-2 gap-4">
               <Field label="Field of study">
                 <input className={INP} value={fieldStudy}
                   onChange={(e) => setFieldStudy(e.target.value)}
-                  placeholder="e.g. Biology, CS…" />
+                  placeholder="e.g. Biology, CS, Business" />
               </Field>
               <Field label="Year / Level">
                 <select className={INP} value={yearLevel}
@@ -164,81 +261,110 @@ export default function ProfileSettings() {
             </div>
 
             <Field label="Timezone">
-              <select className={INP} value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}>
-                {[
-                  ['America/New_York',    'Eastern (UTC−5)'],
-                  ['America/Chicago',     'Central (UTC−6)'],
-                  ['America/Denver',      'Mountain (UTC−7)'],
-                  ['America/Los_Angeles', 'Pacific (UTC−8)'],
-                  ['Europe/London',       'London (UTC+0)'],
-                  ['Europe/Paris',        'Paris (UTC+1)'],
-                  ['Asia/Kolkata',        'India (UTC+5:30)'],
-                  ['Asia/Singapore',      'Singapore (UTC+8)'],
-                  ['Australia/Sydney',    'Sydney (UTC+11)'],
-                ].map(([val, label]) => (
-                  <option key={val} value={val}>{label}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select className={INP + ' pl-9'} value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}>
+                  {[
+                    ['America/New_York',    'Eastern Time (UTC−5)'],
+                    ['America/Chicago',     'Central Time (UTC−6)'],
+                    ['America/Denver',      'Mountain Time (UTC−7)'],
+                    ['America/Los_Angeles', 'Pacific Time (UTC−8)'],
+                    ['Europe/London',       'London (UTC+0)'],
+                    ['Europe/Paris',        'Paris / Berlin (UTC+1)'],
+                    ['Asia/Kolkata',        'India (UTC+5:30)'],
+                    ['Asia/Singapore',      'Singapore (UTC+8)'],
+                    ['Australia/Sydney',    'Sydney (UTC+11)'],
+                  ].map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+              </div>
             </Field>
           </div>
-        </div>
+        </Card>
 
         {/* ── Change password ──────────────────────────────── */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-base font-bold text-gray-900 mb-1.5">Change password</h2>
-          <p className="text-xs text-gray-400 mb-5 font-light">
-            Leave blank if you signed up with Google.
+        <Card title="Change Password" icon={Lock} iconBg="bg-orange-400">
+          <p className="text-xs text-gray-400 mb-4 font-light">
+            Leave blank if you signed in with Google — your password is managed by Google.
           </p>
 
+          {/* Error */}
           {passError && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5 mb-4">
+            <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
               <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-              <p className="text-xs font-medium text-red-600">{passError}</p>
+              <p className="text-xs font-semibold text-red-600">{passError}</p>
+            </div>
+          )}
+          {/* Success */}
+          {passSuccess && (
+            <div className="flex items-center gap-2.5 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
+              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+              <p className="text-xs font-semibold text-green-700">Password updated successfully!</p>
             </div>
           )}
 
           <div className="space-y-3">
+            {/* Current password */}
             <Field label="Current password">
               <div className="relative">
-                <input type={showPass ? 'text' : 'password'} className={INP + ' pr-10'}
-                  value={currentPass} onChange={(e) => setCurrentPass(e.target.value)}
-                  placeholder="••••••••" />
-                <button type="button" onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-indigo-500 transition-colors">
-                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <input type={showCurrent ? 'text' : 'password'}
+                  className={INP + ' pr-11'} value={currentPass}
+                  onChange={(e) => setCurrentPass(e.target.value)}
+                  placeholder="Enter current password" />
+                <button type="button" onClick={() => setShowCurrent(!showCurrent)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-indigo-500 transition-colors">
+                  {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </Field>
+
             <div className="grid grid-cols-2 gap-4">
               <Field label="New password" hint="Min 8 characters">
-                <input type="password" className={INP}
-                  value={newPass} onChange={(e) => setNewPass(e.target.value)}
-                  placeholder="••••••••" />
+                <div className="relative">
+                  <input type={showNew ? 'text' : 'password'}
+                    className={INP + ' pr-11'} value={newPass}
+                    onChange={(e) => setNewPass(e.target.value)}
+                    placeholder="New password" />
+                  <button type="button" onClick={() => setShowNew(!showNew)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-indigo-500 transition-colors">
+                    {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <PassStrength password={newPass} />
               </Field>
               <Field label="Confirm new password">
-                <input type="password" className={INP}
-                  value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)}
-                  placeholder="••••••••" />
+                <input type="password" className={INP} value={confirmPass}
+                  onChange={(e) => setConfirmPass(e.target.value)}
+                  placeholder="Confirm password" />
+                {confirmPass && newPass !== confirmPass && (
+                  <p className="text-[11px] text-red-500 font-semibold mt-1">Passwords don&apos;t match</p>
+                )}
+                {confirmPass && newPass === confirmPass && newPass.length >= 8 && (
+                  <p className="text-[11px] text-green-600 font-semibold mt-1 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Passwords match
+                  </p>
+                )}
               </Field>
             </div>
           </div>
 
           <button onClick={changePassword}
-            className="mt-4 text-sm font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all">
-            Update password
+            className="mt-4 flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-orange-500/20">
+            <Lock className="w-4 h-4" /> Update password
           </button>
-        </div>
+        </Card>
 
         {/* ── Save button ──────────────────────────────────── */}
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-gray-400">Your profile changes are saved when you click below</p>
           <button onClick={save}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20">
-            Save changes
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20 active:scale-95">
+            <CheckCircle2 className="w-4 h-4" /> Save changes
           </button>
         </div>
       </div>
-
       <SaveToast show={saved} />
     </SettingsLayout>
   );
