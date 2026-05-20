@@ -234,11 +234,11 @@ export default function OnboardingLayout({ children, step, disableNext }: Props)
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
 
             {/* Scrollable step content */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-6 lg:p-8">
-                {children}
-              </div>
-            </div>
+          <div className="flex-1 overflow-y-auto">
+  <div className="max-w-[1400px] mx-auto p-6 lg:p-8">
+    {children}
+  </div>
+</div>
 
             {/* ── Sticky bottom nav ──────────────────────────── */}
             {step < 5 && (
