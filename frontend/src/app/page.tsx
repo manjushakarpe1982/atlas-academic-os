@@ -179,34 +179,6 @@ function Hero() {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   STATS BAR
-══════════════════════════════════════════════════════════════ */
-// function Stats() {
-//   const items = [
-//     { icon: GraduationCap, value: "12,000+", label: "Active students"       },
-//     { icon: Trophy,         value: "+0.5",    label: "Avg grade lift"        },
-//     { icon: Star,           value: "4.9 / 5", label: "Student satisfaction" },
-//     { icon: Target,         value: "3 steps", label: "To your first plan"   },
-//   ];
-//   return (
-//     <section className="bg-white border-y border-[#EEEDFE]">
-//       <div className="max-w-5xl mx-auto px-6 py-7 grid grid-cols-2 md:grid-cols-4 gap-6">
-//         {items.map((s, i) => (
-//           <div key={i} className="flex items-center gap-3">
-//             <div className="w-9 h-9 rounded-xl bg-[#EEEDFE] border border-[#ABA9FA]/30 flex items-center justify-center flex-shrink-0">
-//               <s.icon style={{width:17,height:17}} className="text-[#534AB7]" />
-//             </div>
-//             <div>
-//               <p className="text-base font-extrabold text-[#18172B] leading-tight">{s.value}</p>
-//               <p className="text-xs font-medium text-[#9B9AB5]">{s.label}</p>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </section>
-//   );
-// }
 
 /* ══════════════════════════════════════════════════════════════
    FEATURES — "Built for serious students"
@@ -498,7 +470,7 @@ function CTA() {
 ══════════════════════════════════════════════════════════════ */
 function Footer() {
   return (
-    <footer className="bg-white border-t border-[#EEEDFE] py-8">
+    <footer className="bg-white border-t border-[#EEEDFE] py-4">
       <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-[#534AB7] flex items-center justify-center shadow-sm">
@@ -521,15 +493,57 @@ function Footer() {
 ══════════════════════════════════════════════════════════════ */
 export default function LandingPage() {
   return (
-    <main className="bg-white">
-      <Navbar />
-      <Hero />
-     
-      <Features />
-      <HowItWorks />
-      <Testimonials />
-      <CTA />
-      <Footer />
-    </main>
+  <main className="bg-white relative overflow-hidden">
+  <Navbar />
+
+  {/* RIGHT FLOAT IMAGE */}
+  <img
+    src="https://res.cloudinary.com/mview/image/upload/atlas/landingpage-4.webp"
+    alt=""
+    className="
+      absolute
+      right-2 sm:right-6 md:right-12 lg:right-[18%]
+      top-[18%] sm:top-[22%] md:top-[24%] lg:top-[25%]
+      -translate-y-1/2
+      w-14 sm:w-20 md:w-32 lg:w-44
+      h-auto
+      rotate-[8deg]
+      opacity-95
+      z-20
+      pointer-events-none
+      drop-shadow-2xl
+      rounded-2xl
+      hidden lg:block
+    "
+  />
+
+  {/* LEFT FLOAT IMAGE */}
+  <img
+    src="https://res.cloudinary.com/mview/image/upload/atlas/landingpage-5.webp"
+    alt=""
+    className="
+      absolute
+      left-2 sm:left-6 md:left-12 lg:left-[19%]
+      top-[20%] sm:top-[23%] md:top-[25%] lg:top-[26%]
+      -translate-y-1/2
+      w-14 sm:w-20 md:w-32 lg:w-40
+      h-auto
+      -rotate-[8deg]
+      opacity-95
+      z-20
+      pointer-events-none
+      drop-shadow-2xl
+      rounded-2xl
+      hidden lg:block
+    "
+  />
+
+  <Hero />
+  <Features />
+  <HowItWorks />
+  <Testimonials />
+  <CTA />
+  <Footer />
+</main>
   );
 }
