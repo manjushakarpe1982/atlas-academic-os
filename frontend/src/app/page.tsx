@@ -352,6 +352,65 @@ function HowItWorks() {
 /* ══════════════════════════════════════════════════════════════
    TESTIMONIALS — "Students trust the plan"
 ══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   COMPARISON — "Why Atlas vs everything else"
+══════════════════════════════════════════════════════════════ */
+function Comparison() {
+  const tools = [
+    { name:'Notion / Evernote',  icon:'📓', does:'Organises files',    missing:'Doesn\'t prioritize'         },
+    { name:'Quizlet / Anki',     icon:'🃏', does:'Generic flashcards', missing:'Not YOUR class'              },
+    { name:'Canvas / Blackboard',icon:'🏫', does:'Lists deadlines',    missing:'Doesn\'t allocate time'       },
+    { name:'ChatGPT',            icon:'🤖', does:'Answers questions',  missing:'Doesn\'t see your semester'   },
+    { name:'Calendars',          icon:'📅', does:'Shows time',         missing:'Doesn\'t know grade stakes'   },
+    { name:'Atlas',              icon:'⚡', does:'Ranks by grade impact', missing:null, isAtlas:true         },
+  ];
+
+  return (
+    <section id="comparison" className="py-10 bg-white border-t border-[#EEEDFE]">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 bg-[#EEEDFE] border border-[#ABA9FA]/40 rounded-full px-3.5 py-1 mb-4">
+            <span className="text-xs font-semibold text-[#534AB7]">Why Atlas</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-extrabold text-[#18172B] mb-3">
+            Tools either organize <em className="not-italic text-[#534AB7]">or</em> generate.
+          </h2>
+          <p className="text-[#6B6A8A] max-w-md mx-auto font-light">
+            None prioritize. Atlas is the first tool that tells you <strong className="text-[#534AB7]">what to study, when, and why</strong> — backed by your own professor's signals.
+          </p>
+        </div>
+
+        <div className="bg-[#fafafe] border border-[#EEEDFE] rounded-3xl overflow-hidden">
+          {/* Header */}
+          <div className="grid grid-cols-3 bg-[#EEEDFE]/60 px-5 py-3 border-b border-[#EEEDFE]">
+            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest">Tool</p>
+            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest">What it does</p>
+            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest">What's missing</p>
+          </div>
+          {tools.map((t, i) => (
+            <div key={i} className={`grid grid-cols-3 px-5 py-3.5 border-b border-[#EEEDFE] last:border-0 items-center transition-all ${
+              (t as any).isAtlas ? "bg-gradient-to-r from-[#534AB7] from-0% to-[#7B6FE8] to-100%" : "hover:bg-white"
+            }`}>
+              <div className="flex items-center gap-2.5">
+                <span className="text-lg">{t.icon}</span>
+                <p className={`text-sm font-semibold ${(t as any).isAtlas ? "text-white" : "text-[#18172B]"}`}>{t.name}</p>
+              </div>
+              <p className={`text-sm ${(t as any).isAtlas ? "text-indigo-100" : "text-[#6B6A8A]"}`}>{t.does}</p>
+              <div>
+                {t.missing ? (
+                  <span className="text-[11px] font-semibold text-red-500 bg-red-50 border border-red-100 px-2.5 py-1 rounded-lg">✗ {t.missing}</span>
+                ) : (
+                  <span className="text-[11px] font-bold text-white bg-white/20 border border-white/30 px-2.5 py-1 rounded-lg">✓ Tells you exactly what to study next</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Testimonials() {
   const items = [
     { q:"It told me to study mitosis because Smith mentioned it three times and I missed two enzyme questions on Quiz 3. It's not guessing.",   name:"Priya Sharma",   role:"Pre-med student",     term:"Fall 2026" },
@@ -403,6 +462,120 @@ function Testimonials() {
    CTA — "Ready to stop guessing?"  with landingpage-2.webp
    Matches reference: left text + right 3D bag illustration
 ══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   PRICING
+══════════════════════════════════════════════════════════════ */
+function Pricing() {
+  const plans = [
+    {
+      name: "Free",
+      price: "$0",
+      period: "forever",
+      desc: "Get started and see the plan.",
+      color: "border-[#EEEDFE]",
+      btn: "bg-white border-2 border-[#534AB7] text-[#534AB7] hover:bg-[#EEEDFE]",
+      features: [
+        "1 class workspace",
+        "Syllabus parsing",
+        "Daily study plan",
+        "Basic flashcards & quiz",
+        "Grade tracking",
+      ],
+      missing: ["Lecture transcription", "RAG study guides", "Exam prediction"],
+    },
+    {
+      name: "Student",
+      price: "$9",
+      period: "/ month",
+      desc: "Everything you need for a full semester.",
+      color: "border-[#534AB7] shadow-xl shadow-[#534AB7]/10",
+      btn: "bg-[#534AB7] hover:bg-[#3C3489] text-white",
+      badge: "Most popular",
+      features: [
+        "Unlimited classes",
+        "Lecture audio transcription",
+        "RAG-grounded study guides",
+        "Exam score prediction",
+        "Spaced repetition (SM-2)",
+        "Smart calendar",
+        "Grade optimisation tips",
+      ],
+      missing: [],
+    },
+    {
+      name: "Pro",
+      price: "$19",
+      period: "/ month",
+      desc: "For power users and serious grade climbers.",
+      color: "border-[#EEEDFE]",
+      btn: "bg-white border-2 border-[#534AB7] text-[#534AB7] hover:bg-[#EEEDFE]",
+      features: [
+        "Everything in Student",
+        "Per-student calibration (α-learning)",
+        "Cross-semester history",
+        "Priority support",
+        "Early access to new features",
+      ],
+      missing: [],
+    },
+  ];
+
+  return (
+    <section id="pricing" className="py-10 bg-[#fafafe] border-t border-[#EEEDFE]">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 bg-[#EEEDFE] border border-[#ABA9FA]/40 rounded-full px-3.5 py-1 mb-4">
+            <span className="text-xs font-semibold text-[#534AB7]">Pricing</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-extrabold text-[#18172B] mb-3">Simple, student-first pricing</h2>
+          <p className="text-[#6B6A8A] font-light">No credit card to start. Cancel any time.</p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-5">
+          {plans.map((p, i) => (
+            <div key={i} className={`bg-white rounded-3xl border-2 ${p.color} p-6 relative flex flex-col`}>
+              {(p as any).badge && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#534AB7] text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest">
+                  {(p as any).badge}
+                </div>
+              )}
+              <div className="mb-5">
+                <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-1">{p.name}</p>
+                <div className="flex items-end gap-1 mb-1">
+                  <p className="text-4xl font-extrabold text-[#18172B]">{p.price}</p>
+                  <p className="text-sm text-[#9B9AB5] mb-1.5">{p.period}</p>
+                </div>
+                <p className="text-sm text-[#6B6A8A] font-light">{p.desc}</p>
+              </div>
+
+              <ul className="space-y-2 mb-5 flex-1">
+                {p.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-[#18172B]">
+                    <span className="text-[#534AB7] mt-0.5 flex-shrink-0">✓</span> {f}
+                  </li>
+                ))}
+                {p.missing.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-[#9B9AB5]">
+                    <span className="mt-0.5 flex-shrink-0">✗</span> {f}
+                  </li>
+                ))}
+              </ul>
+
+              <a href="/signup" className={`w-full text-center py-3 rounded-2xl text-sm font-bold transition-all ${p.btn}`}>
+                {p.name === "Free" ? "Get started free" : `Start ${p.name}`}
+              </a>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-center text-xs text-[#9B9AB5] mt-6">
+          All plans include FERPA &amp; GDPR compliance · No ads · No data selling
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function CTA() {
   return (
    <section className="py-5 bg-white border-t border-[#EEEDFE]">
@@ -518,7 +691,7 @@ export default function LandingPage() {
   />
 
   {/* LEFT FLOAT IMAGE */}
-  {/* <img
+  <img
     src="https://res.cloudinary.com/mview/image/upload/atlas/landingpage-5.webp"
     alt=""
     className="
@@ -536,12 +709,14 @@ export default function LandingPage() {
       rounded-2xl
       hidden lg:block
     "
-  /> */}
+  />
 
   <Hero />
   <Features />
   <HowItWorks />
+  <Comparison />
   <Testimonials />
+  <Pricing />
   <CTA />
   <Footer />
 </main>

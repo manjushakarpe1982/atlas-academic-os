@@ -169,11 +169,17 @@ function IntroScreen({ onStart }: { onStart: (topics:string[], type:string) => v
 
 
 /* ─── Results screen ─────────────────────────────────────────── */
-function ResultsScreen({ answers, flagged, timeTaken, onRetry }: {
+function ResultsScreen({ answers, flagged, timeTaken, onRetry, writtenAnswers, examType }: {
   answers: (number|null)[]; flagged: boolean[];
   timeTaken: number; onRetry: () => void;
+  writtenAnswers?: string[]; examType?: string;
 }) {
-  const score  = answers.filter((a,i) => a === QUESTIONS[i].correct).length;
+  const [selfGrades, setSelfGrades] = useState<Record<number,number>>({});
+  const isWritten = examType === 'written' || examType === 'solve';
+
+  const score  = isWritten
+    ? Object.values(selfGrades).filter((g) => g >= 3).length
+    : answers.filter((a,i) => a === QUESTIONS[i].correct).length;
   const total  = QUESTIONS.length;
   const pct    = Math.round((score / total) * 100);
   const mins   = Math.floor(timeTaken / 60);
@@ -249,26 +255,68 @@ function ResultsScreen({ answers, flagged, timeTaken, onRetry }: {
         </div>
         <div className="divide-y divide-gray-50">
           {QUESTIONS.map((q, i) => {
-            const isRight = answers[i] === q.correct;
+            const isRight = isWritten ? (selfGrades[i] ?? 0) >= 3 : answers[i] === q.correct;
+            const selfG   = selfGrades[i] ?? 0;
             return (
-              <div key={q.id} className={`px-6 md:px-8 py-4 ${!isRight ? 'bg-red-50/20' : ''}`}>
+              <div key={q.id} className={`px-6 md:px-8 py-4 ${!isRight && !isWritten ? 'bg-red-50/20' : ''}`}>
                 <div className="flex items-start gap-3">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-extrabold flex-shrink-0 mt-0.5 ${
-                    isRight ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                  }`}>{isRight ? '✓' : '✗'}</div>
+                    isWritten
+                      ? selfG >= 3 ? 'bg-emerald-100 text-emerald-700' : selfG > 0 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
+                      : isRight ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                  }`}>{isWritten ? (selfG >= 3 ? '✓' : selfG > 0 ? '~' : '?') : (isRight ? '✓' : '✗')}</div>
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 px-1.5 py-0.5 rounded-md">{q.topic}</span>
                       {flagged[i] && <span className="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-md">🚩 Flagged</span>}
                     </div>
                     <p className="text-sm font-semibold text-gray-900 mb-2 leading-snug">{q.question}</p>
-                    <div className="flex flex-col sm:flex-row gap-1.5 mb-2">
-                      <span className="text-[11px] bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-1 rounded-lg">✓ {q.options[q.correct]}</span>
-                      {!isRight && answers[i] !== null && (
-                        <span className="text-[11px] bg-red-100 text-red-800 font-semibold px-2.5 py-1 rounded-lg">✗ {q.options[answers[i]!]}</span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-gray-500 italic">{q.explanation}</p>
+
+                    {/* Written answer — show user's answer + correct + self-grade */}
+                    {isWritten ? (
+                      <div className="space-y-2">
+                        {writtenAnswers?.[i] && (
+                          <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Your answer</p>
+                            <p className="text-xs text-gray-700">{writtenAnswers[i]}</p>
+                          </div>
+                        )}
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                          <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1">Model answer</p>
+                          <p className="text-xs text-emerald-800">{q.options[q.correct]}</p>
+                          <p className="text-[11px] text-gray-500 italic mt-1">{q.explanation}</p>
+                        </div>
+                        {/* Self-grade buttons */}
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Rate your answer</p>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {[
+                              { v:1, label:'Wrong',    color:'bg-red-100 text-red-700 border-red-200'    },
+                              { v:2, label:'Partial',  color:'bg-amber-100 text-amber-700 border-amber-200'},
+                              { v:3, label:'Good',     color:'bg-blue-100 text-blue-700 border-blue-200'  },
+                              { v:4, label:'Correct',  color:'bg-emerald-100 text-emerald-700 border-emerald-200'},
+                            ].map((g) => (
+                              <button key={g.v} onClick={() => setSelfGrades((p) => ({ ...p, [i]: g.v }))}
+                                className={`text-[11px] font-bold px-3 py-1.5 rounded-lg border-2 transition-all ${
+                                  selfG === g.v ? g.color + ' border-2' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                                }`}>{g.label}</button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* MCQ answer review */
+                      <div>
+                        <div className="flex flex-col sm:flex-row gap-1.5 mb-2">
+                          <span className="text-[11px] bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-1 rounded-lg">✓ {q.options[q.correct]}</span>
+                          {!isRight && answers[i] !== null && (
+                            <span className="text-[11px] bg-red-100 text-red-800 font-semibold px-2.5 py-1 rounded-lg">✗ {q.options[answers[i]!]}</span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-gray-500 italic">{q.explanation}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -282,7 +330,7 @@ function ResultsScreen({ answers, flagged, timeTaken, onRetry }: {
 
 /* ─── Exam screen ────────────────────────────────────────────── */
 function ExamScreen({ onFinish, selectedTopics, examType }: {
-  onFinish: (answers:(number|null)[], flagged:boolean[], timeTaken:number) => void;
+  onFinish: (answers:(number|null)[], flagged:boolean[], timeTaken:number, written?:string[]) => void;
   selectedTopics: string[];
   examType: string;
 }) {
@@ -311,7 +359,7 @@ function ExamScreen({ onFinish, selectedTopics, examType }: {
 
   const handleSubmit = () => {
     const elapsed = Math.round((Date.now() - startTime.current) / 1000);
-    onFinish(answers, flagged, Math.min(elapsed, examDuration));
+    onFinish(answers, flagged, Math.min(elapsed, examDuration), written);
   };
 
   const select = (opt: number) => {
@@ -530,11 +578,12 @@ export default function ExamModePage() {
   const [answers,      setAnswers]      = useState<(number|null)[]>([]);
   const [flagged,      setFlagged]      = useState<boolean[]>([]);
   const [timeTaken,    setTimeTaken]    = useState(0);
+  const [writtenAnss,  setWrittenAnss]  = useState<string[]>([]);
   const [selTopics,    setSelTopics]    = useState<string[]>([]);
   const [selType,      setSelType]      = useState('mcq');
 
-  const handleFinish = (a:(number|null)[], f:boolean[], t:number) => {
-    setAnswers(a); setFlagged(f); setTimeTaken(t); setScreen('results');
+  const handleFinish = (a:(number|null)[], f:boolean[], t:number, w?:string[]) => {
+    setAnswers(a); setFlagged(f); setTimeTaken(t); if(w) setWrittenAnss(w); setScreen('results');
   };
 
   const handleStart = (topics:string[], type:string) => {
@@ -545,7 +594,7 @@ export default function ExamModePage() {
     <AppLayout>
       {screen === 'intro'   && <IntroScreen onStart={handleStart} />}
       {screen === 'exam'    && <ExamScreen onFinish={handleFinish} selectedTopics={selTopics} examType={selType} />}
-      {screen === 'results' && <ResultsScreen answers={answers} flagged={flagged} timeTaken={timeTaken} onRetry={() => setScreen('intro')} />}
+      {screen === 'results' && <ResultsScreen answers={answers} flagged={flagged} timeTaken={timeTaken} writtenAnswers={writtenAnss} examType={selType} onRetry={() => setScreen('intro')} />}
     </AppLayout>
   );
 }

@@ -192,6 +192,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="px-3 py-3 border-t border-gray-50 space-y-0.5">
           <NavLink href="/settings/profile" icon={Settings} label="Settings"
             active={pathname.startsWith('/settings')} />
+          <NavLink href="/help" icon={HelpCircle} label="Help Center"
+            active={pathname === '/help'} />
 
           {/* User card */}
           <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-all mt-1 group">

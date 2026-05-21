@@ -217,6 +217,145 @@ function SectionCard({ section, isActive, onToggle, onComplete }: {
 }
 
 /* ─── Main ───────────────────────────────────────────────────── */
+/* ─── Teach back with AI evaluation ─────────────────────────── */
+function TeachBack() {
+  const [answer,    setAnswer]    = useState('');
+  const [loading,   setLoading]   = useState(false);
+  const [feedback,  setFeedback]  = useState<null|{score:number;strong:string[];missing:string[];tip:string}>(null);
+
+  const check = async () => {
+    if (!answer.trim()) return;
+    setLoading(true);
+    setFeedback(null);
+
+    // Simulate AI evaluation (in production this calls the backend RAG endpoint)
+    await new Promise((r) => setTimeout(r, 1800));
+
+    // Score based on keywords detected
+    const a = answer.toLowerCase();
+    const found = {
+      phases:      /prophase|prometaphase|metaphase|anaphase|telophase/.test(a),
+      spindle:     /spindle|microtubul|kinetochore/.test(a),
+      chromatids:  /chromatid|sister|centromere/.test(a),
+      nuclear:     /nuclear|envelope/.test(a),
+      cytokinesis: /cytokinesis|cell divid|two cell/.test(a),
+    };
+    const hits   = Object.values(found).filter(Boolean).length;
+    const score  = Math.round((hits / 5) * 100);
+    const strong = [];
+    const missing = [];
+    if (found.phases)     strong.push('Correctly described the phase order (PPMAT)');
+    else                  missing.push('Phase order — PPMAT: Prophase, Prometaphase, Metaphase, Anaphase, Telophase');
+    if (found.spindle)    strong.push('Mentioned spindle fibres / kinetochore microtubules');
+    else                  missing.push('Spindle fibre role in pulling chromatids to poles');
+    if (found.chromatids) strong.push('Explained sister chromatid separation');
+    else                  missing.push('Sister chromatids — they separate in anaphase, not prophase');
+    if (found.nuclear)    strong.push('Nuclear envelope breakdown mentioned');
+    else                  missing.push('Nuclear envelope breaks down in prometaphase');
+    if (found.cytokinesis)strong.push('Covered cytokinesis / final cell division');
+    else                  missing.push('Cytokinesis — how the cytoplasm divides to form 2 daughter cells');
+
+    const tip = score >= 80
+      ? "Excellent! You understand the core process. Try explaining the checkpoints (G1, G2, spindle assembly) next."
+      : score >= 50
+      ? "Good start — you have the basic idea. Focus on the missing points above and try again."
+      : "Keep going — re-read the phases section, then try explaining just the phases first before the full process.";
+
+    setFeedback({ score, strong, missing, tip });
+    setLoading(false);
+  };
+
+  const scoreColor = !feedback ? '' : feedback.score >= 80 ? 'text-emerald-600' : feedback.score >= 50 ? 'text-amber-600' : 'text-red-600';
+  const scoreBg    = !feedback ? '' : feedback.score >= 80 ? 'bg-emerald-50 border-emerald-200' : feedback.score >= 50 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200';
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl p-5 md:p-6 shadow-sm">
+      <div className="flex items-center gap-2 mb-1">
+        <MessageSquare className="w-5 h-5 text-indigo-600" />
+        <h2 className="text-base font-extrabold text-gray-900">Teach it back</h2>
+      </div>
+      <p className="text-sm text-gray-500 mb-4 leading-relaxed">
+        Explain mitosis in your own words as if teaching a classmate. Include the phases, what happens in each, and why it matters. Don&apos;t look at the guide.
+      </p>
+
+      <textarea
+        value={answer}
+        onChange={(e) => setAnswer(e.target.value)}
+        className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl p-4 text-sm text-gray-800 outline-none resize-none transition-all"
+        rows={7}
+        placeholder="Start typing your explanation here… e.g. 'Mitosis is the process by which a cell divides into two identical daughter cells. It starts with Prophase where…'"
+      />
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-3 mb-4">
+        <button onClick={check} disabled={loading || !answer.trim()}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20">
+          {loading ? (
+            <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Evaluating…</>
+          ) : (
+            <><MessageSquare className="w-4 h-4" /> Check my explanation</>
+          )}
+        </button>
+        {feedback && (
+          <button onClick={() => { setAnswer(''); setFeedback(null); }}
+            className="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+            Try again
+          </button>
+        )}
+        <p className="text-xs text-gray-400">Atlas compares your answer against your study guide</p>
+      </div>
+
+      {/* Feedback panel */}
+      {feedback && (
+        <div className="space-y-3 border-t border-gray-100 pt-4">
+          {/* Score */}
+          <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${scoreBg}`}>
+            <p className={`text-3xl font-extrabold ${scoreColor}`}>{feedback.score}%</p>
+            <div>
+              <p className={`text-sm font-bold ${scoreColor}`}>
+                {feedback.score >= 80 ? '🌟 Strong explanation!' : feedback.score >= 50 ? '📈 Good start — almost there' : '💪 Keep practising'}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">Based on key concepts from your Biology 101 materials</p>
+            </div>
+          </div>
+
+          {/* What you got right */}
+          {feedback.strong.length > 0 && (
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3.5">
+              <p className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-widest mb-2">✓ You covered</p>
+              <ul className="space-y-1">
+                {feedback.strong.map((s) => (
+                  <li key={s} className="text-xs text-emerald-700 flex items-start gap-1.5">
+                    <span className="mt-0.5 flex-shrink-0">✓</span> {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* What's missing */}
+          {feedback.missing.length > 0 && (
+            <div className="bg-red-50 border border-red-100 rounded-xl p-3.5">
+              <p className="text-[10px] font-extrabold text-red-700 uppercase tracking-widest mb-2">✗ Missing or unclear</p>
+              <ul className="space-y-1">
+                {feedback.missing.map((m) => (
+                  <li key={m} className="text-xs text-red-700 flex items-start gap-1.5">
+                    <span className="mt-0.5 flex-shrink-0">→</span> {m}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Tip */}
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3.5 py-2.5">
+            <p className="text-xs font-semibold text-indigo-700">💡 {feedback.tip}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StudyGuidePage() {
   const [mode,       setMode]       = useState<StudyMode>('read');
   const [sections,   setSections]   = useState(SECTIONS);
@@ -395,26 +534,7 @@ export default function StudyGuidePage() {
 
             {/* TEACH mode */}
             {mode === 'teach' && (
-              <div className="bg-white border border-gray-100 rounded-2xl p-5 md:p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <MessageSquare className="w-5 h-5 text-indigo-600" />
-                  <h2 className="text-base font-extrabold text-gray-900">Teach it back</h2>
-                </div>
-                <p className="text-sm text-gray-500 mb-4 leading-relaxed">
-                  Explain mitosis in your own words as if teaching a classmate. Include the phases, what happens in each, and why it matters. Don&apos;t look at the guide.
-                </p>
-                <textarea
-                  className="w-full border border-gray-200 rounded-xl p-4 text-sm text-gray-800 outline-none focus:border-indigo-400 resize-none transition-all"
-                  rows={8}
-                  placeholder="Start typing your explanation here…"
-                />
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-3">
-                  <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20">
-                    Check my explanation
-                  </button>
-                  <p className="text-xs text-gray-400">Atlas will compare it against your study guide</p>
-                </div>
-              </div>
+              <TeachBack />
             )}
           </div>
 

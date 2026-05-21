@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import {
-  Play, SkipForward, Info, ChevronRight, AlertTriangle,
+  Play, SkipForward, Info, ChevronRight, ChevronDown, AlertTriangle,
   Clock, Zap, Brain, Search,
   BarChart2, Target, BookOpen, Upload, Sparkles, ArrowRight,
   Activity,
@@ -105,6 +105,15 @@ function HeroTask({ task, onStart, onSkip }: {
   onStart: () => void;
   onSkip: () => void;
 }) {
+  const [showEngine, setShowEngine] = useState(false);
+
+  const engineScores = [
+    { label:'Mastery',   value:28,   max:100, color:'bg-red-500',    desc:'Your current knowledge of this topic',            icon:'🧠' },
+    { label:'Emphasis',  value:95,   max:100, color:'bg-indigo-500', desc:'How much your professor weighted it in lectures',  icon:'📢' },
+    { label:'Proximity', value:88,   max:100, color:'bg-amber-500',  desc:'How soon you\'ll be tested on this topic',         icon:'⏱' },
+    { label:'Urgency',   value:91,   max:100, color:'bg-red-400',    desc:'Overall pressure score for this class',            icon:'🎯' },
+  ];
+
   return (
     <div className="bg-white border-2 border-indigo-300 rounded-2xl p-5 shadow-lg shadow-indigo-500/10">
       <div className="flex items-start justify-between mb-3">
@@ -121,12 +130,47 @@ function HeroTask({ task, onStart, onSkip }: {
 
       <h2 className="text-lg font-extrabold text-gray-900 mb-3">{task.topic}</h2>
 
-      <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3.5 py-2.5 mb-4">
+      <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3.5 py-2.5 mb-3">
         <div className="flex items-start gap-2">
           <Info className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0 mt-0.5" />
           <p className="text-[11px] text-indigo-700 leading-relaxed font-medium">{task.reason}</p>
         </div>
       </div>
+
+      {/* Why this task — engine breakdown */}
+      <button onClick={() => setShowEngine(!showEngine)}
+        className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 mb-3 transition-colors">
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showEngine ? 'rotate-180' : ''}`} />
+        Why this task? — engine breakdown
+      </button>
+
+      {showEngine && (
+        <div className="bg-gray-50 border border-gray-100 rounded-xl p-3.5 mb-3 space-y-2.5">
+          <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">
+            priority = emphasis × mastery_gap × proximity
+          </p>
+          {engineScores.map((s) => (
+            <div key={s.label}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm">{s.icon}</span>
+                  <p className="text-xs font-bold text-gray-700">{s.label}</p>
+                  <p className="text-[10px] text-gray-400 hidden sm:block">— {s.desc}</p>
+                </div>
+                <span className={`text-xs font-extrabold ${s.value < 40 ? 'text-red-600' : s.value < 70 ? 'text-amber-600' : 'text-indigo-600'}`}>
+                  {s.label === 'Mastery' ? `${s.value}% ← low` : `${s.value}%`}
+                </span>
+              </div>
+              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div className={`h-full ${s.color} rounded-full`} style={{ width:`${s.value}%` }} />
+              </div>
+            </div>
+          ))}
+          <p className="text-[10px] text-gray-400 pt-1 border-t border-gray-200 mt-1">
+            Low mastery (28%) × high emphasis (95%) × close exam (88%) = #1 priority today
+          </p>
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <Link href="/study-session" onClick={onStart}
