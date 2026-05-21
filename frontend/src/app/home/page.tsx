@@ -139,36 +139,56 @@ function HeroTask({ task, onStart, onSkip }: {
 
       {/* Why this task — engine breakdown */}
       <button onClick={() => setShowEngine(!showEngine)}
-        className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 mb-3 transition-colors">
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showEngine ? 'rotate-180' : ''}`} />
-        Why this task? — engine breakdown
+        className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border-2 transition-all mb-3 ${
+          showEngine
+            ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+            : 'bg-gray-50 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-gray-700 hover:text-indigo-700'
+        }`}>
+        <div className="flex items-center gap-2">
+          <span className="text-base">🔍</span>
+          <span className="text-sm font-bold">Why is this task #1?</span>
+          <span className="text-[11px] text-gray-400 hidden sm:inline">— see the engine breakdown</span>
+        </div>
+        <ChevronDown className={`w-4 h-4 flex-shrink-0 transition-transform ${showEngine ? 'rotate-180 text-indigo-600' : 'text-gray-400'}`} />
       </button>
 
       {showEngine && (
-        <div className="bg-gray-50 border border-gray-100 rounded-xl p-3.5 mb-3 space-y-2.5">
-          <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">
-            priority = emphasis × mastery_gap × proximity
-          </p>
+        <div className="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 mb-3 space-y-3">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-base">⚙️</span>
+            <p className="text-xs font-extrabold text-indigo-800 uppercase tracking-widest">
+              Engine scores
+            </p>
+            <code className="ml-auto text-[10px] font-bold text-indigo-500 bg-indigo-100 px-2 py-0.5 rounded-lg hidden sm:block">
+              priority = emphasis × mastery_gap × proximity
+            </code>
+          </div>
           {engineScores.map((s) => (
             <div key={s.label}>
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm">{s.icon}</span>
-                  <p className="text-xs font-bold text-gray-700">{s.label}</p>
-                  <p className="text-[10px] text-gray-400 hidden sm:block">— {s.desc}</p>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{s.icon}</span>
+                  <p className="text-sm font-bold text-gray-900">{s.label}</p>
+                  <p className="text-xs text-gray-500 hidden sm:block">— {s.desc}</p>
                 </div>
-                <span className={`text-xs font-extrabold ${s.value < 40 ? 'text-red-600' : s.value < 70 ? 'text-amber-600' : 'text-indigo-600'}`}>
-                  {s.label === 'Mastery' ? `${s.value}% ← low` : `${s.value}%`}
+                <span className={`text-sm font-extrabold px-2.5 py-0.5 rounded-lg ${
+                  s.value < 40 ? 'text-red-700 bg-red-100' :
+                  s.value < 70 ? 'text-amber-700 bg-amber-100' :
+                                  'text-indigo-700 bg-indigo-100'
+                }`}>
+                  {s.label === 'Mastery' ? `${s.value}% ← LOW` : `${s.value}%`}
                 </span>
               </div>
-              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div className={`h-full ${s.color} rounded-full`} style={{ width:`${s.value}%` }} />
+              <div className="h-2.5 bg-white border border-indigo-100 rounded-full overflow-hidden shadow-inner">
+                <div className={`h-full ${s.color} rounded-full transition-all`} style={{ width:`${s.value}%` }} />
               </div>
             </div>
           ))}
-          <p className="text-[10px] text-gray-400 pt-1 border-t border-gray-200 mt-1">
-            Low mastery (28%) × high emphasis (95%) × close exam (88%) = #1 priority today
-          </p>
+          <div className="pt-2 border-t border-indigo-200 mt-1">
+            <p className="text-xs font-semibold text-indigo-700">
+              📊 Low mastery (28%) × high emphasis (95%) × close exam (88%) = <strong>#1 priority today</strong>
+            </p>
+          </div>
         </div>
       )}
 

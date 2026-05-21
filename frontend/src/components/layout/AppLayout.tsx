@@ -248,6 +248,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <div onClick={() => setMobileOpen(false)}>
                   <NavLink href="/settings/profile" icon={Settings} label="Settings" active={pathname.startsWith('/settings')} />
                 </div>
+                <div onClick={() => setMobileOpen(false)}>
+                  <NavLink href="/help" icon={HelpCircle} label="Help Center" active={pathname === '/help'} />
+                </div>
               </div>
             </div>
 

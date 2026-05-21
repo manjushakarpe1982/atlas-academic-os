@@ -469,8 +469,8 @@ function Pricing() {
   const plans = [
     {
       name: "Free",
-      price: "$0",
-      period: "forever",
+      price: "Free",
+      period: "to start",
       desc: "Get started and see the plan.",
       color: "border-[#EEEDFE]",
       btn: "bg-white border-2 border-[#534AB7] text-[#534AB7] hover:bg-[#EEEDFE]",
@@ -485,8 +485,8 @@ function Pricing() {
     },
     {
       name: "Student",
-      price: "$9",
-      period: "/ month",
+      price: "Student",
+      period: "pricing TBD",
       desc: "Everything you need for a full semester.",
       color: "border-[#534AB7] shadow-xl shadow-[#534AB7]/10",
       btn: "bg-[#534AB7] hover:bg-[#3C3489] text-white",
@@ -504,8 +504,8 @@ function Pricing() {
     },
     {
       name: "Pro",
-      price: "$19",
-      period: "/ month",
+      price: "Pro",
+      period: "pricing TBD",
       desc: "For power users and serious grade climbers.",
       color: "border-[#EEEDFE]",
       btn: "bg-white border-2 border-[#534AB7] text-[#534AB7] hover:bg-[#EEEDFE]",
@@ -528,7 +528,7 @@ function Pricing() {
             <span className="text-xs font-semibold text-[#534AB7]">Pricing</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-extrabold text-[#18172B] mb-3">Simple, student-first pricing</h2>
-          <p className="text-[#6B6A8A] font-light">No credit card to start. Cancel any time.</p>
+          <p className="text-[#6B6A8A] font-light">Pricing is being finalised. Join the waitlist to be notified at launch.</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-5">
@@ -541,9 +541,8 @@ function Pricing() {
               )}
               <div className="mb-5">
                 <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-1">{p.name}</p>
-                <div className="flex items-end gap-1 mb-1">
-                  <p className="text-4xl font-extrabold text-[#18172B]">{p.price}</p>
-                  <p className="text-sm text-[#9B9AB5] mb-1.5">{p.period}</p>
+                <div className="mb-2">
+                  <span className="inline-flex items-center gap-1.5 bg-[#EEEDFE] text-[#534AB7] text-xs font-extrabold px-3 py-1.5 rounded-full">{p.period === "to start" ? "🎓 Free to start" : "⏳ Pricing coming soon"}</span>
                 </div>
                 <p className="text-sm text-[#6B6A8A] font-light">{p.desc}</p>
               </div>
@@ -562,7 +561,7 @@ function Pricing() {
               </ul>
 
               <a href="/signup" className={`w-full text-center py-3 rounded-2xl text-sm font-bold transition-all ${p.btn}`}>
-                {p.name === "Free" ? "Get started free" : `Start ${p.name}`}
+                {p.name === "Free" ? "Get started free" : "Join waitlist"}
               </a>
             </div>
           ))}
@@ -652,9 +651,14 @@ function Footer() {
           <span className="text-sm font-medium text-[#9B9AB5]">© 2026 Atlas · Academic OS</span>
         </div>
         <div className="flex items-center gap-6">
-          {["Privacy","Terms","Support","For universities"].map((l) => (
-            <a key={l} href="#" className="text-xs font-medium text-[#9B9AB5] hover:text-[#534AB7] transition-colors">{l}</a>
-          ))}
+          {[
+              { label:"Privacy",          href:"/settings/privacy" },
+              { label:"Terms",            href:"#terms"            },
+              { label:"Support",          href:"/help"             },
+              { label:"For universities", href:"#universities"     },
+            ].map((l) => (
+              <a key={l.label} href={l.href} className="text-xs font-medium text-[#9B9AB5] hover:text-[#534AB7] transition-colors">{l.label}</a>
+            ))}
         </div>
       </div>
     </footer>
@@ -715,8 +719,8 @@ export default function LandingPage() {
   <Features />
   <HowItWorks />
   <Comparison />
-  <Testimonials />
   <Pricing />
+  <Testimonials />
   <CTA />
   <Footer />
 </main>
