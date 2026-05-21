@@ -125,7 +125,8 @@ export default function CalendarPage() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [selectedDay, setSelectedDay] = useState<number | null>(19);
   const [showModal,   setShowModal]   = useState(false);
-  const [showPanel,   setShowPanel]   = useState(false); // mobile: show day panel
+  const [showPanel,   setShowPanel]   = useState(false);
+  const [calView,     setCalView]     = useState<'month'|'week'|'day'>('month');
 
   const base = new Date(2026, 4 + monthOffset, 1);
   const year = base.getFullYear(), month = base.getMonth();
@@ -161,6 +162,15 @@ export default function CalendarPage() {
             <p className="text-xs text-gray-400 mt-0.5">{monthName} {year}</p>
           </div>
           <div className="flex items-center gap-1.5 md:gap-2">
+            {/* View tabs */}
+            <div className="flex items-center bg-white border border-gray-200 rounded-xl p-0.5 gap-0.5">
+              {(['month','week','day'] as const).map((v) => (
+                <button key={v} onClick={() => setCalView(v)}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+                    calView===v ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                  }`}>{v}</button>
+              ))}
+            </div>
             <button onClick={() => setMonthOffset(0)}
               className="hidden sm:block text-xs font-semibold text-gray-500 hover:text-indigo-600 border border-gray-200 hover:border-indigo-300 px-3 py-2 rounded-xl transition-all">
               Today
@@ -194,7 +204,101 @@ export default function CalendarPage() {
         {/* Main layout — stacks on mobile */}
         <div className="flex flex-col lg:flex-row gap-4">
 
+          {/* ── WEEK VIEW ────────────────────────────────────────── */}
+          {calView === 'week' && (
+            <div className="flex-1 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+                <p className="text-sm font-extrabold text-gray-900">Week of May 18 – 24, 2026</p>
+                <span className="text-xs text-gray-400">Click a day to see details</span>
+              </div>
+              <div className="grid grid-cols-7 divide-x divide-gray-100">
+                {['Mon 18','Tue 19','Wed 20','Thu 21','Fri 22','Sat 23','Sun 24'].map((d, i) => {
+                  const dayNum = 18 + i;
+                  const evs = EVENTS.filter((e) => e.date === dayNum);
+                  const isToday = dayNum === 19;
+                  return (
+                    <div key={d} className={`min-h-[400px] p-2 cursor-pointer hover:bg-gray-50 transition-all ${isToday?'bg-indigo-50/40':''}`}
+                      onClick={() => { setSelectedDay(dayNum); setCalView('day'); }}>
+                      <div className={`text-center mb-2 py-1.5 rounded-xl ${isToday?'bg-indigo-600':'bg-transparent'}`}>
+                        <p className={`text-[9px] font-bold uppercase ${isToday?'text-indigo-200':'text-gray-400'}`}>{d.split(' ')[0]}</p>
+                        <p className={`text-base font-extrabold leading-none ${isToday?'text-white':'text-gray-800'}`}>{d.split(' ')[1]}</p>
+                      </div>
+                      <div className="space-y-1">
+                        {evs.map((ev) => {
+                          const s = TYPE_STYLES[ev.type];
+                          return (
+                            <div key={ev.id} className={`${s.bg} ${s.text} rounded-lg px-1.5 py-1 text-[10px] font-semibold leading-tight border ${s.border} truncate`}>
+                              {ev.time && <span className="opacity-60">{ev.time} </span>}
+                              {ev.title}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── DAY VIEW ─────────────────────────────────────────── */}
+          {calView === 'day' && (
+            <div className="flex-1 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setSelectedDay((p) => Math.max(1, (p||19)-1))}
+                    className="p-1.5 rounded-lg border border-gray-200 hover:border-indigo-300 transition-all">
+                    <ChevronLeft className="w-3.5 h-3.5 text-gray-500" />
+                  </button>
+                  <p className="text-sm font-extrabold text-gray-900">
+                    {selectedDay === 19 ? 'Today · ' : ''}May {selectedDay || 19}, 2026
+                  </p>
+                  <button onClick={() => setSelectedDay((p) => Math.min(31, (p||19)+1))}
+                    className="p-1.5 rounded-lg border border-gray-200 hover:border-indigo-300 transition-all">
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
+                  </button>
+                </div>
+                <button onClick={() => setShowModal(true)}
+                  className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 px-3 py-1.5 rounded-xl transition-all">
+                  <Plus className="w-3.5 h-3.5" /> Add event
+                </button>
+              </div>
+              <div className="p-5">
+                {/* Hour grid */}
+                <div className="space-y-0">
+                  {Array.from({length:16},(_,i)=>i+7).map((hr) => {
+                    const timeStr = hr < 12 ? `${hr}:00 AM` : hr === 12 ? '12:00 PM' : `${hr-12}:00 PM`;
+                    const evs = EVENTS.filter((e) => e.date === (selectedDay||19) && e.time?.startsWith(hr < 12 ? `${hr}:` : hr === 12 ? '12:' : `${hr-12}:`));
+                    return (
+                      <div key={hr} className="flex gap-3 min-h-[48px] border-b border-gray-50 py-1">
+                        <div className="w-14 flex-shrink-0 text-[10px] font-medium text-gray-400 pt-0.5">{timeStr}</div>
+                        <div className="flex-1 space-y-1">
+                          {evs.map((ev) => {
+                            const s = TYPE_STYLES[ev.type];
+                            return (
+                              <div key={ev.id} className={`${s.bg} border ${s.border} rounded-xl px-3 py-2`}>
+                                <p className={`text-xs font-bold ${s.text}`}>{ev.title}</p>
+                                {ev.subtitle && <p className="text-[10px] text-gray-400 mt-0.5">📍 {ev.subtitle}</p>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {EVENTS.filter((e) => e.date === (selectedDay||19)).length === 0 && (
+                    <div className="text-center py-12 text-gray-400">
+                      <p className="text-sm font-medium">No events on this day</p>
+                      <p className="text-xs mt-1">Click "Add event" to create one</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Monthly calendar */}
+          {calView === 'month' && (
           <div className="flex-1 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
 
             {/* Day headers */}
@@ -260,6 +364,7 @@ export default function CalendarPage() {
               })}
             </div>
           </div>
+          )} {/* end calView === 'month' */}
 
           {/* Day panel — slide up on mobile, fixed sidebar on desktop */}
           {/* Mobile backdrop */}

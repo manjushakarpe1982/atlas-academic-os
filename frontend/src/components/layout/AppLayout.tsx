@@ -7,11 +7,21 @@ import {
   LayoutDashboard, BookOpen, Calendar, BarChart2,
   Settings, Bell, Upload, ChevronDown, ChevronRight,
   FileUp, GraduationCap, Layers, Zap, Brain,
-  HelpCircle, X, Menu, Activity,
+  HelpCircle, X, Menu, Activity, CheckCircle2, AlertTriangle, Clock,
 } from 'lucide-react';
 
 // Alias so we can use BookOpen in both MAIN_NAV and STUDY_NAV
 const BookOpen2 = BookOpen;
+
+/* ─── Notification data ──────────────────────────────────────── */
+const NOTIFS = [
+  { id:1, type:'exam',     title:'Biology Midterm in 3 days',           sub:'Thursday May 22 · 9:00 AM',         time:'Now',     read:false, color:'bg-red-500'    },
+  { id:2, type:'deadline', title:'Lab Report 3 due tomorrow',            sub:'Biology 101 · 6% of grade',          time:'2h ago',  read:false, color:'bg-orange-500' },
+  { id:3, type:'plan',     title:'Your study plan was updated',          sub:'Cell Division moved to #1 priority', time:'3h ago',  read:false, color:'bg-indigo-500' },
+  { id:4, type:'grade',    title:'Quiz 3 grade recorded',                sub:'Biology 101 · 82% · B−',             time:'1d ago',  read:true,  color:'bg-emerald-500'},
+  { id:5, type:'streak',   title:'5-day study streak! 🔥',               sub:'Keep going to hit 6 days',           time:'1d ago',  read:true,  color:'bg-amber-500'  },
+  { id:6, type:'plan',     title:'Statistics PS#4 due Friday',           sub:'2 days away · 8% of grade',          time:'2d ago',  read:true,  color:'bg-blue-500'   },
+];
 
 /* ─── Nav structure ──────────────────────────────────────────── */
 const MAIN_NAV = [
@@ -91,6 +101,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [initials,   setInitials]   = useState('S');
   const [studyOpen,  setStudyOpen]  = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const [notifs,     setNotifs]     = useState(NOTIFS);
+
+  const unreadCount = notifs.filter((n) => !n.read).length;
+  const markAllRead = () => setNotifs((p) => p.map((n) => ({ ...n, read: true })));
+  const markRead    = (id: number) => setNotifs((p) => p.map((n) => n.id === id ? { ...n, read: true } : n));
 
   useEffect(() => {
     const n = localStorage.getItem('atlas_full_name') || 'Student';
@@ -269,10 +285,74 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           {/* Right actions */}
           <div className="flex items-center gap-2 ml-auto">
-            <button className="relative p-2 rounded-xl hover:bg-gray-50 transition-all">
-              <Bell className="w-4 h-4 text-gray-500" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white" />
-            </button>
+
+            {/* Notification bell + dropdown */}
+            <div className="relative">
+              <button onClick={() => setShowNotifs((p) => !p)}
+                className="relative p-2 rounded-xl hover:bg-gray-50 transition-all">
+                <Bell className="w-4 h-4 text-gray-500" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center text-[9px] font-extrabold text-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification dropdown */}
+              {showNotifs && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowNotifs(false)} />
+                  <div className="absolute right-0 top-10 w-80 bg-white border border-gray-100 rounded-2xl shadow-2xl shadow-black/10 z-50 overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-extrabold text-gray-900">Notifications</p>
+                        {unreadCount > 0 && (
+                          <span className="text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">{unreadCount} new</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {unreadCount > 0 && (
+                          <button onClick={markAllRead}
+                            className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                            Mark all read
+                          </button>
+                        )}
+                        <button onClick={() => setShowNotifs(false)}
+                          className="w-6 h-6 rounded-full hover:bg-gray-100 flex items-center justify-center transition-all">
+                          <X className="w-3.5 h-3.5 text-gray-400" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Notification list */}
+                    <div className="max-h-96 overflow-y-auto divide-y divide-gray-50">
+                      {notifs.map((n) => (
+                        <div key={n.id} onClick={() => markRead(n.id)}
+                          className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-all hover:bg-gray-50 ${!n.read ? 'bg-indigo-50/30' : ''}`}>
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${!n.read ? n.color : 'bg-gray-200'}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-semibold leading-snug ${!n.read ? 'text-gray-900' : 'text-gray-500'}`}>
+                              {n.title}
+                            </p>
+                            <p className="text-[10px] text-gray-400 mt-0.5">{n.sub}</p>
+                          </div>
+                          <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{n.time}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50">
+                      <Link href="/settings/notifications" onClick={() => setShowNotifs(false)}
+                        className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                        Manage notification settings →
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <Link href="/upload"
               className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-all shadow-sm shadow-indigo-500/20">
               <Upload className="w-3.5 h-3.5" />
