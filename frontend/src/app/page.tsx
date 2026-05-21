@@ -518,7 +518,7 @@ export default function LandingPage() {
   />
 
   {/* LEFT FLOAT IMAGE */}
-  <img
+  {/* <img
     src="https://res.cloudinary.com/mview/image/upload/atlas/landingpage-5.webp"
     alt=""
     className="
@@ -536,7 +536,7 @@ export default function LandingPage() {
       rounded-2xl
       hidden lg:block
     "
-  />
+  /> */}
 
   <Hero />
   <Features />

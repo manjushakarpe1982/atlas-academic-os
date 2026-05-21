@@ -97,14 +97,15 @@ export default function Step3Page() {
             )}
           </div>
 
-          {/* RIGHT — illustration */}
-          <div className="hidden lg:flex bg-gradient-to-br from-[#F8F4FF] via-[#F1EAFF] to-[#EBDDFF] items-center justify-center p-8">
-            <img
-              src="https://res.cloudinary.com/mview/image/upload/atlas/onboardingpage3.webp"
-              alt="Goals illustration"
-              className="w-full max-w-[300px] object-contain"
-            />
-          </div>
+         
+
+            <div className="hidden lg:flex h-full w-full overflow-hidden rounded-3xl">
+  <img
+ src="https://res.cloudinary.com/mview/image/upload/atlas/onboardingpage3.webp"    alt="Academic profile illustration"
+    className="w-full h-full object-cover"
+  />
+</div>
+       
         </div>
       </div>
     </OnboardingLayout>

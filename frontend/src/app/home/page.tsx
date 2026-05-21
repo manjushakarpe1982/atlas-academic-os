@@ -5,10 +5,9 @@ import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import {
   Play, SkipForward, Info, ChevronRight, AlertTriangle,
-  Clock, TrendingUp, Zap, Brain, Search, Bell,
-  BarChart2, CheckCircle2, RotateCcw, Target,
-  BookOpen, Upload, Sparkles, ArrowRight,
-  Calendar, Star, Activity,
+  Clock, Zap, Brain, Search,
+  BarChart2, Target, BookOpen, Upload, Sparkles, ArrowRight,
+  Activity,
 } from 'lucide-react';
 
 /* ─── Mock data ──────────────────────────────────────────────── */
@@ -40,38 +39,45 @@ const TODAY_TASKS = [
 ];
 
 const UPCOMING_EXAMS = [
-  { name: 'Biology Midterm',   date: 'May 26, 2026', daysLeft: 3,  color: 'text-red-600',    dot: 'bg-red-500'    },
-  { name: 'Statistics Quiz 3', date: 'May 27, 2026', daysLeft: 4,  color: 'text-orange-600', dot: 'bg-orange-500' },
+  { name: 'Biology Midterm',   date: 'May 26, 2026', daysLeft: 3, color: 'text-red-600',    dot: 'bg-red-500'    },
+  { name: 'Statistics Quiz 3', date: 'May 27, 2026', daysLeft: 4, color: 'text-orange-600', dot: 'bg-orange-500' },
 ];
 
 const WEAK_TOPICS = [
-  { name: 'Cell Division',    pct: 28, color: 'bg-red-500',    label: 'Low mastery'    },
-  { name: 'Probability',      pct: 45, color: 'bg-orange-500', label: 'Medium mastery' },
-  { name: 'DNA Replication',  pct: 52, color: 'bg-orange-400', label: 'Medium mastery' },
+  { name: 'Cell Division',   pct: 28, color: 'bg-red-500',    label: 'Low mastery'    },
+  { name: 'Probability',     pct: 45, color: 'bg-orange-500', label: 'Medium mastery' },
+  { name: 'DNA Replication', pct: 52, color: 'bg-orange-400', label: 'Medium mastery' },
 ];
 
 const CLASSES_OVERVIEW = [
-  { name: 'Biology 101',    prof: 'Prof. Smith',    pct: 72, color: 'bg-indigo-500', dot: 'bg-indigo-500' },
-  { name: 'Statistics',     prof: 'Prof. Johnson',  pct: 64, color: 'bg-green-500',  dot: 'bg-green-500'  },
-  { name: 'History',        prof: 'Prof. Williams', pct: 58, color: 'bg-yellow-500', dot: 'bg-yellow-500' },
-  { name: 'Computer Science',prof: 'Prof. Brown',   pct: 80, color: 'bg-purple-500', dot: 'bg-purple-500' },
+  { name: 'Biology 101',     prof: 'Prof. Smith',    pct: 72, color: 'bg-indigo-500', dot: 'bg-indigo-500' },
+  { name: 'Statistics',      prof: 'Prof. Johnson',  pct: 64, color: 'bg-green-500',  dot: 'bg-green-500'  },
+  { name: 'History',         prof: 'Prof. Williams', pct: 58, color: 'bg-yellow-500', dot: 'bg-yellow-500' },
+  { name: 'Computer Science',prof: 'Prof. Brown',    pct: 80, color: 'bg-purple-500', dot: 'bg-purple-500' },
 ];
 
 const UPCOMING_DEADLINES = [
-  { name: 'Biology Lab Report',      class: 'Bio',   date: 'Tomorrow',  urgency: 'high'   },
-  { name: 'Statistics Problem Set',  class: 'Stats', date: '2 days left',urgency: 'high'  },
-  { name: 'History Essay',           class: 'Hist',  date: '2 days left',urgency: 'medium'},
+  { name: 'Biology Lab Report',     date: 'Tomorrow',   urgency: 'high'   },
+  { name: 'Statistics Problem Set', date: '2 days left', urgency: 'high'   },
+  { name: 'History Essay',          date: '2 days left', urgency: 'medium' },
 ];
 
 const RECENT_ACTIVITY = [
-  { icon: '📄', action: 'Syllabus uploaded',      detail: 'Biology_Syllabus.pdf',  time: '2h ago' },
-  { icon: '📖', action: 'Study guide generated',  detail: 'Cell Division, Mitosis', time: '4h ago' },
-  { icon: '✅', action: 'Quiz completed',          detail: 'Statistics Quiz 2',      time: 'Yesterday' },
+  { icon: '📄', action: 'Syllabus uploaded',     detail: 'Biology_Syllabus.pdf',   time: '2h ago'    },
+  { icon: '📖', action: 'Study guide generated', detail: 'Cell Division, Mitosis',  time: '4h ago'    },
+  { icon: '✅', action: 'Quiz completed',         detail: 'Statistics Quiz 2',       time: 'Yesterday' },
 ];
 
 const STUDY_PROGRESS = [
   { day: 'Mon', hrs: 1.5 }, { day: 'Tue', hrs: 2.0 }, { day: 'Wed', hrs: 0.5 },
   { day: 'Thu', hrs: 2.5 }, { day: 'Fri', hrs: 1.0 }, { day: 'Sat', hrs: 3.0 }, { day: 'Sun', hrs: 2.0 },
+];
+
+/* flashcards due per class */
+const FLASHCARD_DECKS = [
+  { class: 'Biology 101',    cards: 14, dot: 'bg-indigo-500', color: 'text-indigo-600' },
+  { class: 'Statistics 201', cards: 6,  dot: 'bg-green-500',  color: 'text-green-600'  },
+  { class: 'History 105',    cards: 4,  dot: 'bg-yellow-500', color: 'text-yellow-600' },
 ];
 
 /* ─── Mini bar chart ─────────────────────────────────────────── */
@@ -82,7 +88,7 @@ function MiniBarChart({ data }: { data: { day: string; hrs: number }[] }) {
       {data.map((d, i) => (
         <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
           <div
-            className="w-full rounded-sm bg-indigo-200 hover:bg-indigo-500 transition-colors cursor-pointer"
+            className="w-full rounded-sm bg-indigo-300 hover:bg-indigo-600 transition-colors cursor-pointer"
             style={{ height: `${(d.hrs / max) * 44}px` }}
             title={`${d.day}: ${d.hrs}h`}
           />
@@ -93,7 +99,7 @@ function MiniBarChart({ data }: { data: { day: string; hrs: number }[] }) {
   );
 }
 
-/* ─── Hero task card ─────────────────────────────────────────── */
+/* ─── Hero task ──────────────────────────────────────────────── */
 function HeroTask({ task, onStart, onSkip }: {
   task: typeof TODAY_TASKS[0];
   onStart: () => void;
@@ -123,8 +129,7 @@ function HeroTask({ task, onStart, onSkip }: {
       </div>
 
       <div className="flex items-center gap-2">
-        <Link href="/study-session"
-          onClick={onStart}
+        <Link href="/study-session" onClick={onStart}
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/25">
           <Play className="w-4 h-4" /> Start Study Session
         </Link>
@@ -137,7 +142,7 @@ function HeroTask({ task, onStart, onSkip }: {
   );
 }
 
-/* ─── Secondary task ─────────────────────────────────────────── */
+/* ─── Secondary task row ─────────────────────────────────────── */
 function TaskRow({ task, rank, onSkip }: { task: typeof TODAY_TASKS[0]; rank: number; onSkip: () => void }) {
   return (
     <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:border-indigo-200 hover:shadow-sm transition-all group shadow-sm">
@@ -187,12 +192,13 @@ export default function HomePage() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const heroTask = tasks[0];
   const otherTasks = tasks.slice(1);
+  const totalFlashcards = FLASHCARD_DECKS.reduce((s, d) => s + d.cards, 0);
 
   return (
     <AppLayout>
       <div className="p-5 max-w-[1300px] mx-auto">
 
-        {/* ── Top header ──────────────────────────────────────── */}
+        {/* ── Header ───────────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-5 gap-4">
           <div>
             <h1 className="text-xl font-extrabold text-gray-900">
@@ -201,7 +207,6 @@ export default function HomePage() {
             <p className="text-xs text-gray-400 mt-0.5">Let&apos;s make today productive.</p>
           </div>
 
-          {/* Global search */}
           <div className="relative flex-1 max-w-xs hidden md:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -234,11 +239,11 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* ── Main 3-col grid ──────────────────────────────────── */}
-        <div className="grid grid-cols-12 gap-4">
+        {/* ── 3-col grid ───────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
 
-          {/* ── COL 1: Today's Plan (5 cols) ─────────────────── */}
-          <div className="col-span-12 lg:col-span-5 space-y-3">
+          {/* COL 1 — Today's Plan (5 cols) */}
+          <div className="col-span-1 lg:col-span-5 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Today&apos;s Plan</p>
               <Link href="/study-plan" className="text-[11px] font-semibold text-indigo-600 hover:underline flex items-center gap-1">
@@ -246,17 +251,13 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <HeroTask
-              task={heroTask}
-              onStart={() => {}}
-              onSkip={() => skipTask(heroTask.id)}
-            />
+            <HeroTask task={heroTask} onStart={() => {}} onSkip={() => skipTask(heroTask.id)} />
 
             {otherTasks.map((t, i) => (
               <TaskRow key={t.id} task={t} rank={i + 2} onSkip={() => skipTask(t.id)} />
             ))}
 
-            {/* AI Recommendation card */}
+            {/* AI Recommendation */}
             <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-4 text-white">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
@@ -276,8 +277,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ── COL 2: Middle panels (4 cols) ────────────────── */}
-          <div className="col-span-12 lg:col-span-4 space-y-4">
+          {/* COL 2 — Middle (4 cols) — exactly 3 cards */}
+          <div className="col-span-1 lg:col-span-4 space-y-4">
 
             {/* Upcoming Exams */}
             <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
@@ -349,10 +350,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ── COL 3: Right panels (3 cols) ─────────────────── */}
-          <div className="col-span-12 lg:col-span-3 space-y-4">
+          {/* COL 3 — Right (3 cols) */}
+          <div className="col-span-1 lg:col-span-3 space-y-4">
 
-            {/* Study Progress */}
+            {/* Study Progress + bar chart */}
             <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Study Progress</p>
@@ -388,40 +389,34 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Recent Activity */}
+            {/* Flashcards Due */}
             <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-              <p className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3">Recent Activity</p>
-              <div className="space-y-2.5">
-                {RECENT_ACTIVITY.map((a, i) => (
-                  <div key={i} className="flex items-start gap-2.5">
-                    <span className="text-base flex-shrink-0 mt-0.5">{a.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold text-gray-800">{a.action}</p>
-                      <p className="text-[10px] text-gray-400 truncate">{a.detail}</p>
-                    </div>
-                    <span className="text-[10px] text-gray-300 flex-shrink-0">{a.time}</span>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-extrabold text-gray-500 uppercase tracking-widest">Flashcards Due</p>
+                <Link href="/flashcards" className="text-[11px] text-indigo-600 font-semibold hover:underline">Review all</Link>
+              </div>
+              <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-3.5 py-2.5 mb-3">
+                <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm shadow-indigo-500/20">
+                  <Brain className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-base font-extrabold text-indigo-700 leading-none">{totalFlashcards} cards</p>
+                  <p className="text-[10px] text-indigo-500 font-medium mt-0.5">due for review today</p>
+                </div>
+              </div>
+              <div className="space-y-2 mb-3">
+                {FLASHCARD_DECKS.map((d) => (
+                  <div key={d.class} className="flex items-center gap-2.5">
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${d.dot}`} />
+                    <p className="text-[11px] font-medium text-gray-700 flex-1 truncate">{d.class}</p>
+                    <span className={`text-[11px] font-extrabold ${d.color}`}>{d.cards} cards</span>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-              <p className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3">Quick Actions</p>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: 'Upload Material',     href: '/upload',      icon: Upload,   bg: 'bg-indigo-50',  text: 'text-indigo-600' },
-                  { label: 'Generate Study Guide', href: '/study-guide', icon: BookOpen, bg: 'bg-green-50',   text: 'text-green-600'  },
-                  { label: 'Start Quiz',           href: '/quiz',        icon: Target,   bg: 'bg-yellow-50',  text: 'text-yellow-600' },
-                  { label: 'Enter Exam Mode',      href: '/exam-mode',   icon: Zap,      bg: 'bg-red-50',     text: 'text-red-600'    },
-                ].map((a) => (
-                  <Link key={a.href} href={a.href}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl ${a.bg} hover:shadow-sm transition-all text-center cursor-pointer`}>
-                    <a.icon className={`w-4 h-4 ${a.text}`} />
-                    <span className={`text-[10px] font-bold ${a.text} leading-tight`}>{a.label}</span>
-                  </Link>
-                ))}
-              </div>
+              <Link href="/flashcards"
+                className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-2.5 rounded-xl transition-all shadow-sm shadow-indigo-500/20">
+                <Brain className="w-3.5 h-3.5" /> Start flashcard review
+              </Link>
             </div>
           </div>
         </div>
