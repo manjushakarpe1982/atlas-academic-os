@@ -54,7 +54,7 @@ export default function Step4Page() {
   return (
     <OnboardingLayout step={4}>
       <div className="bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg overflow-hidden">
-        <div className="grid lg:grid-cols-[1fr_340px]">
+        <div className="grid grid-cols-1">
 
           {/* LEFT — preferences form */}
           <div className="px-8 lg:px-10 py-8 space-y-5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
@@ -253,18 +253,7 @@ export default function Step4Page() {
             </div>
           </div>
 
-          {/* RIGHT — illustration */}
-          <div className="hidden lg:flex bg-gradient-to-br from-[#F8F4FF] via-[#F1EAFF] to-[#EBDDFF] items-center justify-center p-8">
-            <img
-              src="https://res.cloudinary.com/mview/image/upload/atlas/onboardingpage4.webp"
-              alt="Preferences illustration"
-              className="w-full max-w-[300px] object-contain"
-              onError={(e) => {
-                // Fallback if page4 image doesn't exist
-                (e.target as HTMLImageElement).src = 'https://res.cloudinary.com/mview/image/upload/atlas/desktop-hero.webp';
-              }}
-            />
-          </div>
+
         </div>
       </div>
     </OnboardingLayout>
