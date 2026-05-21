@@ -186,7 +186,7 @@ export default function NotificationsSettings() {
         {/* ── Delivery channels ────────────────────────────── */}
         <div className={BLOCKED}>
           <SectionHeader label="Delivery Channels" icon={Settings2} color="text-gray-400" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
               { icon: Mail,       iconBg: 'bg-blue-50',   iconColor: 'text-blue-600',   label: 'Email',         desc: 'Daily plan, alerts & weekly report', enabled: emailEnabled, onChange: setEmailEnabled },
               { icon: Smartphone, iconBg: 'bg-purple-50', iconColor: 'text-purple-600', label: 'Push',          desc: 'Browser alerts (requires permission)', enabled: pushEnabled,  onChange: setPushEnabled  },
@@ -306,7 +306,7 @@ export default function NotificationsSettings() {
         </div>
 
         {/* ── Save ─────────────────────────────────────────── */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
           <p className="text-xs text-gray-400">
             {activeCount} of 8 notification types active
           </p>

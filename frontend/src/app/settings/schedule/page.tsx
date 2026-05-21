@@ -26,7 +26,7 @@ function Card({ title, icon: Icon, iconBg, subtitle, children }: {
 }) {
   return (
     <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-50">
+      <div className="flex items-center gap-3 px-4 md:px-6 py-3.5 border-b border-gray-50">
         <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
           <Icon className="w-4 h-4 text-white" />
         </div>
@@ -35,7 +35,7 @@ function Card({ title, icon: Icon, iconBg, subtitle, children }: {
           {subtitle && <p className="text-[11px] text-gray-400 mt-0.5">{subtitle}</p>}
         </div>
       </div>
-      <div className="px-6 py-5">{children}</div>
+      <div className="px-4 md:px-6 py-4">{children}</div>
     </div>
   );
 }
@@ -47,7 +47,7 @@ function DayToggle({ days, selected, onChange }: {
   const toggle = (d: string) =>
     onChange(selected.includes(d) ? selected.filter((x) => x !== d) : [...selected, d]);
   return (
-    <div className="flex gap-1.5">
+    <div className="flex gap-1.5 flex-wrap">
       {days.map((d) => (
         <button key={d} type="button" onClick={() => toggle(d)}
           className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
@@ -265,7 +265,7 @@ export default function ScheduleSettings() {
         {/* ── Preferred study time ─────────────────────────── */}
         <Card title="Preferred Study Time" icon={Timer} iconBg="bg-amber-500"
           subtitle="Atlas will place sessions during this window">
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {TIME_OPTIONS.map((opt) => (
               <button key={opt.id} type="button" onClick={() => setStudyTime(opt.id)}
                 className={`flex items-center gap-3 p-3.5 rounded-2xl border-2 text-left transition-all ${
@@ -339,7 +339,7 @@ export default function ScheduleSettings() {
           </div>
 
           {/* Time inputs */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Moon className="w-4 h-4 text-indigo-600" />
@@ -381,7 +381,7 @@ export default function ScheduleSettings() {
           <div className="space-y-2.5 mb-4">
             {events.map((ev) => (
               <div key={ev.id}
-                className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all">
+                className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-2xl px-3 md:px-4 py-3 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all">
                 <span className="text-lg flex-shrink-0">{ev.emoji}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-gray-800">{ev.label}</p>
@@ -444,7 +444,7 @@ export default function ScheduleSettings() {
         </Card>
 
         {/* ── Save ─────────────────────────────────────────── */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
           <p className="text-xs text-gray-400">Schedule changes apply to your next generated study plan</p>
           <button onClick={save}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20 active:scale-95">
