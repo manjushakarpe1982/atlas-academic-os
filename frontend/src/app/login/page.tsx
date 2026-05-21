@@ -83,14 +83,14 @@ export default function LoginPage() {
   const hasPassError = error.toLowerCase().includes("password") || error.toLowerCase().includes("incorrect");
 
   return (
-  <main className="min-h-screen flex items-center justify-center px-4 py-8">
+  <main className="min-h-screen flex items-center justify-center px-4 py-6 md:py-8 bg-gray-50 lg:bg-white">
   <div
-    className="w-full max-w-[1000px] bg-white border border-[#e6e5e7] rounded-[32px] overflow-hidden shadow-2xl shadow-black/10 flex flex-col lg:flex-row"
+    className="w-full max-w-[1000px] bg-white border-0 lg:border border-[#e6e5e7] rounded-none lg:rounded-[32px] overflow-hidden shadow-none lg:shadow-2xl lg:shadow-black/10 flex flex-col lg:flex-row"
     style={{ minHeight: 620 }}
   >
     {/* LEFT PANEL */}
     <div
-      className="lg:w-[50%] relative p-8 lg:p-10 flex flex-col justify-between text-black"
+      className="hidden lg:flex lg:w-[50%] relative p-8 lg:p-10 flex-col justify-between text-black"
       style={{
         backgroundImage:
           " url('https://res.cloudinary.com/mview/image/upload/atlas/signup.webp')",
@@ -177,9 +177,17 @@ export default function LoginPage() {
     </div>
 
     {/* RIGHT PANEL */}
-    <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center bg-white">
+    <div className="flex-1 p-6 md:p-8 lg:p-12 flex flex-col justify-center bg-white">
       <div className="max-w-[420px] w-full mx-auto">
-        <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-2">
+        {/* Mobile-only logo — hidden on desktop where left panel shows it */}
+        <div className="flex items-center gap-2 mb-6 lg:hidden">
+          <div className="w-9 h-9 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md shadow-[#534AB7]/30">
+            <span className="text-white font-bold text-sm">A</span>
+          </div>
+          <span className="font-bold text-lg text-[#1A1A2E] tracking-wide">Atlas</span>
+        </div>
+
+                <h2 className="text-3xl font-extrabold text-[#1A1A2E] mb-2">
           Log in to Atlas
         </h2>
 

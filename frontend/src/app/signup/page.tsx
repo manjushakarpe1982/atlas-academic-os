@@ -86,15 +86,15 @@ export default function SignupPage() {
 
   return (
     /* Exact same outer wrapper as login */
-    <main className="min-h-screen flex items-center justify-center px-4 py-8">
+    <main className="min-h-screen flex items-center justify-center px-4 py-6 md:py-8 bg-gray-50 lg:bg-white">
       <div
-        className="w-full max-w-[1000px] bg-white border border-[#e6e5e7] rounded-[32px] overflow-hidden shadow-2xl shadow-black/10 flex flex-col lg:flex-row"
+        className="w-full max-w-[1000px] bg-white border-0 lg:border border-[#e6e5e7] rounded-none lg:rounded-[32px] overflow-hidden shadow-none lg:shadow-2xl lg:shadow-black/10 flex flex-col lg:flex-row"
         style={{ minHeight: 620 }}
       >
 
         {/* LEFT PANEL — same structure as login, only bg image changed to login.webp */}
         <div
-          className="lg:w-[50%] relative p-8 lg:p-10 flex flex-col justify-between text-black"
+          className="hidden lg:flex lg:w-[50%] relative p-8 lg:p-10 flex-col justify-between text-black"
           style={{
             backgroundImage: "url('https://res.cloudinary.com/mview/image/upload/atlas/login.webp')",
             backgroundSize: "cover",
@@ -159,7 +159,7 @@ export default function SignupPage() {
         </div>
 
         {/* RIGHT PANEL — same padding, bg, max-width as login */}
-        <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center bg-white">
+        <div className="flex-1 p-6 md:p-8 lg:p-12 flex flex-col justify-center bg-white">
           <div className="max-w-[420px] w-full mx-auto">
 
             {/* Heading — same font sizes as login */}
