@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
+import AskAIWidget, { AskAIInline } from '@/components/AskAIWidget';
 import {
   Play, ChevronRight, Brain, Clock, AlertTriangle,
   Zap, Sparkles, BookOpen, SkipForward, ChevronDown,
@@ -173,7 +174,7 @@ export default function StudyPlanPage() {
       <div className="p-4 md:p-6 max-w-[1100px] mx-auto">
 
         {/* ── Header ───────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1">
               <span className="hover:text-indigo-600 cursor-pointer" onClick={() => router.push('/home')}>Home</span>
@@ -188,6 +189,9 @@ export default function StudyPlanPage() {
             <Play className="w-4 h-4" /> Start Today&apos;s Session
           </button>
         </div>
+
+        {/* ── Ask AI — top of page ─────────────────────────────── */}
+        <AskAIInline context="study-plan" />
 
         {/* ── Why this plan ─────────────────────────────────────── */}
         <div className="bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3.5 mb-5">
@@ -241,7 +245,7 @@ export default function StudyPlanPage() {
           {/* Right sidebar */}
           <div className="lg:w-[220px] lg:flex-shrink-0 space-y-3">
 
-            {/* Today's plan stats */}
+         
             <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
               <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">
                 Today&apos;s Plan

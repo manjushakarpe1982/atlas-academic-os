@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
+import AskAIWidget, { AskAIInline } from '@/components/AskAIWidget';
 import {
   CheckCircle2, FileText, Brain, Calendar,
   BookOpen, Target, Sparkles, ArrowRight, Star,
@@ -84,7 +85,7 @@ export default function UploadSummaryPage() {
         </div>
 
         {/* ── Page header ──────────────────────────────────────── */}
-        <div className="mb-5">
+        <div className="mb-4">
           <h1 className="text-lg md:text-xl font-extrabold text-gray-900">
             {done ? '✅ Your materials are ready!' : '⏳ Atlas is reading your file…'}
           </h1>
@@ -94,6 +95,9 @@ export default function UploadSummaryPage() {
               : 'Biology_Syllabus.pdf is being processed — usually takes under 30 seconds.'}
           </p>
         </div>
+
+        {/* ── Ask AI — top of page ─────────────────────────────── */}
+        <AskAIInline context="upload-summary" />
 
         {/* ── STEP 1: What Atlas is doing (pipeline) ───────────── */}
         <section className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm mb-4">
@@ -288,7 +292,7 @@ export default function UploadSummaryPage() {
             {/* Right sidebar ── */}
             <div className="lg:w-[240px] lg:flex-shrink-0 space-y-3">
 
-              {/* AI Suggestions — TOP */}
+              
               <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
                   <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
