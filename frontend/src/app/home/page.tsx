@@ -411,7 +411,7 @@ export default function HomePage() {
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
 
   const [tasks,    setTasks]    = useState(TODAY_TASKS);
-  const [userName, setUserName] = useState('Ananya');
+  const [userName, setUserName] = useState('Pooja');
   const [search,   setSearch]   = useState('');
 
   useEffect(() => {
