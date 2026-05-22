@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
+import EmptyState from '@/components/EmptyState';
 import {
   Upload, FileText, Mic, BookOpen, Target,
   BarChart2, CheckCircle2, XCircle, RefreshCw,

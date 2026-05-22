@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
-
+import EmptyState from '@/components/EmptyState';
+import Tooltip from '@/components/Tooltip';
 import {
   ChevronRight, Upload, BookOpen, FileText, Mic,
   BarChart2, Target, CheckCircle2, Star, TrendingUp,
   Plus, Search, Brain, Zap, AlertTriangle,
   GraduationCap, Clock, ArrowLeft, RefreshCw, X,
 } from 'lucide-react';
-import Tooltip from '@/components/Tooltip';
 
 /* ─── Data ───────────────────────────────────────────────────── */
 const CLASSES = [
@@ -743,11 +743,19 @@ export default function ClassesPage() {
         </div>
 
         {/* Class grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((cls) => (
-            <ClassCard key={cls.id} cls={cls} onClick={() => setSelected(cls)} />
-          ))}
-        </div>
+        {filtered.length === 0 && search ? (
+          <div className="text-center py-12">
+            <p className="text-sm text-gray-500">No classes match "{search}"</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <EmptyState type="no-classes" onAction={() => setShowAddModal(true)} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((cls) => (
+              <ClassCard key={cls.id} cls={cls} onClick={() => setSelected(cls)} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Add Class Modal ─────────────────────────────────── */}

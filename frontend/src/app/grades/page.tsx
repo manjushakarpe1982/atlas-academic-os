@@ -6,8 +6,8 @@ import {
   BarChart2, Trophy, Zap, X, AlertTriangle,
 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
+import EmptyState from '@/components/EmptyState';
 import Tooltip from '@/components/Tooltip';
-
 
 /* ─── Data ───────────────────────────────────────────────────── */
 const CLASSES = [
@@ -326,6 +326,242 @@ function ClassRow({ cls, onAddGrade }: { cls: typeof CLASSES[0]; onAddGrade: () 
 
 /* ─── Main ───────────────────────────────────────────────────── */
 /* ─── What-if grade simulator ───────────────────────────────── */
+/* ─── GPA Trajectory Chart ───────────────────────────────────── */
+function GPATrajectory() {
+  const weeks = [
+    { week:'W1',  gpa:3.20 },
+    { week:'W2',  gpa:3.20 },
+    { week:'W3',  gpa:3.35 },
+    { week:'W4',  gpa:3.28 },
+    { week:'W5',  gpa:3.35 },
+    { week:'W6',  gpa:3.42 },
+    { week:'W7',  gpa:3.38 },
+    { week:'W8',  gpa:3.42 },
+    { week:'W9',  gpa:3.50 },
+    { week:'W10', gpa:3.55 },
+    { week:'W11', gpa:3.61, projected:true },
+    { week:'W12', gpa:3.68, projected:true },
+  ];
+
+  const min = 3.0;
+  const max = 4.0;
+  const h   = 80;
+  const w   = 100 / (weeks.length - 1);
+
+  const toY = (gpa: number) => h - ((gpa - min) / (max - min)) * h;
+
+  const solidPoints = weeks.filter((_, i) => i < 10).map((d, i) => `${i * w},${toY(d.gpa)}`).join(' ');
+  const allPoints   = weeks.map((d, i) => `${i * w},${toY(d.gpa)}`).join(' ');
+  const currentGpa  = weeks[9].gpa;
+  const projGpa     = weeks[weeks.length - 1].gpa;
+  const trend       = projGpa >= currentGpa ? 'up' : 'down';
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm mb-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-indigo-600" />
+          <p className="text-sm font-extrabold text-gray-900">GPA trajectory</p>
+          <Tooltip text="Your GPA plotted week by week. Solid line = actual. Dashed = Atlas projection based on current grades and upcoming assessments." position="right" width="w-60" />
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-xs text-gray-400">Current</p>
+            <p className="text-base font-extrabold text-gray-900">{currentGpa.toFixed(2)}</p>
+          </div>
+          <div className="w-px h-8 bg-gray-100" />
+          <div className="text-right">
+            <p className="text-xs text-gray-400">Projected</p>
+            <p className={`text-base font-extrabold ${trend === 'up' ? 'text-emerald-600' : 'text-red-500'}`}>
+              {trend === 'up' ? '↑' : '↓'} {projGpa.toFixed(2)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* SVG Chart */}
+      <div className="relative">
+        <svg viewBox={`0 0 100 ${h + 10}`} preserveAspectRatio="none" className="w-full h-24">
+          {/* Grid lines */}
+          {[3.0, 3.25, 3.5, 3.75, 4.0].map((g) => (
+            <line key={g} x1="0" y1={toY(g)} x2="100" y2={toY(g)}
+              stroke="#f3f4f6" strokeWidth="0.5" />
+          ))}
+          {/* Projected area fill */}
+          <polyline points={`${9 * w},${toY(weeks[9].gpa)} ${allPoints.split(' ').slice(9).join(' ')} ${11 * w},${h} ${9 * w},${h}`}
+            fill="rgba(99,102,241,0.06)" stroke="none" />
+          {/* Solid line */}
+          <polyline points={solidPoints} fill="none" stroke="#4F46E5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          {/* Dashed projected line */}
+          <polyline points={`${9 * w},${toY(weeks[9].gpa)} ${weeks.slice(9).map((d,i) => `${(9+i)*w},${toY(d.gpa)}`).join(' ')}`}
+            fill="none" stroke="#4F46E5" strokeWidth="1.5" strokeDasharray="2,2" strokeLinecap="round" />
+          {/* Current point */}
+          <circle cx={9 * w} cy={toY(weeks[9].gpa)} r="2" fill="#4F46E5" />
+          {/* Projected end point */}
+          <circle cx={11 * w} cy={toY(projGpa)} r="2" fill="none" stroke="#4F46E5" strokeWidth="1.5" />
+        </svg>
+
+        {/* X axis labels */}
+        <div className="flex justify-between mt-1">
+          {weeks.filter((_, i) => i % 3 === 0 || i === weeks.length - 1).map((d) => (
+            <span key={d.week} className={`text-[9px] ${d.projected ? 'text-indigo-400' : 'text-gray-400'}`}>
+              {d.week}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 mt-2">
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-0.5 bg-indigo-600" />
+          <span className="text-[10px] text-gray-500">Actual GPA</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-0.5 bg-indigo-400" style={{ borderTop:'1.5px dashed #818cf8' }} />
+          <span className="text-[10px] text-gray-500">Projected</span>
+        </div>
+        {trend === 'up' && (
+          <span className="ml-auto text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+            📈 Trending up
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Target Grade Calculator ────────────────────────────────── */
+function TargetGradeCalc() {
+  const [targetClass, setTargetClass] = useState('bio101');
+  const [targetLetter, setTargetLetter] = useState('A');
+  const [open, setOpen] = useState(false);
+
+  const classes = [
+    { id:'bio101', name:'Biology 101',    currentPct:87, remaining:[
+        { name:'Exam 2',  weight:25 },
+        { name:'Final',   weight:25 },
+      ]},
+    { id:'stat201', name:'Statistics 201', currentPct:79, remaining:[
+        { name:'PS #4',   weight:10 },
+        { name:'Midterm', weight:20 },
+        { name:'Final',   weight:30 },
+      ]},
+    { id:'eng301', name:'English 301',    currentPct:84, remaining:[
+        { name:'Essay 2', weight:20 },
+        { name:'Final',   weight:25 },
+      ]},
+  ];
+
+  const targetPcts: Record<string,number> = { 'A':93,'A−':90,'B+':87,'B':83,'B−':80,'C+':77,'C':73 };
+  const cls = classes.find((c) => c.id === targetClass)!;
+  const targetPct = targetPcts[targetLetter];
+  const earnedWeight = 100 - cls.remaining.reduce((s,r) => s + r.weight, 0);
+  const earnedContrib = (cls.currentPct * earnedWeight) / 100;
+  const remainingWeight = 100 - earnedWeight;
+  const neededContrib = targetPct - earnedContrib;
+  const neededAvg = remainingWeight > 0 ? Math.round((neededContrib / remainingWeight) * 100) : 0;
+  const feasible = neededAvg <= 100;
+  const easy     = neededAvg <= 85;
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm mb-4">
+      <button onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Target className="w-4 h-4 text-indigo-600" />
+          <p className="text-sm font-extrabold text-gray-900">To reach my target grade, I need…</p>
+          <Tooltip text="Enter your target grade and Atlas calculates the exact score needed on remaining assessments." position="right" width="w-56" />
+        </div>
+        <span className={`text-[10px] font-bold px-2 py-1 rounded-lg flex-shrink-0 transition-all ${open ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}>
+          {open ? '▲ Close' : '▼ Calculate'}
+        </span>
+      </button>
+
+      {open && (
+        <div className="mt-4 space-y-4">
+          {/* Selectors */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Class</label>
+              <select value={targetClass} onChange={(e) => setTargetClass(e.target.value)}
+                className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none bg-white transition-all">
+                {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Target grade</label>
+              <select value={targetLetter} onChange={(e) => setTargetLetter(e.target.value)}
+                className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none bg-white transition-all">
+                {Object.keys(targetPcts).map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Result card */}
+          <div className={`rounded-2xl border-2 p-4 ${
+            !feasible ? 'bg-red-50 border-red-200' :
+            easy      ? 'bg-emerald-50 border-emerald-200' :
+                        'bg-amber-50 border-amber-200'
+          }`}>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p className="text-xs font-bold text-gray-600 mb-0.5">
+                  {!feasible ? '❌ Not achievable' : easy ? '✅ Achievable' : '⚠️ Challenging but possible'}
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  To get <strong>{targetLetter}</strong> in {cls.name}, you need an average of
+                </p>
+              </div>
+              <div className={`text-4xl font-extrabold flex-shrink-0 ${
+                !feasible ? 'text-red-600' : easy ? 'text-emerald-600' : 'text-amber-600'
+              }`}>
+                {!feasible ? '100+' : `${neededAvg}%`}
+              </div>
+            </div>
+
+            {/* Remaining assessments breakdown */}
+            <div className="space-y-1.5 mb-3">
+              {cls.remaining.map((r) => (
+                <div key={r.name} className="flex items-center justify-between text-xs bg-white/60 rounded-lg px-3 py-1.5">
+                  <span className="font-medium text-gray-700">{r.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400">{r.weight}% of grade</span>
+                    <span className={`font-extrabold ${
+                      !feasible ? 'text-red-600' : easy ? 'text-emerald-600' : 'text-amber-600'
+                    }`}>→ {!feasible ? '100+' : neededAvg}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className={`text-[11px] font-medium leading-relaxed ${
+              !feasible ? 'text-red-700' :
+              easy      ? 'text-emerald-700' :
+                          'text-amber-700'
+            }`}>
+              {!feasible
+                ? `Even scoring 100% on everything remaining won't reach ${targetLetter}. Consider targeting ${targetLetter === 'A' ? 'A−' : 'B+'} instead.`
+                : easy
+                ? `You're on track! ${neededAvg}% is within reach — keep your current study pace.`
+                : `${neededAvg}% is above your current average (${cls.currentPct}%). Atlas recommends 2× study sessions this week.`
+              }
+            </p>
+          </div>
+
+          {/* Semester GPA impact */}
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 flex items-center justify-between">
+            <p className="text-xs font-semibold text-indigo-800">Semester GPA if you achieve {targetLetter}</p>
+            <p className="text-sm font-extrabold text-indigo-700">
+              {feasible ? (3.42 + 0.08 * (easy ? 1.5 : 0.8)).toFixed(2) : '3.42'} GPA
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function WhatIfSimulator() {
   const [examScore, setExamScore] = useState(85);
   const [show,      setShow]      = useState(false);
@@ -411,6 +647,12 @@ export default function GradesPage() {
             <Plus className="w-3.5 h-3.5" /> Add grade
           </button>
         </div>
+
+        {/* GPA Trajectory Chart */}
+        <GPATrajectory />
+
+        {/* Target Grade Calculator */}
+        <TargetGradeCalc />
 
         {/* GPA summary — 2 cols on mobile, 4 on desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">

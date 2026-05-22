@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -9,6 +10,8 @@ export const metadata: Metadata = {
   title: "Atlas — Academic OS",
   description: "The semester, on autopilot. AI-powered study planning for college students.",
 };
+
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -27,7 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-xl focus:font-bold focus:text-sm focus:shadow-lg">
           Skip to main content
         </a>
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
       </body>
     </html>
   );

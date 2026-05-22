@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
+import EmptyState from '@/components/EmptyState';
 import Tooltip from '@/components/Tooltip';
 import {
   Play, SkipForward, Info, ChevronRight, ChevronDown, AlertTriangle,

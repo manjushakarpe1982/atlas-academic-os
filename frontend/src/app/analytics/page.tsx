@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
+import EmptyState from '@/components/EmptyState';
+import Tooltip from '@/components/Tooltip';
 import { TrendingUp, Clock, BookOpen, Star, BarChart2, Brain, Award, Target, Zap } from 'lucide-react';
 
 type Tab = 'overview' | 'subjects' | 'topics' | 'time';
