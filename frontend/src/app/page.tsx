@@ -680,7 +680,7 @@ export default function LandingPage() {
     className="
       absolute
       right-2 sm:right-6 md:right-12 lg:right-[18%]
-      top-[18%] sm:top-[22%] md:top-[24%] lg:top-[25%]
+      top-[18%] sm:top-[22%] md:top-[24%] lg:top-[17%]
       -translate-y-1/2
       w-14 sm:w-20 md:w-32 lg:w-44
       h-auto
@@ -695,7 +695,7 @@ export default function LandingPage() {
   />
 
   {/* LEFT FLOAT IMAGE */}
-  <img
+  {/* <img
     src="https://res.cloudinary.com/mview/image/upload/atlas/landingpage-5.webp"
     alt=""
     className="
@@ -713,7 +713,7 @@ export default function LandingPage() {
       rounded-2xl
       hidden lg:block
     "
-  />
+  /> */}
 
   <Hero />
   <Features />
