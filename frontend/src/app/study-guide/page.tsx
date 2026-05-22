@@ -6,10 +6,10 @@ import {
   BookOpen, CheckCircle2, ChevronRight, Flag,
   Brain, AlertTriangle, Star, RefreshCw,
   ChevronDown, ChevronUp, Volume2,
-  MessageSquare, X,
+  MessageSquare, X, Send, Sparkles,
 } from 'lucide-react';
 
-type StudyMode = 'read' | 'listen' | 'quiz' | 'teach';
+type StudyMode = 'read' | 'listen' | 'quiz' | 'teach' | 'ask';
 
 interface Citation { source:string; ref:string; preview:string; }
 interface Section {
@@ -217,6 +217,210 @@ function SectionCard({ section, isActive, onToggle, onComplete }: {
 }
 
 /* ─── Main ───────────────────────────────────────────────────── */
+/* ─── Ask AI — RAG Q&A grounded in uploaded materials ───────── */
+const SUGGESTED_QUESTIONS = [
+  'What are the key phases of mitosis in order?',
+  'What is the role of spindle fibres?',
+  'When does the nuclear envelope break down?',
+  'How is mitosis different from meiosis?',
+  'What did Prof. Smith say about checkpoints?',
+];
+
+interface Message { role:'user'|'ai'; text:string; sources?:string[]; }
+
+function AskAI() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input,    setInput]    = useState('');
+  const [loading,  setLoading]  = useState(false);
+
+  const MOCK_ANSWERS: Record<string, { text:string; sources:string[] }> = {
+    default: {
+      text: "Based on your Biology 101 materials, mitosis is the process of cell division that produces two genetically identical daughter cells. Your professor Dr. Smith emphasized that students often confuse the phase order — the correct sequence is Prophase → Prometaphase → Metaphase → Anaphase → Telophase (PPMAT).",
+      sources: ["📢 Lecture 8, 09:15", "📑 Lecture 10, slide 4", "📋 Exam 2 Review Sheet, p.1"],
+    },
+    phase: {
+      text: "The 5 phases in order are: (1) Prophase — chromatin condenses, spindle begins forming. (2) Prometaphase — nuclear envelope breaks down, spindle fibres attach to kinetochores. (3) Metaphase — chromosomes align at the cell plate. (4) Anaphase — sister chromatids pulled to opposite poles. (5) Telophase — nuclear envelope reforms, chromosomes decondense.",
+      sources: ["📢 Lecture 8, 09:15–18:40", "📑 Slides 3–8"],
+    },
+    spindle: {
+      text: "Spindle fibres are microtubule structures that attach to chromosomes at the kinetochore during prometaphase. During anaphase, kinetochore microtubules shorten to pull sister chromatids to opposite poles. Dr. Smith said: 'If you remember nothing else, remember that kinetochore microtubules pull — that distinction showed up on last year's exam.'",
+      sources: ["📢 Lecture 8, 22:04", "📋 Review Sheet, p.2"],
+    },
+    nuclear: {
+      text: "The nuclear envelope fully breaks down in Prometaphase — not Prophase as many students assume. In Prophase it begins to fragment, but complete disintegration happens in Prometaphase when spindle microtubules need direct access to the chromosomes. This was on Quiz 3 and you got it wrong — worth reviewing carefully.",
+      sources: ["📢 Lecture 8, 14:32", "✏️ Quiz 3, Q4 — you answered Prophase"],
+    },
+    meiosis: {
+      text: "Your uploaded materials only briefly compare mitosis and meiosis. From Lecture 8: mitosis produces 2 identical diploid cells for growth/repair, while meiosis produces 4 haploid cells for reproduction. Smith noted this comparison may appear on Exam 2 as a short-answer question.",
+      sources: ["📢 Lecture 8, 44:10", "⚠️ Supplementary — not fully covered in your files"],
+    },
+    checkpoint: {
+      text: "Dr. Smith covered 3 checkpoints: G1 checkpoint (cell size, nutrients OK?), G2 checkpoint (DNA replicated correctly?), and the Spindle Assembly Checkpoint in metaphase (all chromosomes attached to spindle?). She said: 'The SAC is the one I love testing because students always forget it exists.'",
+      sources: ["📢 Lecture 9, 08:22", "📑 Lecture 9, slides 14–16"],
+    },
+  };
+
+  const getAnswer = (q: string) => {
+    const lower = q.toLowerCase();
+    if (lower.includes('phase') || lower.includes('order') || lower.includes('ppmat')) return MOCK_ANSWERS.phase;
+    if (lower.includes('spindle') || lower.includes('microtubul') || lower.includes('kinetochore')) return MOCK_ANSWERS.spindle;
+    if (lower.includes('nuclear') || lower.includes('envelope')) return MOCK_ANSWERS.nuclear;
+    if (lower.includes('meiosis') || lower.includes('different')) return MOCK_ANSWERS.meiosis;
+    if (lower.includes('checkpoint') || lower.includes('smith')) return MOCK_ANSWERS.checkpoint;
+    return MOCK_ANSWERS.default;
+  };
+
+  const send = async (q?: string) => {
+    const question = q || input.trim();
+    if (!question) return;
+    setInput('');
+    setMessages((p) => [...p, { role:'user', text:question }]);
+    setLoading(true);
+    await new Promise((r) => setTimeout(r, 1200));
+    const ans = getAnswer(question);
+    setMessages((p) => [...p, { role:'ai', text:ans.text, sources:ans.sources }]);
+    setLoading(false);
+  };
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  };
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden flex flex-col" style={{ height: 560 }}>
+
+      {/* ── Header ────────────────────────────────────────────── */}
+      <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between gap-3 flex-shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
+            <Sparkles className="w-3.5 h-3.5 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-extrabold text-gray-900">Ask about this material</p>
+            <p className="text-[10px] text-gray-400">Grounded in your Biology 101 uploads · not the internet</p>
+          </div>
+        </div>
+        <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-lg flex-shrink-0">
+          87% your files
+        </span>
+      </div>
+
+      {/* ── Scrollable chat area ──────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0">
+
+        {/* Empty state — info + suggestions */}
+        {messages.length === 0 && !loading && (
+          <div>
+            <div className="text-center py-5 mb-5">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-2.5">
+                <MessageSquare className="w-5 h-5 text-indigo-500" />
+              </div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Ask anything about Mitosis</p>
+              <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
+                Atlas answers from your professor's lectures, slides, and review sheets — not the internet.
+              </p>
+            </div>
+            <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2.5">Suggested questions</p>
+            <div className="space-y-2">
+              {SUGGESTED_QUESTIONS.map((q) => (
+                <button key={q} onClick={() => send(q)}
+                  className="w-full flex items-center gap-2.5 text-left px-3.5 py-2.5 bg-gray-50 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 rounded-xl text-xs font-medium text-gray-700 hover:text-indigo-700 transition-all group">
+                  <span className="text-indigo-400 group-hover:text-indigo-600 flex-shrink-0">→</span>
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Chat messages */}
+        {messages.map((m, i) => (
+          <div key={i} className={`flex gap-2.5 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            {m.role === 'ai' && (
+              <div className="w-7 h-7 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+              </div>
+            )}
+            <div className="max-w-[80%]">
+              <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                m.role === 'user'
+                  ? 'bg-indigo-600 text-white rounded-br-sm'
+                  : 'bg-gray-50 border border-gray-100 text-gray-800 rounded-bl-sm'
+              }`}>
+                {m.text}
+              </div>
+              {m.sources && m.sources.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {m.sources.map((s) => (
+                    <span key={s} className="text-[10px] font-medium bg-white border border-indigo-100 text-indigo-600 px-2 py-1 rounded-lg">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            {m.role === 'user' && (
+              <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-xs font-extrabold text-indigo-600">A</span>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Typing indicator */}
+        {loading && (
+          <div className="flex gap-2.5">
+            <div className="w-7 h-7 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+            </div>
+            <div className="bg-gray-50 border border-gray-100 px-4 py-3 rounded-2xl rounded-bl-sm">
+              <div className="flex gap-1 items-center h-4">
+                {[0,1,2].map((i) => (
+                  <div key={i} className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"
+                    style={{ animationDelay:`${i*0.15}s` }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Follow-up chips after reply */}
+        {messages.length > 1 && !loading && (
+          <div className="flex gap-1.5 flex-wrap">
+            {['What about checkpoints?', 'Compare with meiosis', 'Which phases are tested?'].map((q) => (
+              <button key={q} onClick={() => send(q)}
+                className="text-[10px] font-semibold bg-white border border-gray-200 hover:border-indigo-300 hover:text-indigo-600 text-gray-500 px-2.5 py-1.5 rounded-lg transition-all">
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Input — pinned at bottom ───────────────────────────── */}
+      <div className="flex-shrink-0 border-t border-gray-100 px-4 py-3 bg-white">
+        <div className="flex gap-2 items-end">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="Ask a question about this material…"
+            rows={1}
+            className="flex-1 bg-gray-50 border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 outline-none transition-all resize-none"
+          />
+          <button onClick={() => send()}
+            disabled={!input.trim() || loading}
+            className="flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white transition-all shadow-md shadow-indigo-500/20 flex-shrink-0">
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+        <p className="text-[10px] text-gray-400 mt-1.5">↵ Enter to send</p>
+      </div>
+    </div>
+  );
+}
+
+
 /* ─── Teach back with AI evaluation ─────────────────────────── */
 function TeachBack() {
   const [answer,    setAnswer]    = useState('');
@@ -384,6 +588,7 @@ export default function StudyGuidePage() {
     { id:'listen'as StudyMode, icon:Volume2,       label:'Listen'     },
     { id:'quiz'  as StudyMode, icon:Brain,         label:'Quiz me'    },
     { id:'teach' as StudyMode, icon:MessageSquare, label:'Teach back' },
+    { id:'ask'   as StudyMode, icon:Sparkles,      label:'Ask'        },
   ];
 
   return (
@@ -535,6 +740,11 @@ export default function StudyGuidePage() {
             {/* TEACH mode */}
             {mode === 'teach' && (
               <TeachBack />
+            )}
+
+            {/* ASK mode */}
+            {mode === 'ask' && (
+              <AskAI />
             )}
           </div>
 

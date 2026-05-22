@@ -7,7 +7,7 @@ import {
   ChevronRight, Upload, BookOpen, FileText, Mic,
   BarChart2, Target, CheckCircle2, Star, TrendingUp,
   Plus, Search, Brain, Zap, AlertTriangle,
-  GraduationCap, Clock, ArrowLeft, RefreshCw,
+  GraduationCap, Clock, ArrowLeft, RefreshCw, X,
 } from 'lucide-react';
 
 /* ─── Data ───────────────────────────────────────────────────── */
@@ -533,9 +533,123 @@ function ClassDetail({ cls, onBack }: { cls: CLS; onBack: () => void }) {
 /* ══════════════════════════════════════════════════════════════
    LIST PAGE
 ══════════════════════════════════════════════════════════════ */
+/* ─── Add Class Modal ────────────────────────────────────────── */
+function AddClassModal({ onClose }: { onClose: () => void }) {
+  const [name,        setName]        = useState('');
+  const [code,        setCode]        = useState('');
+  const [professor,   setProfessor]   = useState('');
+  const [credits,     setCredits]     = useState('3');
+  const [color,       setColor]       = useState('#534AB7');
+  const [saved,       setSaved]       = useState(false);
+
+  const COLORS = ['#534AB7','#10B981','#F59E0B','#EF4444','#3B82F6','#8B5CF6','#EC4899'];
+
+  const handleSave = () => {
+    if (!name.trim()) return;
+    setSaved(true);
+    setTimeout(onClose, 900);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+        {/* Top strip */}
+        <div className="h-1.5 w-full" style={{ background: color }} />
+
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-extrabold text-gray-900">Add a class</h2>
+            <button onClick={onClose}
+              className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all">
+              <X className="w-4 h-4 text-gray-500" />
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {/* Class name */}
+            <div>
+              <label className="text-xs font-bold text-gray-600 mb-1 block">Class name *</label>
+              <input value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Introduction to Biology"
+                className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 outline-none transition-all" />
+            </div>
+
+            {/* Code + Credits row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-gray-600 mb-1 block">Course code</label>
+                <input value={code} onChange={(e) => setCode(e.target.value)}
+                  placeholder="e.g. BIO 101"
+                  className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 outline-none transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-600 mb-1 block">Credits</label>
+                <select value={credits} onChange={(e) => setCredits(e.target.value)}
+                  className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 outline-none transition-all bg-white">
+                  {['1','2','3','4','5','6'].map((c) => (
+                    <option key={c} value={c}>{c} credits</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Professor */}
+            <div>
+              <label className="text-xs font-bold text-gray-600 mb-1 block">Professor</label>
+              <input value={professor} onChange={(e) => setProfessor(e.target.value)}
+                placeholder="e.g. Dr. Sarah Smith"
+                className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 outline-none transition-all" />
+            </div>
+
+            {/* Color picker */}
+            <div>
+              <label className="text-xs font-bold text-gray-600 mb-2 block">Class colour</label>
+              <div className="flex gap-2">
+                {COLORS.map((c) => (
+                  <button key={c} onClick={() => setColor(c)}
+                    className={`w-7 h-7 rounded-full transition-all ${color === c ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'}`}
+                    style={{ background: c }} />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Tip */}
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3.5 py-2.5 mt-4">
+            <p className="text-xs text-indigo-700 font-medium">
+              💡 After adding, upload your syllabus so Atlas can build your study plan automatically.
+            </p>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-2.5 mt-4">
+            <button onClick={onClose}
+              className="flex-1 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-bold py-2.5 rounded-xl text-sm transition-all">
+              Cancel
+            </button>
+            <button onClick={handleSave} disabled={!name.trim()}
+              className={`flex-1 flex items-center justify-center gap-2 font-bold py-2.5 rounded-xl text-sm transition-all ${
+                saved
+                  ? 'bg-emerald-500 text-white'
+                  : name.trim()
+                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20'
+                  : 'bg-indigo-300 text-white cursor-not-allowed'
+              }`}>
+              {saved ? <><CheckCircle2 className="w-4 h-4" /> Added!</> : <><Plus className="w-4 h-4" /> Add class</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ClassesPage() {
-  const [selected, setSelected] = useState<CLS | null>(null);
-  const [search,   setSearch]   = useState('');
+  const [selected,      setSelected]      = useState<CLS | null>(null);
+  const [search,        setSearch]        = useState('');
+  const [showAddModal,  setShowAddModal]  = useState(false);
 
   const filtered = CLASSES.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -562,7 +676,7 @@ export default function ClassesPage() {
               Fall 2026 · {CLASSES.length} classes · {totalCredits} credits total
             </p>
           </div>
-          <button className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm shadow-indigo-500/20">
+          <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm shadow-indigo-500/20">
             <Plus className="w-4 h-4" /> Add class
           </button>
         </div>
@@ -608,6 +722,9 @@ export default function ClassesPage() {
           ))}
         </div>
       </div>
+
+      {/* ── Add Class Modal ─────────────────────────────────── */}
+      {showAddModal && <AddClassModal onClose={() => setShowAddModal(false)} />}
     </AppLayout>
   );
 }
