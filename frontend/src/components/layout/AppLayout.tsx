@@ -378,3 +378,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+/* ─── Global keyboard shortcuts ─────────────────────────────── */
+// This is exported so it can be used as a hook in any page
+export function useKeyboardShortcuts(shortcuts: Record<string, () => void>) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Don't fire when typing in inputs
+      if (['INPUT','TEXTAREA','SELECT'].includes((e.target as HTMLElement).tagName)) return;
+      const key = `${e.ctrlKey||e.metaKey?'mod+':''}${e.key.toLowerCase()}`;
+      if (shortcuts[key]) { e.preventDefault(); shortcuts[key](); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [shortcuts]);
+}

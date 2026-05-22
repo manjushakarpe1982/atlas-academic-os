@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import {
   RotateCcw, ChevronRight, ChevronLeft,
   CheckCircle2, AlertTriangle, Brain,
-  Sparkles, BookOpen,
+  Sparkles, BookOpen, Copy, Keyboard,
 } from 'lucide-react';
 
 type Rating = 'again' | 'hard' | 'good' | 'easy';
@@ -139,6 +139,9 @@ export default function FlashcardsPage() {
   const [cards,   setCards]   = useState(CARDS.map((c) => ({ ...c, seen:false, rating:undefined as Rating|undefined })));
   const [index,   setIndex]   = useState(0);
   const [flipped, setFlipped] = useState(false);
+
+  // Keyboard shortcuts: Space = flip, 1=Again 2=Hard 3=Good 4=Easy, ←/→ navigate
+
   const [done,    setDone]    = useState(false);
   const [correct, setCorrect] = useState(0);
   const [again,   setAgain]   = useState(0);
@@ -146,6 +149,21 @@ export default function FlashcardsPage() {
   const total   = cards.length;
   const current = cards[index];
   const pct     = Math.round((index / total) * 100);
+
+    useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (done) return;
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!flipped) setFlipped(true); }
+      if (flipped) {
+        if (e.key === '1') rate('again');
+        if (e.key === '2') rate('hard');
+        if (e.key === '3') rate('good');
+        if (e.key === '4') rate('easy');
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [flipped, done]);
 
   const rate = (r: Rating) => {
     setCards((p) => p.map((c, i) => i === index ? { ...c, seen:true, rating:r } : c));
@@ -236,6 +254,11 @@ export default function FlashcardsPage() {
                     {flipped ? 'Answer' : 'Question'}
                   </span>
                   <span className="text-[10px] text-gray-400 font-medium hidden sm:inline">📎 {current.source}</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(flipped ? current.back : current.front); }}
+                    className="p-1.5 rounded-lg hover:bg-gray-100 transition-all group" title="Copy to clipboard">
+                    <Copy className="w-3.5 h-3.5 text-gray-300 group-hover:text-indigo-500" />
+                  </button>
                 </div>
 
                 {/* Content */}
@@ -263,7 +286,11 @@ export default function FlashcardsPage() {
               </div>
             </div>
 
-            {/* ── Rating buttons ───────────────────────────────── */}
+            {/* Keyboard hint */}
+            <p className="text-center text-[10px] text-gray-400 mt-2 hidden sm:block">
+              <kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-[9px] font-mono">Space</kbd> flip &nbsp;
+              {flipped && <><kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-[9px] font-mono">1</kbd>–<kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-[9px] font-mono">4</kbd> rate</>}
+            </p>
             {flipped ? (
               <div className="grid grid-cols-4 gap-2 mt-4">
                 {RATINGS.map((r) => (

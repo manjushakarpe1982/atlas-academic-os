@@ -156,6 +156,32 @@ function ResultsScreen({ answers, onRestart }: {
             </div>
           </div>
 
+          {/* ── Misconception detector ────────────────────────── */}
+          {score < total && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-base">🧠</span>
+                <p className="text-sm font-extrabold text-red-800">Misconception detected</p>
+              </div>
+              <p className="text-xs text-red-600 mb-3">You got these wrong — Atlas detects a pattern, not just a knowledge gap:</p>
+              <div className="space-y-2.5">
+                {QUESTIONS.filter((_,i) => answers[i] !== QUESTIONS[i].correct).map((q, idx) => (
+                  <div key={q.id} className="bg-white border border-red-100 rounded-xl px-3.5 py-3">
+                    <p className="text-xs font-semibold text-gray-800 mb-1">"{q.question}"</p>
+                    <div className="flex items-start gap-2">
+                      <span className="text-[10px] font-bold text-red-600 flex-shrink-0 mt-0.5">✗ You likely think:</span>
+                      <p className="text-[11px] text-red-700">The answer is during Prophase — but it's actually <strong>Prometaphase</strong>. This is a common misconception: the nuclear envelope starts fragmenting in Prophase but fully breaks down in Prometaphase.</p>
+                    </div>
+                    <a href="/study-guide"
+                      className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+                      Fix this misconception → Study Guide
+                    </a>
+                  </div>
+                )).slice(0,2)}
+              </div>
+            </div>
+          )}
+
           {/* ── Per-question review ───────────────────────────── */}
           <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden"
             style={{ animation:'staggerIn 0.4s ease 0.45s both' }}>

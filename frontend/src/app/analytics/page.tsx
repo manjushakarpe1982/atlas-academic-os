@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
-;
+import { PageSkeleton } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import Tooltip from '@/components/Tooltip';
 import { TrendingUp, Clock, BookOpen, Star, BarChart2, Brain, Award, Target, Zap } from 'lucide-react';
-import { PageSkeleton } from '@/components/Skeleton';
 
 type Tab = 'overview' | 'subjects' | 'topics' | 'time';
 
@@ -165,9 +164,8 @@ function StatCard({ icon: Icon, label, value, delta, deltaGood, bg, color }: {
 /* ─── Main ───────────────────────────────────────────────────── */
 export default function AnalyticsPage() {
   const [tab, setTab] = useState<Tab>('overview');
-   const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
-
   if (loading) return <PageSkeleton />;
 
     return (
@@ -316,6 +314,90 @@ export default function AnalyticsPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+
+            {/* Anonymous class benchmark */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-base">🏆</span>
+                <p className="text-sm font-extrabold text-gray-900">How you compare — anonymous</p>
+                <Tooltip text="Compared anonymously against other Atlas students in the same classes. No names, no rankings shared." position="right" width="w-56" />
+              </div>
+              <p className="text-[11px] text-gray-400 mb-4">All comparisons are fully anonymous · opt-out in Privacy settings</p>
+              <div className="space-y-3">
+                {[
+                  { class:'Biology 101',    mastery:65, rank:28, total:100, color:'bg-indigo-500' },
+                  { class:'Statistics 201', mastery:72, rank:35, total:100, color:'bg-emerald-500' },
+                  { class:'English 301',    mastery:58, rank:44, total:100, color:'bg-blue-500'   },
+                ].map((c) => (
+                  <div key={c.class} className="flex items-center gap-3">
+                    <div className="w-28 flex-shrink-0">
+                      <p className="text-xs font-semibold text-gray-800 truncate">{c.class}</p>
+                      <p className="text-[10px] text-gray-400">Top {c.rank}% of students</p>
+                    </div>
+                    <div className="flex-1 relative h-5 bg-gray-100 rounded-full overflow-hidden">
+                      {/* Class average line */}
+                      <div className="absolute top-0 bottom-0 w-0.5 bg-gray-400 z-10" style={{ left:'50%' }} />
+                      {/* Your position */}
+                      <div className={`absolute top-1 bottom-1 ${c.color} rounded-full transition-all`}
+                        style={{ left:0, width:`${100-c.rank}%` }} />
+                    </div>
+                    <span className={`text-xs font-extrabold flex-shrink-0 ${c.rank<=33?'text-emerald-600':c.rank<=66?'text-amber-600':'text-red-500'}`}>
+                      {c.rank <= 33 ? '🟢' : c.rank <= 66 ? '🟡' : '🔴'} Top {c.rank}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Confidence calibration chart */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-base">🎯</span>
+                <p className="text-sm font-extrabold text-gray-900">Confidence calibration</p>
+                <Tooltip text="How accurate your self-confidence is before quizzes. Perfect calibration = the diagonal line. Above = overconfident. Below = underconfident." position="right" width="w-60" />
+              </div>
+              <p className="text-[11px] text-gray-400 mb-4">Your self-rated confidence vs actual quiz score — per topic</p>
+              <div className="relative">
+                <svg viewBox="0 0 200 120" className="w-full h-32">
+                  {/* Grid */}
+                  {[0,50,100].map((v) => (
+                    <g key={v}>
+                      <line x1={v*2} y1="0" x2={v*2} y2="100" stroke="#f3f4f6" strokeWidth="1" />
+                      <line x1="0" y1={100-v} x2="200" y2={100-v} stroke="#f3f4f6" strokeWidth="1" />
+                    </g>
+                  ))}
+                  {/* Perfect calibration diagonal */}
+                  <line x1="0" y1="100" x2="200" y2="0" stroke="#e5e7eb" strokeWidth="1.5" strokeDasharray="4,3" />
+                  {/* Data points */}
+                  {[
+                    { confidence:80, actual:91, topic:'Mitosis',    overconfident:false },
+                    { confidence:70, actual:62, topic:'Enzyme K.',  overconfident:true  },
+                    { confidence:50, actual:78, topic:'Cell Resp.', overconfident:false },
+                    { confidence:90, actual:85, topic:'DNA Rep.',   overconfident:true  },
+                    { confidence:40, actual:55, topic:'Krebs',      overconfident:false },
+                  ].map((d, i) => (
+                    <g key={i}>
+                      <circle
+                        cx={d.confidence * 2} cy={100 - d.actual}
+                        r="5" fill={d.overconfident ? '#F59E0B' : '#4F46E5'}
+                        stroke="white" strokeWidth="1.5"
+                      />
+                    </g>
+                  ))}
+                  {/* Axes labels */}
+                  <text x="100" y="115" textAnchor="middle" fontSize="8" fill="#9ca3af">Self-confidence →</text>
+                  <text x="8" y="50" textAnchor="middle" fontSize="8" fill="#9ca3af" transform="rotate(-90 8 50)">Actual score</text>
+                </svg>
+              </div>
+              <div className="flex items-center gap-4 mt-2 text-[10px] text-gray-500">
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500" /><span>Well calibrated</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-500" /><span>Overconfident</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-8 h-px bg-gray-300" style={{borderTop:'1.5px dashed #d1d5db'}} /><span>Perfect line</span></div>
+              </div>
+              <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5">
+                <p className="text-[11px] text-amber-700 font-semibold">⚠️ You tend to be overconfident on Enzyme Kinetics — you rated 70% confidence but scored 62%. Study this more before exams.</p>
               </div>
             </div>
           </div>
@@ -524,6 +606,6 @@ export default function AnalyticsPage() {
       </div>
     </AppLayout>
   );
- 
+
 
 }

@@ -174,7 +174,12 @@ function ResultsScreen({ answers, flagged, timeTaken, onRetry, writtenAnswers, e
   timeTaken: number; onRetry: () => void;
   writtenAnswers?: string[]; examType?: string;
 }) {
-  const [selfGrades, setSelfGrades] = useState<Record<number,number>>({});
+  const [selfGrades,   setSelfGrades]   = useState<Record<number,number>>({});
+  const [showReflect,  setShowReflect]  = useState(true);
+  const [confidence,   setConfidence]   = useState(0);
+  const [feeling,      setFeeling]      = useState('');
+  const [surprise,     setSurprise]     = useState('');
+  const [reflectDone,  setReflectDone]  = useState(false);
   const isWritten = examType === 'written' || examType === 'solve';
 
   const score  = isWritten
@@ -243,6 +248,67 @@ function ResultsScreen({ answers, flagged, timeTaken, onRetry, writtenAnswers, e
           </div>
         </div>
       </div>
+
+      {/* ── Post-exam reflection ──────────────────────────────── */}
+      {showReflect && !reflectDone && (
+        <div className="bg-white border border-indigo-200 rounded-3xl shadow-sm overflow-hidden mb-4">
+          <div className="h-1 bg-gradient-to-r from-indigo-500 to-violet-500" />
+          <div className="px-6 py-5">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">🪞</span>
+              <p className="text-sm font-extrabold text-gray-900">Quick reflection — 30 seconds</p>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">This feeds Atlas's engine to improve future predictions. Takes 3 taps.</p>
+
+            {/* Q1 — confidence before */}
+            <div className="mb-4">
+              <p className="text-xs font-bold text-gray-700 mb-2">How confident did you feel going in?</p>
+              <div className="flex gap-2">
+                {[{v:1,l:'😰 Not ready'},{v:2,l:'😐 Unsure'},{v:3,l:'😊 Prepared'},{v:4,l:'💪 Very ready'}].map((o) => (
+                  <button key={o.v} onClick={() => setConfidence(o.v)}
+                    className={`flex-1 text-[10px] font-semibold py-2 px-1 rounded-xl border-2 transition-all text-center ${
+                      confidence === o.v ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-indigo-200'
+                    }`}>{o.l}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Q2 — how did it go */}
+            <div className="mb-4">
+              <p className="text-xs font-bold text-gray-700 mb-2">How do you think the exam went?</p>
+              <div className="flex gap-2">
+                {['😓 Harder than expected','😐 About as expected','😊 Easier than expected'].map((f) => (
+                  <button key={f} onClick={() => setFeeling(f)}
+                    className={`flex-1 text-[10px] font-semibold py-2 px-1 rounded-xl border-2 transition-all text-center leading-tight ${
+                      feeling === f ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-indigo-200'
+                    }`}>{f}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Q3 — surprises */}
+            <div className="mb-4">
+              <p className="text-xs font-bold text-gray-700 mb-2">Any surprise topics on the exam?</p>
+              <input value={surprise} onChange={(e) => setSurprise(e.target.value)}
+                placeholder="e.g. Cell checkpoints weren't in my study guide"
+                className="w-full border border-gray-200 focus:border-indigo-400 rounded-xl px-3.5 py-2.5 text-xs text-gray-800 placeholder:text-gray-400 outline-none transition-all" />
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => { setReflectDone(true); setShowReflect(false); }}
+                disabled={confidence === 0 || !feeling}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white font-bold py-2.5 rounded-xl text-sm transition-all">
+                Save reflection ✓
+              </button>
+              <button onClick={() => setShowReflect(false)}
+                className="text-xs text-gray-400 hover:text-gray-600 px-4 transition-colors">
+                Skip
+              </button>
+            </div>
+            <p className="text-[10px] text-gray-400 mt-2">📊 Atlas uses this to calibrate your grade predictions</p>
+          </div>
+        </div>
+      )}
 
       {/* ── Per-question review ───────────────────────────────── */}
       <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">

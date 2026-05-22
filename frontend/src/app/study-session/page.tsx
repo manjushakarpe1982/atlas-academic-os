@@ -54,6 +54,52 @@ function fmt(s: number) {
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
+/* ─── Micro journal ──────────────────────────────────────────── */
+function MicroJournal() {
+  const [entry,  setEntry]  = useState('');
+  const [saved,  setSaved]  = useState(false);
+  const maxChars = 140;
+
+  const save = () => {
+    if (!entry.trim()) return;
+    setSaved(true);
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-indigo-100 rounded-2xl p-4">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-base">✍️</span>
+        <p className="text-xs font-extrabold text-indigo-900">One thing I learned today</p>
+      </div>
+      <p className="text-[10px] text-indigo-500 mb-3">One sentence — builds your study diary over the semester</p>
+
+      {!saved ? (
+        <>
+          <textarea
+            value={entry}
+            onChange={(e) => setEntry(e.target.value.slice(0, maxChars))}
+            placeholder="e.g. Kinetochore microtubules pull in anaphase, not spindle fibres"
+            className="w-full bg-white/80 border border-indigo-200 focus:border-indigo-500 rounded-xl px-3 py-2.5 text-xs text-gray-800 placeholder:text-gray-400 outline-none resize-none transition-all"
+            rows={2}
+          />
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-[10px] text-indigo-400">{entry.length}/{maxChars}</span>
+            <button onClick={save} disabled={!entry.trim()}
+              className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white px-3.5 py-1.5 rounded-xl transition-all">
+              Save ✓
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="bg-white/80 border border-indigo-200 rounded-xl px-3 py-2.5">
+          <p className="text-xs text-indigo-800 italic">"{entry}"</p>
+          <p className="text-[10px] text-indigo-400 mt-1">✓ Added to your study diary</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StudySessionPage() {
   const router = useRouter();
   const [seconds, setSeconds] = useState(GOAL_SECS);
@@ -244,6 +290,9 @@ export default function StudySessionPage() {
               />
               <p className="text-[10px] text-gray-400 mt-1.5">Notes are saved with your session summary</p>
             </div>
+
+            {/* ── Micro-journal ──────────────────────────────── */}
+            <MicroJournal />
           </div>
 
           {/* ── Right sidebar ────────────────────────────────── */}
