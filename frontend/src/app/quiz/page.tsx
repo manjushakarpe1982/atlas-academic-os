@@ -245,11 +245,48 @@ export default function QuizPage() {
   const q     = QUESTIONS[index];
   const total = QUESTIONS.length;
 
+  // Web Audio API sound effects — no external files needed
+  const playSound = (correct: boolean) => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (correct) {
+        // Correct — two ascending pleasant tones
+        [0, 0.12].forEach((delay, i) => {
+          const osc  = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(i === 0 ? 523 : 659, ctx.currentTime + delay); // C5 → E5
+          gain.gain.setValueAtTime(0.25, ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.25);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + 0.25);
+        });
+      } else {
+        // Wrong — low descending tone
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.35);
+      }
+    } catch (_) { /* Audio not supported — fail silently */ }
+  };
+
   const handleSelect = (opt:number) => {
     if (answered !== 'unanswered') return;
+    const isCorrect = opt === q.correct;
     setSelected(opt);
-    setAnswered(opt === q.correct ? 'correct' : 'wrong');
+    setAnswered(isCorrect ? 'correct' : 'wrong');
     setAnswers((p) => { const n=[...p]; n[index]=opt; return n; });
+    playSound(isCorrect);
   };
 
   const goNext = () => {
