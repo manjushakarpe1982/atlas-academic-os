@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
+
 import {
   BookOpen, CheckCircle2, ChevronRight, Flag,
   Brain, AlertTriangle, Star, RefreshCw,
   ChevronDown, ChevronUp, Volume2,
   MessageSquare, X, Send, Sparkles,
 } from 'lucide-react';
+import Tooltip from '@/components/Tooltip';
 
 type StudyMode = 'read' | 'listen' | 'quiz' | 'teach' | 'ask';
 
@@ -557,6 +559,27 @@ function TeachBack() {
         </div>
       )}
     </div>
+  );
+}
+
+/* ─── Flag unclear signal button ─────────────────────────────── */
+function FlagUnclearButton({ sectionId }: { sectionId: string }) {
+  const [flagged, setFlagged] = useState(false);
+  return (
+    <Tooltip
+      text="Flag this section as unclear. Atlas will go deeper on this topic and increase its engine priority score."
+      position="top"
+      width="w-60">
+      <button onClick={() => setFlagged(!flagged)}
+        className={`flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-xl border transition-all ${
+          flagged
+            ? 'bg-amber-50 border-amber-300 text-amber-700'
+            : 'bg-white border-gray-200 text-gray-400 hover:border-amber-300 hover:text-amber-600'
+        }`}>
+        <AlertTriangle className="w-3.5 h-3.5" />
+        {flagged ? 'Flagged unclear' : 'Flag unclear'}
+      </button>
+    </Tooltip>
   );
 }
 

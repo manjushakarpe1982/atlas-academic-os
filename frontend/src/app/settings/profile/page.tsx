@@ -26,13 +26,13 @@ function Card({ title, icon: Icon, iconBg, children }: {
   return (
     <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
       {/* Card header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-50">
+      <div className="flex items-center gap-3 px-4 md:px-6 py-3.5 border-b border-gray-50">
         <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
           <Icon className="w-4 h-4 text-white" />
         </div>
         <p className="text-sm font-bold text-gray-900">{title}</p>
       </div>
-      <div className="px-6 py-5">{children}</div>
+      <div className="px-4 md:px-6 py-4">{children}</div>
     </div>
   );
 }
@@ -148,7 +148,7 @@ export default function ProfileSettings() {
         <Card title="Your Profile" icon={User} iconBg="bg-indigo-500">
 
           {/* Avatar row */}
-          <div className="flex items-center gap-5 mb-6 pb-6 border-b border-gray-50">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-5 pb-5 border-b border-gray-50">
             {/* Avatar circle */}
             <div className="relative flex-shrink-0">
               <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -164,7 +164,7 @@ export default function ProfileSettings() {
                 <Camera className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
               {/* Hidden file input */}
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+              <input aria-describedby="profile-form" ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
             </div>
 
             {/* Info */}
@@ -190,7 +190,7 @@ export default function ProfileSettings() {
           </div>
 
           {/* Name fields */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <Field label="First name">
               <input className={INP} value={firstName}
                 onChange={(e) => setFirstName(e.target.value)} placeholder="Jordan" />
@@ -243,7 +243,7 @@ export default function ProfileSettings() {
               </div>
             </Field>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Field of study">
                 <input className={INP} value={fieldStudy}
                   onChange={(e) => setFieldStudy(e.target.value)}
@@ -320,7 +320,7 @@ export default function ProfileSettings() {
               </div>
             </Field>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="New password" hint="Min 8 characters">
                 <div className="relative">
                   <input type={showNew ? 'text' : 'password'}
@@ -351,16 +351,16 @@ export default function ProfileSettings() {
           </div>
 
           <button onClick={changePassword}
-            className="mt-4 flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-orange-500/20">
+            className="mt-4 w-full sm:w-auto flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-orange-500/20">
             <Lock className="w-4 h-4" /> Update password
           </button>
         </Card>
 
         {/* ── Save button ──────────────────────────────────── */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
           <p className="text-xs text-gray-400">Your profile changes are saved when you click below</p>
           <button onClick={save}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20 active:scale-95">
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20 active:scale-95">
             <CheckCircle2 className="w-4 h-4" /> Save changes
           </button>
         </div>

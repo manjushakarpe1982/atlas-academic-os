@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
+
 import {
   ChevronRight, Upload, BookOpen, FileText, Mic,
   BarChart2, Target, CheckCircle2, Star, TrendingUp,
   Plus, Search, Brain, Zap, AlertTriangle,
   GraduationCap, Clock, ArrowLeft, RefreshCw, X,
 } from 'lucide-react';
+import Tooltip from '@/components/Tooltip';
 
 /* ─── Data ───────────────────────────────────────────────────── */
 const CLASSES = [
@@ -190,7 +192,7 @@ function ClassCard({ cls, onClick }: { cls: CLS; onClick: () => void }) {
             <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1">
               <Star className="w-3 h-3 text-indigo-500 fill-indigo-500" />
               <span className="text-[10px] font-extrabold text-indigo-700">
-                Predicted: {cls.examPrediction}
+                Predicted: {cls.examPrediction} <span className="text-gray-400 font-normal text-[10px]">(CI: {Math.round(cls.examPrediction-5)}–{Math.round(cls.examPrediction+5)})</span>
               </span>
             </div>
           ) : (
@@ -288,7 +290,7 @@ function ClassDetail({ cls, onBack }: { cls: CLS; onBack: () => void }) {
               </div>
               <div className="bg-white border border-indigo-200 rounded-xl px-3 py-1.5 text-center flex-shrink-0">
                 <p className="text-xl font-extrabold text-indigo-700">{cls.examPrediction}</p>
-                <p className="text-[9px] text-indigo-500">Predicted</p>
+                <p className="text-[9px] text-indigo-500">Predicted (CI ±5)</p>
               </div>
             </div>
           )}
@@ -317,6 +319,31 @@ function ClassDetail({ cls, onBack }: { cls: CLS; onBack: () => void }) {
           {/* OVERVIEW */}
           {tab === 'overview' && (
             <div className="space-y-4">
+              {/* Professor emphasis signals */}
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-base">📢</span>
+                  <p className="text-xs font-extrabold text-amber-800">Professor emphasis signals</p>
+                  <Tooltip text="Verbatim phrases extracted from lecture recordings. These are the strongest predictors of what appears on exams." position="right" width="w-60" />
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { quote:"this is the part I love testing",     topic:"Mitosis",             lecture:"Lecture 8",  high:true  },
+                    { quote:"make sure you know this equation",    topic:"Enzyme Kinetics",     lecture:"Lecture 11", high:true  },
+                    { quote:"we'll come back to this on the exam", topic:"Cellular Respiration",lecture:"Lecture 9",  high:false },
+                  ].map((s, i) => (
+                    <div key={i} className={`flex items-start gap-2.5 bg-white border rounded-xl px-3 py-2.5 ${s.high ? "border-amber-200" : "border-gray-100"}`}>
+                      <span className="text-sm flex-shrink-0">💬</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-800 italic">"{s.quote}"</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{s.topic} · {s.lecture}</p>
+                      </div>
+                      {s.high && <span className="text-[9px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full flex-shrink-0 mt-0.5">Exam signal</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm font-extrabold text-gray-900">📚 Topics — by priority</p>

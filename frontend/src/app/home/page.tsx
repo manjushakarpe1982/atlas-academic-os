@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
+import Tooltip from '@/components/Tooltip';
 import {
   Play, SkipForward, Info, ChevronRight, ChevronDown, AlertTriangle,
   Clock, Zap, Brain, Search,
@@ -99,6 +100,94 @@ function MiniBarChart({ data }: { data: { day: string; hrs: number }[] }) {
   );
 }
 
+/* ─── What can I skip today? ─────────────────────────────────── */
+function SkipTodayCard() {
+  const [open, setOpen] = useState(false);
+  const SKIPPABLE = [
+    { topic:'Krebs Cycle',     class:'Biology 101',    mastery:72, reason:'Already strong at 72% — skim later this week',    safe:true  },
+    { topic:'English Essay outline', class:'English 301', mastery:65, reason:'Due Monday — safe to push to Sunday evening',   safe:true  },
+    { topic:'Stats Ch.9 reading',class:'Statistics 201', mastery:60, reason:'Low quiz value — covers it again next week',     safe:true  },
+    { topic:'Mitosis',         class:'Biology 101',    mastery:28, reason:'Exam Thursday — skipping this risks your grade',   safe:false },
+  ];
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-4">
+      <button onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-all">
+        <div className="flex items-center gap-2.5">
+          <span className="text-base">⏭</span>
+          <div className="text-left">
+            <p className="text-sm font-extrabold text-gray-900">What can I skip today?</p>
+            <p className="text-[10px] text-gray-400">Atlas identifies your lowest-risk tasks to drop</p>
+          </div>
+        </div>
+        <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0 ${open ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}>
+          {open ? '▲ Close' : '▼ Show'}
+        </span>
+      </button>
+      {open && (
+        <div className="border-t border-gray-50 divide-y divide-gray-50">
+          {SKIPPABLE.map((s) => (
+            <div key={s.topic} className={`flex items-start gap-3 px-4 py-3 ${s.safe ? 'hover:bg-gray-50' : 'bg-red-50/30'}`}>
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${s.safe ? 'bg-emerald-100' : 'bg-red-100'}`}>
+                <span className="text-[10px]">{s.safe ? '✓' : '✗'}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-gray-900">{s.topic}</p>
+                  <span className="text-[9px] font-bold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">{s.class}</span>
+                  <span className="text-[9px] font-bold text-gray-400">{s.mastery}% mastery</span>
+                </div>
+                <p className={`text-[11px] mt-0.5 ${s.safe ? 'text-gray-500' : 'text-red-600 font-semibold'}`}>{s.reason}</p>
+              </div>
+              {s.safe && (
+                <button className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:bg-indigo-50 px-2.5 py-1 rounded-lg transition-all flex-shrink-0">
+                  Skip
+                </button>
+              )}
+            </div>
+          ))}
+          <div className="px-4 py-2.5 bg-gray-50/50">
+            <p className="text-[10px] text-gray-400">⚠️ Skipping tasks with exams in &lt;3 days is not recommended by Atlas.</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Streak & milestone banner ─────────────────────────────── */
+function StreakBanner() {
+  const streak = 5;
+  const milestones = [
+    { days:3,  label:'3-day streak',  done:true  },
+    { days:7,  label:'Week warrior',  done:false },
+    { days:14, label:'2-week grind',  done:false },
+    { days:30, label:'Month master',  done:false },
+  ];
+  const next = milestones.find((m) => !m.done);
+  const pct  = next ? Math.round((streak / next.days) * 100) : 100;
+
+  return (
+    <div className="bg-white border border-orange-200 rounded-2xl px-4 py-3.5 flex items-center gap-3 mb-4">
+      <div className="w-10 h-10 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+        <span className="text-xl">🔥</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <p className="text-sm font-extrabold text-gray-900">{streak}-day study streak</p>
+          <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Active</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width:`${pct}%` }} />
+          </div>
+          <p className="text-[10px] text-gray-400 whitespace-nowrap">{streak}/{next?.days} → 🏆 {next?.label}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Hero task ──────────────────────────────────────────────── */
 function HeroTask({ task, onStart, onSkip }: {
   task: typeof TODAY_TASKS[0];
@@ -147,7 +236,7 @@ function HeroTask({ task, onStart, onSkip }: {
         <div className="flex items-center gap-2">
           <span className="text-base">🔍</span>
           <span className="text-sm font-bold">Why is this task #1?</span>
-          <span className="text-[11px] text-gray-400 hidden sm:inline">— see the engine breakdown</span>
+          <Tooltip text="The engine ranks tasks using 4 signals: Mastery (how well you know it), Emphasis (professor weight), Proximity (how soon you're tested), and Urgency (overall class pressure)." position="right" width="w-64" />
         </div>
         <ChevronDown className={`w-4 h-4 flex-shrink-0 transition-transform ${showEngine ? 'rotate-180 text-indigo-600' : 'text-gray-400'}`} />
       </button>

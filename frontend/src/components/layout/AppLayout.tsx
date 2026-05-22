@@ -7,7 +7,7 @@ import {
   LayoutDashboard, BookOpen, Calendar, BarChart2,
   Settings, Bell, Upload, ChevronDown, ChevronRight,
   FileUp, GraduationCap, Layers, Zap, Brain,
-  HelpCircle, X, Menu, Activity, CheckCircle2, AlertTriangle, Clock,
+  HelpCircle, X, Menu, Activity, CheckCircle2, AlertTriangle, Clock, TrendingUp,
 } from 'lucide-react';
 
 // Alias so we can use BookOpen in both MAIN_NAV and STUDY_NAV
@@ -25,11 +25,12 @@ const NOTIFS = [
 
 /* ─── Nav structure ──────────────────────────────────────────── */
 const MAIN_NAV = [
-  { href: '/home',          icon: LayoutDashboard, label: 'Dashboard',   desc: 'Your daily study plan'     },
-  { href: '/classes',       icon: BookOpen,        label: 'Classes',     desc: 'All your class workspaces' },
-  { href: '/calendar',      icon: Calendar,        label: 'Calendar',    desc: 'Week view & deadlines'     },
-  { href: '/grades',        icon: BarChart2,       label: 'Grades',      desc: 'Grade tracker & GPA'       },
-  { href: '/analytics',     icon: Activity,        label: 'Analytics',   desc: 'Progress & insights'       },
+  { href: '/home',           icon: LayoutDashboard, label: 'Dashboard',      desc: 'Your daily study plan'     },
+  { href: '/classes',        icon: BookOpen,        label: 'Classes',        desc: 'All your class workspaces' },
+  { href: '/calendar',       icon: Calendar,        label: 'Calendar',       desc: 'Week view & deadlines'     },
+  { href: '/grades',         icon: BarChart2,       label: 'Grades',         desc: 'Grade tracker & GPA'       },
+  { href: '/analytics',      icon: Activity,        label: 'Analytics',      desc: 'Progress & insights'       },
+  { href: '/weekly-review',  icon: TrendingUp,      label: 'Weekly Review',  desc: 'Your week in summary'      },
 ];
 
 const STUDY_NAV = [
@@ -77,7 +78,7 @@ function MobileTabBar({ pathname }: { pathname: string }) {
   ];
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 flex md:hidden z-40 safe-area-pb">
+    <nav aria-label="Main navigation" className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 flex md:hidden z-40 safe-area-pb">
       {tabs.map((t) => {
         const active = pathname === t.href || pathname.startsWith(t.href + '/');
         return (

@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
+
 import AskAIWidget, { AskAIInline } from '@/components/AskAIWidget';
 import {
   Play, ChevronRight, Brain, Clock, AlertTriangle,
   Zap, Sparkles, BookOpen, SkipForward, ChevronDown,
 } from 'lucide-react';
+import Tooltip from '@/components/Tooltip';
 
 /* ─── Data ───────────────────────────────────────────────────── */
 const TASKS = [
@@ -148,15 +150,24 @@ function TaskCard({ task, isHero, onStart }: {
               className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-indigo-500/20 flex-1 sm:flex-none">
               <Play className="w-3.5 h-3.5" /> Start This Topic
             </button>
-            <button className="flex items-center gap-1.5 border border-gray-200 hover:border-red-300 hover:text-red-500 text-gray-500 font-semibold px-4 py-2.5 rounded-xl text-xs transition-all">
-              <SkipForward className="w-3.5 h-3.5" /> Skip
-            </button>
+            <Tooltip text="Skip this task today — Atlas reschedules it and recalculates your plan." position="top" width="w-52">
+              <button className="flex items-center gap-1.5 border border-gray-200 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 text-gray-400 font-semibold px-4 py-2.5 rounded-xl text-xs transition-all">
+                <SkipForward className="w-3.5 h-3.5" /> Skip today
+              </button>
+            </Tooltip>
           </div>
         ) : (
-          <button onClick={onStart}
-            className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded-xl transition-all -ml-1">
-            <BookOpen className="w-3.5 h-3.5" /> Study this topic
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={onStart}
+              className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded-xl transition-all -ml-1">
+              <BookOpen className="w-3.5 h-3.5" /> Study this topic
+            </button>
+            <Tooltip text="Skip this task today — Atlas reschedules it and recalculates your plan." position="top" width="w-52">
+              <button className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400 hover:text-amber-600 hover:bg-amber-50 border border-transparent hover:border-amber-200 px-3 py-1.5 rounded-xl transition-all">
+                <SkipForward className="w-3 h-3" /> Skip
+              </button>
+            </Tooltip>
+          </div>
         )}
       </div>
     </div>
@@ -245,7 +256,8 @@ export default function StudyPlanPage() {
           {/* Right sidebar */}
           <div className="lg:w-[220px] lg:flex-shrink-0 space-y-3">
 
-         
+            {/* Ask AI */}
+            <AskAIWidget context="study-plan" />
             <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
               <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">
                 Today&apos;s Plan

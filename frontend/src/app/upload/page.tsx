@@ -285,7 +285,7 @@ function DropZone({ onUpload }: { onUpload: (name:string) => void }) {
     <div
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
-      onDrop={handleDrop}
+      onDrop={handleDrop} role="button" aria-label="Upload files — drag and drop or click to browse" tabIndex={0}
       onClick={() => inputRef.current?.click()}
       className={`border-2 border-dashed rounded-2xl p-6 md:p-8 text-center cursor-pointer transition-all ${
         dragging

@@ -6,6 +6,8 @@ import {
   BarChart2, Trophy, Zap, X, AlertTriangle,
 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
+import Tooltip from '@/components/Tooltip';
+
 
 /* ─── Data ───────────────────────────────────────────────────── */
 const CLASSES = [
@@ -323,6 +325,67 @@ function ClassRow({ cls, onAddGrade }: { cls: typeof CLASSES[0]; onAddGrade: () 
 }
 
 /* ─── Main ───────────────────────────────────────────────────── */
+/* ─── What-if grade simulator ───────────────────────────────── */
+function WhatIfSimulator() {
+  const [examScore, setExamScore] = useState(85);
+  const [show,      setShow]      = useState(false);
+
+  // Current: 87.2% — weights: Exams 40%, HW 30%, Quizzes 20%, Lab 10%
+  // Exam 2 is 20% of final grade
+  const currentGrade = 87.2;
+  const examWeight   = 0.20;
+  const otherWeight  = 1 - examWeight;
+  const projected    = currentGrade * otherWeight + examScore * examWeight;
+  const letter       = projected >= 93 ? 'A' : projected >= 90 ? 'A−' : projected >= 87 ? 'B+' : projected >= 83 ? 'B' : projected >= 80 ? 'B−' : projected >= 77 ? 'C+' : 'C';
+  const letterColor  = projected >= 90 ? 'text-emerald-600' : projected >= 80 ? 'text-indigo-600' : 'text-amber-600';
+
+  return (
+    <div className="bg-white border border-indigo-200 rounded-2xl p-4 shadow-sm mb-4">
+      <button onClick={() => setShow(!show)}
+        className="w-full flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-base">🎯</span>
+          <p className="text-sm font-extrabold text-gray-900">What-if grade simulator</p>
+          <Tooltip text="Slide to a hypothetical exam score and instantly see what your final grade would be." position="right" width="w-56" />
+        </div>
+        <span className="text-[10px] font-semibold text-indigo-500">{show ? '▲ Hide' : '▼ Try it'}</span>
+      </button>
+
+      {show && (
+        <div className="mt-4 space-y-4">
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs font-semibold text-indigo-800">If I score on Exam 2:</p>
+              <span className="text-lg font-extrabold text-indigo-700">{examScore}%</span>
+            </div>
+            <input type="range" min={0} max={100} value={examScore}
+              onChange={(e) => setExamScore(Number(e.target.value))}
+              className="w-full accent-indigo-600 cursor-pointer" />
+            <div className="flex justify-between text-[9px] text-indigo-400 mt-0.5">
+              <span>0%</span><span>50%</span><span>100%</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between bg-white border-2 border-indigo-200 rounded-xl px-4 py-3">
+            <div>
+              <p className="text-[10px] text-gray-400 mb-0.5">Projected final grade</p>
+              <p className="text-2xl font-extrabold text-gray-900">{projected.toFixed(1)}%</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] text-gray-400 mb-0.5">Letter grade</p>
+              <p className={`text-3xl font-extrabold ${letterColor}`}>{letter}</p>
+            </div>
+          </div>
+
+          {projected >= 90 && <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">🎉 Score {examScore}%+ on Exam 2 to finish with an A!</p>}
+          {projected >= 80 && projected < 90 && <p className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">💪 You need {Math.ceil((90 - currentGrade * otherWeight) / examWeight)}% on Exam 2 to reach an A−.</p>}
+          {projected < 80 && <p className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">⚠️ Score at least {Math.ceil((80 - currentGrade * otherWeight) / examWeight)}% to stay above a B−.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GradesPage() {
   const [showModal, setShowModal] = useState(false);
 
