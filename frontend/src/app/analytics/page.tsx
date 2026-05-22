@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
+;
 import EmptyState from '@/components/EmptyState';
 import Tooltip from '@/components/Tooltip';
 import { TrendingUp, Clock, BookOpen, Star, BarChart2, Brain, Award, Target, Zap } from 'lucide-react';
+import { PageSkeleton } from '@/components/Skeleton';
 
 type Tab = 'overview' | 'subjects' | 'topics' | 'time';
 
@@ -163,8 +165,12 @@ function StatCard({ icon: Icon, label, value, delta, deltaGood, bg, color }: {
 /* ─── Main ───────────────────────────────────────────────────── */
 export default function AnalyticsPage() {
   const [tab, setTab] = useState<Tab>('overview');
+   const [loading, setLoading] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
 
-  return (
+  if (loading) return <PageSkeleton />;
+
+    return (
     <AppLayout>
       <div className="p-4 md:p-6 max-w-[1200px] mx-auto">
 
@@ -445,26 +451,50 @@ export default function AnalyticsPage() {
                 <BarChart data={WEEKLY} />
               </div>
 
-              {/* Time of day */}
+              {/* Time of day performance */}
               <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-                <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-4">Study by time of day</p>
-                <div className="space-y-3.5">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest">Performance by time of day</p>
+                  <Tooltip text="Shows when you study most (hours) vs when you actually score best on quizzes. The gap reveals your optimal study time." position="top" width="w-60" />
+                </div>
+                <p className="text-[10px] text-gray-400 mb-4">Hours studied vs quiz score at each time</p>
+                <div className="space-y-3">
                   {[
-                    { label:'🌅 Morning  (6–12)',    hrs:3.2, pct:25, color:'bg-amber-400'   },
-                    { label:'☀️ Afternoon (12–6)',   hrs:4.1, pct:33, color:'bg-orange-400'  },
-                    { label:'🌙 Evening   (6–10)',   hrs:4.8, pct:39, color:'bg-indigo-500'  },
-                    { label:'🌌 Late night (10–2)',  hrs:0.4, pct:3,  color:'bg-purple-400'  },
+                    { label:'🌅 Morning  6–12',  hrs:3.2, score:78, scoreColor:'text-amber-600',  hrsBar:'bg-indigo-300' },
+                    { label:'☀️ Afternoon 12–6', hrs:4.1, score:72, scoreColor:'text-red-500',    hrsBar:'bg-indigo-400' },
+                    { label:'🌙 Evening  6–10',  hrs:4.8, score:91, scoreColor:'text-emerald-600',hrsBar:'bg-indigo-500' },
+                    { label:'🌌 Late night 10–2',hrs:0.4, score:61, scoreColor:'text-red-500',    hrsBar:'bg-indigo-200' },
                   ].map((s) => (
                     <div key={s.label}>
-                      <div className="flex justify-between text-xs mb-1.5">
+                      <div className="flex justify-between text-xs mb-1">
                         <span className="text-gray-600 font-medium">{s.label}</span>
-                        <span className="font-extrabold text-gray-800">{s.hrs}h</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-400">{s.hrs}h studied</span>
+                          <span className={`font-extrabold ${s.scoreColor}`}>{s.score}% avg score</span>
+                        </div>
                       </div>
-                      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full ${s.color} rounded-full`} style={{ width:`${s.pct}%` }} />
+                      <div className="flex gap-1 h-3">
+                        {/* Hours bar */}
+                        <div className="flex-1 bg-gray-100 rounded-full overflow-hidden">
+                          <div className={`h-full ${s.hrsBar} rounded-full`} style={{ width:`${(s.hrs/5)*100}%` }} />
+                        </div>
+                        {/* Score bar */}
+                        <div className="flex-1 bg-gray-100 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${s.score>=85?'bg-emerald-500':s.score>=75?'bg-amber-400':'bg-red-400'}`}
+                            style={{ width:`${s.score}%` }} />
+                        </div>
                       </div>
                     </div>
                   ))}
+                </div>
+                {/* Insight */}
+                <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2.5">
+                  <p className="text-xs font-bold text-emerald-800 mb-0.5">💡 Your insight</p>
+                  <p className="text-[11px] text-emerald-700">You study most at <strong>6–10pm</strong> and score best then too (91%). But you study 4h in the afternoon and only score 72%. Shift afternoon study to evening for better results.</p>
+                </div>
+                <div className="flex items-center gap-3 mt-2.5 text-[10px] text-gray-400">
+                  <div className="flex items-center gap-1"><div className="w-3 h-2 rounded bg-indigo-400" /><span>Hours studied</span></div>
+                  <div className="flex items-center gap-1"><div className="w-3 h-2 rounded bg-emerald-400" /><span>Quiz score</span></div>
                 </div>
               </div>
             </div>
@@ -494,4 +524,6 @@ export default function AnalyticsPage() {
       </div>
     </AppLayout>
   );
+ 
+
 }

@@ -2,7 +2,37 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Tooltip from '@/components/Tooltip';
 import AppLayout from '@/components/layout/AppLayout';
+
+/* ─── Interleaved practice toggle ───────────────────────────── */
+function InterleavedToggle() {
+  const [on, setOn] = useState(false);
+  return (
+    <div className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border-2 mb-3 transition-all ${
+      on ? 'bg-violet-50 border-violet-300' : 'bg-gray-50 border-gray-200'
+    }`}>
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-base flex-shrink-0">🔀</span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className={`text-xs font-bold ${on ? 'text-violet-800' : 'text-gray-700'}`}>Interleaved mode</p>
+            <Tooltip text="Switches topics every 12 min instead of one topic the whole session. Research shows this improves exam performance by 43% vs studying one topic straight." position="right" width="w-60" />
+          </div>
+          <p className={`text-[10px] ${on ? 'text-violet-600' : 'text-gray-400'}`}>
+            {on ? 'Switching topics every 12 min 🔬' : 'Topic switching for better retention'}
+          </p>
+        </div>
+      </div>
+      <button onClick={() => setOn(!on)}
+        className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${on ? 'bg-violet-600' : 'bg-gray-300'}`}>
+        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${on ? 'translate-x-4' : 'translate-x-0.5'}`} />
+      </button>
+    </div>
+  );
+}
+
+
 import {
   Pause, Square, Play, ChevronRight,
   CheckCircle2, Brain, Clock, BookOpen,
@@ -140,10 +170,13 @@ export default function StudySessionPage() {
                     </div>
 
                     {/* Goal */}
-                    <div className="bg-gray-50 border border-gray-100 rounded-xl px-3.5 py-2.5 mb-4">
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl px-3.5 py-2.5 mb-3">
                       <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-0.5">Session goal</p>
                       <p className="text-xs font-semibold text-gray-800">Understand mitosis stages &amp; checkpoints</p>
                     </div>
+
+                    {/* Interleaved mode toggle */}
+                    <InterleavedToggle />
 
                     {/* Controls */}
                     <div className="flex items-center gap-2">

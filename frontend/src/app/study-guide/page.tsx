@@ -2,14 +2,13 @@
 
 import { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
-
+import Tooltip from '@/components/Tooltip';
 import {
   BookOpen, CheckCircle2, ChevronRight, Flag,
   Brain, AlertTriangle, Star, RefreshCw,
   ChevronDown, ChevronUp, Volume2,
-  MessageSquare, X, Send, Sparkles,
+  MessageSquare, X, Send, Sparkles, Printer,
 } from 'lucide-react';
-import Tooltip from '@/components/Tooltip';
 
 type StudyMode = 'read' | 'listen' | 'quiz' | 'teach' | 'ask';
 
@@ -603,6 +602,11 @@ export default function StudyGuidePage() {
     showToast('⚑ Issue flagged — we\'ll review this guide', 'bg-red-500');
   };
 
+  const handlePrint = () => {
+    showToast('📄 Preparing PDF…', 'bg-gray-700');
+    setTimeout(() => window.print(), 600);
+  };
+
   const completedCount = sections.filter((s) => s.completed).length;
   const progressPct    = Math.round((completedCount / sections.length) * 100);
 
@@ -656,6 +660,11 @@ export default function StudyGuidePage() {
                 onClick={handleRegenerate}
                 className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 border-2 border-indigo-300 hover:bg-indigo-100 hover:border-indigo-500 px-3.5 py-2 rounded-xl transition-all shadow-sm">
                 <RefreshCw className="w-3.5 h-3.5" /> Regenerate
+              </button>
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 text-xs font-bold text-gray-700 bg-gray-50 border-2 border-gray-300 hover:bg-gray-100 hover:border-gray-400 px-3.5 py-2 rounded-xl transition-all shadow-sm">
+                <Printer className="w-3.5 h-3.5" /> Export PDF
               </button>
               <button
                 onClick={handleFlag}

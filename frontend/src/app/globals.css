@@ -172,3 +172,51 @@ label, li, td, th, div {
     @apply font-sans;
   }
 }
+/* ── Reduced motion — SRS §4.1 MUST ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Print styles — study guide PDF export ─────────────────── */
+@media print {
+  /* Hide everything except main content */
+  nav, aside, header, footer,
+  [data-no-print],
+  .fixed, .sticky {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    font-size: 12pt;
+    color: black;
+  }
+
+  /* Show content full width */
+  main, [data-print-content] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Page breaks */
+  h2, h3 { page-break-after: avoid; }
+  .bg-white { box-shadow: none !important; }
+
+  /* Print header */
+  body::before {
+    content: "Atlas Study Guide";
+    display: block;
+    font-size: 20pt;
+    font-weight: bold;
+    margin-bottom: 16pt;
+  }
+}

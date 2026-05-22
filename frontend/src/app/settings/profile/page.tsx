@@ -81,6 +81,49 @@ function PassStrength({ password }: { password: string }) {
 }
 
 /* ─── Main page ──────────────────────────────────────────────── */
+import { useTheme } from '@/components/ThemeProvider';
+
+/* ─── Appearance card ────────────────────────────────────────── */
+function AppearanceCard() {
+  const { theme, setTheme } = useTheme();
+  const options = [
+    { value:'light',  emoji:'☀️',  label:'Light',  desc:'Clean white interface'       },
+    { value:'dark',   emoji:'🌙',  label:'Dark',   desc:'Easy on the eyes at night'   },
+    { value:'system', emoji:'💻',  label:'System', desc:'Follows your OS preference'  },
+  ] as const;
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      <div className="flex items-center gap-3 px-4 md:px-6 py-3.5 border-b border-gray-50">
+        <div className="w-8 h-8 rounded-xl bg-gray-700 flex items-center justify-center flex-shrink-0">
+          <span className="text-sm">🎨</span>
+        </div>
+        <p className="text-sm font-extrabold text-gray-900">Appearance</p>
+      </div>
+      <div className="px-4 md:px-6 py-4">
+        <p className="text-xs text-gray-400 mb-3">Choose how Atlas looks to you</p>
+        <div className="grid grid-cols-3 gap-2.5">
+          {options.map((o) => (
+            <button key={o.value} onClick={() => setTheme(o.value)}
+              className={`flex flex-col items-center gap-2 p-3.5 rounded-2xl border-2 transition-all ${
+                theme === o.value
+                  ? 'border-indigo-400 bg-indigo-50 shadow-sm'
+                  : 'border-gray-200 hover:border-indigo-200 hover:bg-gray-50'
+              }`}>
+              <span className="text-2xl">{o.emoji}</span>
+              <div className="text-center">
+                <p className={`text-xs font-bold ${theme===o.value?'text-indigo-700':'text-gray-700'}`}>{o.label}</p>
+                <p className={`text-[9px] mt-0.5 leading-tight ${theme===o.value?'text-indigo-500':'text-gray-400'}`}>{o.desc}</p>
+              </div>
+              {theme === o.value && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfileSettings() {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -355,6 +398,9 @@ export default function ProfileSettings() {
             <Lock className="w-4 h-4" /> Update password
           </button>
         </Card>
+
+        {/* ── Appearance ───────────────────────────────────── */}
+        <AppearanceCard />
 
         {/* ── Save button ──────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">

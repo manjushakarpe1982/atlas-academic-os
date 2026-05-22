@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
+
 import EmptyState from '@/components/EmptyState';
 import Tooltip from '@/components/Tooltip';
 import {
@@ -11,6 +12,7 @@ import {
   BarChart2, Target, BookOpen, Upload, Sparkles, ArrowRight,
   Activity,
 } from 'lucide-react';
+import { PageSkeleton } from '@/components/Skeleton';
 
 /* ─── Mock data ──────────────────────────────────────────────── */
 const TODAY_TASKS = [
@@ -321,7 +323,99 @@ function TaskRow({ task, rank, onSkip }: { task: typeof TODAY_TASKS[0]; rank: nu
 }
 
 /* ─── Main page ──────────────────────────────────────────────── */
+/* ─── Daily goal ring ────────────────────────────────────────── */
+function DailyGoalRing() {
+  const goalMins    = 150; // 2.5 hours
+  const doneMins    = 65;
+  const pct         = Math.min(100, Math.round((doneMins / goalMins) * 100));
+  const r           = 36;
+  const circ        = 2 * Math.PI * r;
+  const offset      = circ * (1 - pct / 100);
+  const done        = pct >= 100;
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center gap-4">
+      {/* Ring */}
+      <div className="relative flex-shrink-0">
+        <svg width="88" height="88" viewBox="0 0 88 88">
+          <circle cx="44" cy="44" r={r} fill="none" stroke="#EEF2FF" strokeWidth="8" />
+          <circle cx="44" cy="44" r={r} fill="none"
+            stroke={done ? '#10B981' : '#4F46E5'}
+            strokeWidth="8" strokeLinecap="round"
+            strokeDasharray={circ}
+            strokeDashoffset={offset}
+            transform="rotate(-90 44 44)"
+            style={{ transition:'stroke-dashoffset 0.8s ease' }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <p className={`text-lg font-extrabold leading-none ${done ? 'text-emerald-600' : 'text-indigo-600'}`}>{pct}%</p>
+          <p className="text-[9px] text-gray-400">done</p>
+        </div>
+      </div>
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 mb-1">
+          <p className="text-sm font-extrabold text-gray-900">Daily study goal</p>
+          {done && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">✓ Done!</span>}
+        </div>
+        <p className="text-xs text-gray-400 mb-2">{doneMins}m of {goalMins}m completed today</p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { label:'Studied', value:`${doneMins}m`, color:'text-indigo-600' },
+            { label:'Left',    value:`${goalMins - doneMins}m`, color:'text-amber-600' },
+            { label:'Goal',    value:`${Math.floor(goalMins/60)}h ${goalMins%60}m`, color:'text-gray-500' },
+          ].map((s) => (
+            <div key={s.label} className="bg-gray-50 rounded-lg p-1.5 text-center">
+              <p className={`text-xs font-extrabold ${s.color}`}>{s.value}</p>
+              <p className="text-[9px] text-gray-400">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Exam countdown widget ──────────────────────────────────── */
+function ExamCountdown() {
+  const exams = [
+    { name:'Biology Midterm',  subject:'BIO 101',  days:3,  hours:14, color:'bg-red-500',    light:'bg-red-50',    border:'border-red-200',    text:'text-red-700'    },
+    { name:'Statistics Quiz',  subject:'STAT 201', days:5,  hours:2,  color:'bg-amber-500',  light:'bg-amber-50',  border:'border-amber-200',  text:'text-amber-700'  },
+    { name:'English Essay',    subject:'ENG 301',  days:8,  hours:6,  color:'bg-blue-500',   light:'bg-blue-50',   border:'border-blue-200',   text:'text-blue-700'   },
+  ];
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-extrabold text-gray-900">Upcoming assessments</p>
+        <Link href="/calendar" className="text-[11px] font-semibold text-indigo-600 hover:underline">Calendar →</Link>
+      </div>
+      <div className="space-y-2">
+        {exams.map((e) => (
+          <div key={e.name} className={`flex items-center gap-3 ${e.light} border ${e.border} rounded-xl px-3 py-2.5`}>
+            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${e.color}`} />
+            <div className="flex-1 min-w-0">
+              <p className={`text-xs font-bold ${e.text} truncate`}>{e.name}</p>
+              <p className="text-[10px] text-gray-400">{e.subject}</p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className={`text-sm font-extrabold ${e.days <= 3 ? 'text-red-600' : e.days <= 5 ? 'text-amber-600' : 'text-gray-700'}`}>
+                {e.days}d {e.hours}h
+              </p>
+              <p className="text-[9px] text-gray-400">remaining</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
+
   const [tasks,    setTasks]    = useState(TODAY_TASKS);
   const [userName, setUserName] = useState('Ananya');
   const [search,   setSearch]   = useState('');
@@ -348,7 +442,9 @@ export default function HomePage() {
   const otherTasks = tasks.slice(1);
   const totalFlashcards = FLASHCARD_DECKS.reduce((s, d) => s + d.cards, 0);
 
-  return (
+  if (loading) return <PageSkeleton />;
+
+    return (
     <AppLayout>
       <div className="p-5 max-w-[1300px] mx-auto">
 
@@ -391,6 +487,12 @@ export default function HomePage() {
           <Link href="/study-plan" className="ml-auto text-[11px] font-bold text-amber-700 hover:text-amber-900 whitespace-nowrap flex items-center gap-1">
             View plan <ChevronRight className="w-3 h-3" />
           </Link>
+        </div>
+
+        {/* ── Daily goal ring + exam countdown ─────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <DailyGoalRing />
+          <ExamCountdown />
         </div>
 
         {/* ── 3-col grid ───────────────────────────────────────── */}
