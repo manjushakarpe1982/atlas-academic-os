@@ -58,115 +58,192 @@ function IntroScreen({ onStart }: { onStart: (topics:string[], type:string) => v
 
   const totalQ  = TOPIC_OPTIONS.filter((t) => selectedTopics.includes(t.id)).reduce((s,t) => s+t.questions, 0);
   const estMins = Math.max(5, totalQ * 2);
+  const selectedCount = selectedTopics.length;
+
+  const topicIcons: Record<string, string> = {
+    mitosis: '🎯', enzyme: '🧬', respiration: '🫁', dna: '🔬',
+  };
+
+  const typeIcons = [
+    { id:'mcq',     icon:'❓', label:'MCQ',           sub:'Multiple choice questions'   },
+    { id:'written', icon:'✏️', label:'Written',        sub:'Answer in your own words'    },
+    { id:'solve',   icon:'🔢', label:'Solve / Numeric',sub:'Calculate or fill in the formula' },
+  ];
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-4 md:p-6">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-gray-100"
-        style={{ animation:'fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
-        <style>{`@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }`}</style>
+    <div className="min-h-screen bg-[#F0F0FA] p-4 md:p-8">
+      <div className="max-w-5xl mx-auto">
 
-        {/* Header strip */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-indigo-50">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
-            <Brain className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <p className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-widest">Biology 101</p>
-            <h1 className="text-base font-extrabold text-gray-900 leading-tight">Set up your Exam</h1>
-          </div>
-        </div>
+        {/* ── Outer white card — wraps everything ─────────────── */}
+        <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 md:p-8">
 
-        {/* Two-column body */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
-
-          {/* Left — Topics */}
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[9px] font-extrabold flex items-center justify-center flex-shrink-0">1</span>
-              <p className="text-[11px] font-extrabold text-gray-700 uppercase tracking-widest">Select topics</p>
-            </div>
-            <div className="space-y-1.5">
-              {TOPIC_OPTIONS.map((t) => {
-                const isOn = selectedTopics.includes(t.id);
-                return (
-                  <button key={t.id} onClick={() => toggleTopic(t.id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 transition-all text-left ${
-                      isOn ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200 bg-white hover:border-indigo-200'
-                    }`}>
-                    <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all ${
-                      isOn ? 'bg-indigo-600' : 'border-2 border-gray-300 bg-white'
-                    }`}>
-                      {isOn && <CheckCircle2 className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className={`text-xs font-semibold leading-none ${isOn?'text-indigo-900':'text-gray-700'}`}>{t.label}</p>
-                        {t.weak && <span className="text-[8px] font-bold bg-red-100 text-red-600 px-1 py-0.5 rounded-full flex-shrink-0">Weak</span>}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <div className="w-14 h-1 bg-gray-200 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${t.mastery<40?'bg-red-500':t.mastery<65?'bg-amber-500':'bg-emerald-500'}`} style={{ width:`${t.mastery}%` }} />
-                        </div>
-                        <span className="text-[9px] text-gray-400">{t.mastery}%</span>
-                      </div>
-                    </div>
-                    <span className={`text-[10px] font-bold flex-shrink-0 ${isOn?'text-indigo-600':'text-gray-400'}`}>{t.questions}Q</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right — Type + summary + start */}
-          <div className="p-4 flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[9px] font-extrabold flex items-center justify-center flex-shrink-0">2</span>
-              <p className="text-[11px] font-extrabold text-gray-700 uppercase tracking-widest">Question type</p>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5 mb-3">
-              {EXAM_TYPES.map((et) => (
-                <button key={et.id} onClick={() => setExamType(et.id)}
-                  className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all text-center ${
-                    examType === et.id ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 bg-white hover:border-indigo-200'
-                  }`}>
-                  <span className="text-lg">{et.emoji}</span>
-                  <p className={`text-[10px] font-extrabold leading-tight ${examType===et.id?'text-indigo-700':'text-gray-700'}`}>{et.label}</p>
-                  <p className={`text-[8px] leading-tight ${examType===et.id?'text-indigo-500':'text-gray-400'}`}>{et.desc}</p>
-                </button>
-              ))}
-            </div>
-
-            {examType !== 'mcq' && (
-              <div className="flex items-start gap-1.5 bg-amber-50 border border-amber-200 rounded-xl px-2.5 py-2 mb-3">
-                <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
-                <p className="text-[10px] text-amber-700 leading-snug">
-                  {examType==='written' ? 'Self-graded after submitting.' : 'Enter exact values or formulas.'}
-                </p>
+          {/* ── Page header ────────────────────────────────────── */}
+          <div className="flex items-start justify-between mb-7">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
+                <Brain className="w-7 h-7 text-white" />
               </div>
-            )}
+              <div>
+                <p className="text-xs font-extrabold text-indigo-500 uppercase tracking-widest mb-0.5">Biology 101</p>
+                <h1 className="text-3xl font-extrabold text-gray-900 leading-tight">Set up your Exam</h1>
+                <p className="text-sm text-gray-400 mt-1">Choose topics and question type to generate your personalized exam</p>
+              </div>
+            </div>
+            <img
+              src="https://res.cloudinary.com/mview/image/upload/atlas/quizpage.webp"
+              alt="Exam illustration"
+              className="hidden md:block h-28 object-contain"
+              onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }}
+            />
+          </div>
 
-            {/* Summary */}
-            <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 mb-3 mt-auto">
-              <span className="text-xs font-bold text-gray-700">📝 {totalQ} questions</span>
-              <span className="text-gray-300">·</span>
-              <span className="text-xs font-bold text-gray-700">⏱ ~{estMins}m</span>
-              <span className="text-gray-300">·</span>
-              <span className="text-xs font-bold text-gray-700">{selectedTopics.length}/{TOPIC_OPTIONS.length} topics</span>
+          {/* ── Two-column body ──────────────────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* ── LEFT — Select Topics ──────────────────────────── */}
+            <div className="bg-[#FAFAFE] rounded-2xl p-5 border border-gray-100">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-7 h-7 rounded-full bg-indigo-600 text-white text-sm font-extrabold flex items-center justify-center flex-shrink-0">1</div>
+                <p className="text-lg font-extrabold text-gray-900">Select Topics</p>
+              </div>
+              <p className="text-sm text-gray-400 mb-4 ml-10">Choose the topics you want to include in your exam</p>
+
+              <div className="space-y-2.5">
+                {TOPIC_OPTIONS.map((t) => {
+                  const isOn = selectedTopics.includes(t.id);
+                  const barColor = t.mastery < 40 ? 'bg-red-500' : t.mastery < 65 ? 'bg-amber-500' : 'bg-emerald-500';
+                  return (
+                    <button key={t.id} onClick={() => toggleTopic(t.id)}
+                      className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl border transition-all text-left bg-white shadow-sm ${
+                        isOn ? 'border-indigo-300' : 'border-gray-200 hover:border-gray-300'
+                      }`}>
+
+                      {/* Checkbox */}
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all ${
+                        isOn ? 'bg-indigo-600 border-0' : 'border-2 border-gray-300 bg-white rounded'
+                      }`}>
+                        {isOn && <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={3} />}
+                      </div>
+
+                      {/* Topic icon */}
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xl ${
+                        isOn ? 'bg-indigo-50' : 'bg-gray-50'
+                      }`}>
+                        {topicIcons[t.id] || '📚'}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <p className="text-sm font-bold text-gray-900">{t.label}</p>
+                          {t.weak && (
+                            <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Weak</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className={`h-full ${barColor} rounded-full`} style={{ width:`${t.mastery}%` }} />
+                          </div>
+                          <span className="text-[11px] text-gray-400 flex-shrink-0">{t.mastery}%</span>
+                        </div>
+                      </div>
+
+                      {/* Q count */}
+                      <span className={`text-sm font-extrabold flex-shrink-0 ${isOn ? 'text-indigo-600' : 'text-gray-400'}`}>
+                        {t.questions}Q
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Tip */}
+              <div className="mt-4 flex items-start gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-base">💡</span>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-800">Tip: We've highlighted your weaker areas.</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Focusing on these topics will help you improve faster!</p>
+                </div>
+              </div>
             </div>
 
-            <button onClick={() => onStart(selectedTopics, examType)} disabled={selectedTopics.length===0}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 active:scale-[0.98] text-white font-extrabold py-3 rounded-xl transition-all shadow-md shadow-indigo-500/20 text-sm">
-              <Brain className="w-4 h-4" /> Start — {totalQ} questions
-            </button>
-            <p className="text-center text-[10px] text-gray-400 mt-2">🔒 Answers shown after submit</p>
+            {/* ── RIGHT — Question Type + Summary + CTA ─────────── */}
+            <div className="flex flex-col gap-4">
+
+              {/* Question Type */}
+              <div className="bg-[#FAFAFE] rounded-2xl p-5 border border-gray-100 flex-1">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-7 h-7 rounded-full bg-indigo-600 text-white text-sm font-extrabold flex items-center justify-center flex-shrink-0">2</div>
+                  <p className="text-lg font-extrabold text-gray-900">Question Type</p>
+                </div>
+                <p className="text-sm text-gray-400 mb-4 ml-10">Choose the type of questions for your exam</p>
+
+                <div className="grid grid-cols-3 gap-3">
+                  {typeIcons.map((et) => (
+                    <button key={et.id} onClick={() => setExamType(et.id)}
+                      className={`relative flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 transition-all text-center bg-white shadow-sm ${
+                        examType === et.id
+                          ? 'border-indigo-400 shadow-md shadow-indigo-500/10'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}>
+                      {/* Radio circle top-right */}
+                      <div className={`absolute top-2.5 right-2.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        examType === et.id ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 bg-white'
+                      }`}>
+                        {examType === et.id && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                      {/* Icon box */}
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${
+                        examType === et.id ? 'bg-indigo-50' : 'bg-gray-50'
+                      }`}>
+                        {et.icon}
+                      </div>
+                      <p className={`text-sm font-extrabold leading-tight ${examType===et.id?'text-indigo-700':'text-gray-800'}`}>{et.label}</p>
+                      <p className={`text-[10px] leading-tight text-center ${examType===et.id?'text-gray-500':'text-gray-400'}`}>{et.sub}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary strip */}
+              <div className="bg-[#F5F5FB] rounded-2xl px-5 py-4 border border-gray-200">
+                <div className="grid grid-cols-3 divide-x divide-gray-200">
+                  {[
+                    { icon:'❓', label:'Total',          value:`${totalQ} Questions`    },
+                    { icon:'⏱', label:'Estimated Time',  value:`~${estMins} min`        },
+                    { icon:'📚', label:'Selected',        value:`${selectedCount}/${TOPIC_OPTIONS.length} Topics` },
+                  ].map((s) => (
+                    <div key={s.label} className="flex items-center gap-2.5 px-4 first:pl-0 last:pr-0">
+                      <span className="text-lg flex-shrink-0">{s.icon}</span>
+                      <div>
+                        <p className="text-sm font-extrabold text-gray-900">{s.value}</p>
+                        <p className="text-[10px] text-gray-400">{s.label}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Start button */}
+              <button
+                onClick={() => onStart(selectedTopics, examType)}
+                disabled={selectedTopics.length === 0}
+                className="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 active:scale-[0.98] text-white font-extrabold py-4 rounded-2xl transition-all shadow-xl shadow-indigo-500/25 text-lg">
+                <Brain className="w-5 h-5" />
+                Start Exam — {totalQ} Questions
+              </button>
+              <p className="text-center text-xs text-gray-400 -mt-2">
+                🔒 Answers will be shown after submission
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-
 
 /* ─── Results screen ─────────────────────────────────────────── */
 function ResultsScreen({ answers, flagged, timeTaken, onRetry, writtenAnswers, examType }: {
