@@ -1,611 +1,441 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { PageSkeleton } from '@/components/Skeleton';
-import EmptyState from '@/components/EmptyState';
-import Tooltip from '@/components/Tooltip';
-import { TrendingUp, Clock, BookOpen, Star, BarChart2, Brain, Award, Target, Zap } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+
 
 type Tab = 'overview' | 'subjects' | 'topics' | 'time';
 
-/* ─── Data ───────────────────────────────────────────────────── */
-const WEEKLY = [
-  { week:'Apr W3', hrs:8.5  },
-  { week:'Apr W4', hrs:10.2 },
-  { week:'May W1', hrs:9.8  },
-  { week:'May W2', hrs:12.4 },
-];
-
-const SUBJECTS = [
-  { name:'Biology 101',    hrs:5.2, pct:42, color:'bg-indigo-500', light:'bg-indigo-100', text:'text-indigo-600', score:72 },
-  { name:'Statistics 201', hrs:3.1, pct:25, color:'bg-emerald-500',light:'bg-emerald-100',text:'text-emerald-600',score:85 },
-  { name:'English 110',    hrs:2.5, pct:20, color:'bg-amber-500',  light:'bg-amber-100',  text:'text-amber-600',  score:78 },
-  { name:'History 105',    hrs:1.6, pct:13, color:'bg-purple-500', light:'bg-purple-100', text:'text-purple-600', score:91 },
-];
-
-const TOPICS = [
-  { name:'Cell Division',        cls:'Biology',    pct:40, trend:'+12', exam:true  },
-  { name:'DNA Replication',      cls:'Biology',    pct:35, trend:'+5',  exam:true  },
-  { name:'Cellular Respiration', cls:'Biology',    pct:44, trend:'+8',  exam:true  },
-  { name:'Probability',          cls:'Statistics', pct:68, trend:'+15', exam:false },
-  { name:'Essay Structure',      cls:'English',    pct:72, trend:'+3',  exam:false },
-  { name:'World War II',         cls:'History',    pct:88, trend:'+2',  exam:false },
-];
-
-const CALENDAR_DATA: Record<number,string[]> = {
-  13:['bio','stats'], 14:['eng'], 15:['hist'],
-  18:['bio'], 19:['bio','stats'], 20:['exam'],
-  22:['stats'], 25:['deadline'], 26:['eng'],
-};
-
-const DOT_TYPE: Record<string,string> = {
-  bio:'bg-indigo-500', stats:'bg-emerald-500',
-  eng:'bg-amber-500',  hist:'bg-purple-500',
-  exam:'bg-red-500',   deadline:'bg-orange-500',
-};
-
-const ACHIEVEMENTS = [
-  { icon:'🔥', label:'5-day streak',         sub:'Keep going!',           earned:true  },
-  { icon:'⭐', label:'Quiz Master',           sub:'10 quizzes completed',  earned:true  },
-  { icon:'📈', label:'+0.3 GPA improvement', sub:'This semester',          earned:true  },
-  { icon:'🎯', label:'100% plan completion', sub:'Complete 3 in a row',    earned:false },
-  { icon:'🏆', label:'Top score 90%+',       sub:'Score 90%+ on exam',     earned:false },
-];
-
-/* ─── Helpers ────────────────────────────────────────────────── */
-function masteryColor(p: number) {
-  return p < 40 ? 'bg-red-500' : p < 65 ? 'bg-amber-500' : 'bg-emerald-500';
-}
-function masteryText(p: number) {
-  return p < 40 ? 'text-red-600' : p < 65 ? 'text-amber-600' : 'text-emerald-600';
-}
-function masteryLabel(p: number) {
-  return p < 40 ? 'Needs work' : p < 65 ? 'Developing' : 'Strong';
-}
-function masteryBadge(p: number) {
-  return p < 40 ? 'bg-red-50 text-red-700 border-red-200' :
-         p < 65 ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  'bg-emerald-50 text-emerald-700 border-emerald-200';
-}
-
-/* ─── Bar chart ──────────────────────────────────────────────── */
-function BarChart({ data }: { data: { week:string; hrs:number }[] }) {
-  const max = Math.max(...data.map((d) => d.hrs));
-  return (
-    <div className="flex items-end gap-2 md:gap-4 h-20 md:h-24 mt-3">
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-          <span className="text-[10px] font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">{d.hrs}h</span>
-          <div className="w-full rounded-t-lg bg-indigo-400 hover:bg-indigo-600 transition-colors cursor-pointer"
-            style={{ height:`${(d.hrs/max)*64}px` }} />
-          <span className="text-[9px] text-gray-400 text-center leading-tight truncate w-full text-center">{d.week}</span>
-        </div>
-      ))}
-    </div>
+/* ─── KPI background sparkline/bar SVGs ─────────────────────── */
+function KpiChart({ type }: { type: 'purple'|'green'|'blue'|'violet' }) {
+  if (type === 'purple') return (
+    <svg className="absolute right-0 bottom-0 w-[62%] h-[70%] opacity-95 pointer-events-none" viewBox="0 0 200 100" preserveAspectRatio="none">
+      <defs><linearGradient id="kg1" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#6d5cf6" stopOpacity=".35"/><stop offset="100%" stopColor="#6d5cf6" stopOpacity="0"/></linearGradient></defs>
+      <path d="M0,70 C30,55 50,80 80,60 C110,40 130,75 160,45 C180,30 195,40 200,35 L200,100 L0,100 Z" fill="url(#kg1)"/>
+      <path d="M0,70 C30,55 50,80 80,60 C110,40 130,75 160,45 C180,30 195,40 200,35" stroke="#6d5cf6" strokeWidth="1.5" fill="none"/>
+    </svg>
   );
-}
-
-/* ─── Donut ──────────────────────────────────────────────────── */
-function Donut({ pct, color, label }: { pct:number; color:string; label:string }) {
-  const r=36, circ=2*Math.PI*r, dash=(pct/100)*circ;
-  return (
-    <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center flex-shrink-0">
-      <svg className="absolute inset-0 -rotate-90" viewBox="0 0 88 88">
-        <circle cx="44" cy="44" r={r} fill="none" stroke="#f3f4f6" strokeWidth="10" />
-        <circle cx="44" cy="44" r={r} fill="none" stroke={color} strokeWidth="10"
-          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
-      </svg>
-      <div className="relative text-center">
-        <p className="text-lg md:text-xl font-extrabold text-gray-900">{pct}%</p>
-        <p className="text-[8px] md:text-[9px] text-gray-400 leading-tight">{label}</p>
-      </div>
-    </div>
+  if (type === 'green') return (
+    <svg className="absolute right-0 bottom-0 w-[62%] h-[70%] opacity-95 pointer-events-none" viewBox="0 0 200 100" preserveAspectRatio="none">
+      <defs><linearGradient id="kg2" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#29c089" stopOpacity=".35"/><stop offset="100%" stopColor="#29c089" stopOpacity="0"/></linearGradient></defs>
+      <path d="M0,80 C25,75 45,55 70,50 C95,45 110,30 135,28 C160,26 180,40 200,35 L200,100 L0,100 Z" fill="url(#kg2)"/>
+      <path d="M0,80 C25,75 45,55 70,50 C95,45 110,30 135,28 C160,26 180,40 200,35" stroke="#29c089" strokeWidth="1.5" fill="none"/>
+    </svg>
   );
-}
-
-/* ─── Mini calendar ──────────────────────────────────────────── */
-function MiniCalendar() {
-  return (
-    <div>
-      <div className="grid grid-cols-7 gap-0.5 mb-1.5">
-        {['S','M','T','W','T','F','S'].map((d,i) => (
-          <div key={i} className="text-[9px] font-bold text-gray-400 text-center py-1">{d}</div>
+  if (type === 'blue') return (
+    <svg className="absolute right-0 bottom-0 w-[62%] h-[70%] opacity-95 pointer-events-none" viewBox="0 0 200 100" preserveAspectRatio="none">
+      <g fill="#cdc6ff">
+        {[[10,65,30],[34,55,40],[58,60,35],[82,48,47],[106,40,55],[130,30,65],[154,20,75],[178,10,85]].map(([x,y,h],i) => (
+          <rect key={i} x={x} y={y} width="14" height={h} rx="3" fill={i===7?'#6d5cf6':'#cdc6ff'}/>
         ))}
-      </div>
-      <div className="grid grid-cols-7 gap-1">
-        {[...Array(4)].map((_,i) => <div key={`b${i}`} />)}
-        {Array.from({length:31},(_,i)=>i+1).map((d) => {
-          const evs = CALENDAR_DATA[d] || [];
-          const isToday = d===19;
-          return (
-            <div key={d} className={`relative p-1 rounded-lg cursor-pointer transition-all hover:bg-indigo-50 ${isToday?'bg-indigo-600':''}`}>
-              <p className={`text-[10px] font-semibold text-center leading-none mb-1 ${isToday?'text-white':'text-gray-700'}`}>{d}</p>
-              {evs.length>0 && (
-                <div className="flex justify-center gap-0.5 flex-wrap">
-                  {evs.slice(0,2).map((ev) => (
-                    <div key={ev} className={`w-1.5 h-1.5 rounded-full ${DOT_TYPE[ev]||'bg-gray-400'}`} />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex flex-wrap gap-x-2 gap-y-1 mt-2">
-        {[{c:'bg-red-500',l:'Exam'},{c:'bg-orange-500',l:'Deadline'},{c:'bg-indigo-500',l:'Bio'},{c:'bg-emerald-500',l:'Stats'}].map((l) => (
-          <div key={l.l} className="flex items-center gap-1">
-            <div className={`w-1.5 h-1.5 rounded-full ${l.c}`} />
-            <span className="text-[9px] text-gray-400">{l.l}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+      </g>
+    </svg>
   );
-}
-
-/* ─── Stat card ──────────────────────────────────────────────── */
-function StatCard({ icon: Icon, label, value, delta, deltaGood, bg, color }: {
-  icon: typeof Clock; label:string; value:string; delta:string;
-  deltaGood:boolean; bg:string; color:string;
-}) {
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-3.5 md:p-4 shadow-sm">
-      <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center mb-2.5`}>
-        <Icon className={`w-4 h-4 ${color}`} />
-      </div>
-      <p className={`text-xl md:text-2xl font-extrabold ${color} leading-none`}>{value}</p>
-      <p className="text-[10px] text-gray-400 mt-0.5 mb-0.5">{label}</p>
-      <p className={`text-[10px] font-bold ${deltaGood?'text-emerald-600':'text-red-500'}`}>{delta}</p>
-    </div>
+    <svg className="absolute right-0 bottom-0 w-[62%] h-[70%] opacity-95 pointer-events-none" viewBox="0 0 200 100" preserveAspectRatio="none">
+      <defs><linearGradient id="kg4" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#b89ef0" stopOpacity=".4"/><stop offset="100%" stopColor="#b89ef0" stopOpacity="0"/></linearGradient></defs>
+      <path d="M0,75 C25,65 45,72 70,60 C95,48 110,68 135,50 C160,32 180,42 200,30 L200,100 L0,100 Z" fill="url(#kg4)"/>
+      <path d="M0,75 C25,65 45,72 70,60 C95,48 110,68 135,50 C160,32 180,42 200,30" stroke="#b89ef0" strokeWidth="1.5" fill="none"/>
+    </svg>
   );
 }
 
-/* ─── Main ───────────────────────────────────────────────────── */
+/* ─── Icons (SVG inline) ─────────────────────────────────────── */
+const IconClock = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>;
+const IconBar  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 20h18M6 16v-4M11 16V8M16 16v-6M21 16v-2"/></svg>;
+const IconBook = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14"/><path d="M12 3v18"/></svg>;
+const IconBolt = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>;
+const ArrowUp  = () => <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>;
+const ArrowDn  = () => <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>;
+const InfoI    = () => <span className="inline-flex items-center justify-center w-[14px] h-[14px] rounded-full border border-[#9a9db4] text-[#9a9db4] text-[9px] font-bold ml-1.5">i</span>;
+
 export default function AnalyticsPage() {
   const [tab, setTab] = useState<Tab>('overview');
   const [loading, setLoading] = useState(true);
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 500); return () => clearTimeout(t); }, []);
   if (loading) return <PageSkeleton />;
 
-    return (
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'subjects', label: 'Subjects' },
+    { id: 'topics',   label: 'Topics'   },
+    { id: 'time',     label: 'Time'     },
+  ];
+
+  return (
     <AppLayout>
-      <div className="p-4 md:p-6 max-w-[1200px] mx-auto">
+      <div className="min-h-screen bg-[#f3f3f8] px-7 pt-7 pb-14 font-[Inter]">
+        <div className="max-w-[1080px] mx-auto">
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 md:mb-5">
-          <div>
-            <h1 className="text-lg md:text-xl font-extrabold text-gray-900">Progress Analytics</h1>
-            <p className="text-xs text-gray-400 mt-0.5">Fall 2026 · Updated just now</p>
-          </div>
-          {/* Tabs — scrollable on mobile */}
-          <div className="flex items-center bg-white border border-gray-100 rounded-xl p-1 gap-0.5 shadow-sm overflow-x-auto scrollbar-none">
-            {(['overview','subjects','topics','time'] as Tab[]).map((t) => (
-              <button key={t} onClick={() => setTab(t)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all whitespace-nowrap flex-shrink-0 ${
-                  tab===t ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
-                }`}>{t}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* ════ OVERVIEW ════ */}
-        {tab==='overview' && (
-          <div className="space-y-4">
-
-            {/* Top stats — 2 cols mobile, 4 cols desktop */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <StatCard icon={Clock}     label="Study time"    value="24.5h" delta="-12% vs last month" deltaGood={false} bg="bg-indigo-50"  color="text-indigo-600" />
-              <StatCard icon={BarChart2} label="Avg score"     value="76%"   delta="+6% vs last month"  deltaGood={true}  bg="bg-emerald-50" color="text-emerald-600" />
-              <StatCard icon={Brain}     label="Topics studied" value="28"   delta="+9 this month"      deltaGood={true}  bg="bg-blue-50"    color="text-blue-600"   />
-              <StatCard icon={Zap}       label="Quizzes taken" value="12"    delta="+3 this month"      deltaGood={true}  bg="bg-purple-50"  color="text-purple-600" />
+          {/* ── Header ─────────────────────────────────────── */}
+          <div className="flex items-start justify-between mb-5">
+            <div>
+              <h1 className="text-[26px] font-bold text-[#11132b] tracking-tight mb-1.5">Progress Analytics</h1>
+              <div className="flex items-center gap-2 text-[13px] text-[#6c6f8a]">
+                Fall 2026 · Updated just now
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#29c089]"/>
+              </div>
             </div>
+            <div className="flex gap-0.5 bg-white rounded-full p-1 shadow-sm">
+              {TABS.map(t => (
+                <button key={t.id} onClick={() => setTab(t.id)}
+                  className={`px-[18px] py-2 rounded-full text-[13px] font-medium transition-all border-none outline-none cursor-pointer ${
+                    tab === t.id ? 'bg-[#6d5cf6] text-white font-semibold' : 'bg-transparent text-[#6c6f8a] hover:text-[#11132b]'
+                  }`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-            {/* Middle row — donut + bar chart + calendar */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          {/* ── KPI Row ────────────────────────────────────── */}
+          <div className="grid grid-cols-4 gap-3.5 mb-3.5">
+            {/* KPI 1 */}
+            <div className="relative overflow-hidden min-h-[138px] bg-white p-0 border border-gray-100 shadow-sm rounded-2xl">
+              <CardContent className="p-[18px]">
+                <div className="w-[30px] h-[30px] rounded-lg bg-[#efecff] flex items-center justify-center text-[#6d5cf6] mb-3.5"><IconClock/></div>
+                <div className="text-[30px] font-bold text-[#6d5cf6] leading-none tracking-tight">24.5h</div>
+                <div className="text-xs text-[#6c6f8a] mt-2">Study time</div>
+                <div className="flex items-center gap-1 text-[11px] text-[#ec5b56] mt-2.5"><ArrowDn/> -12% vs last month</div>
+                <KpiChart type="purple"/>
+              </CardContent>
+            </div>
+            {/* KPI 2 */}
+            <div className="relative overflow-hidden min-h-[138px] bg-white p-0 border border-gray-100 shadow-sm rounded-2xl">
+              <CardContent className="p-[18px]">
+                <div className="w-[30px] h-[30px] rounded-lg bg-[#e2f6ee] flex items-center justify-center text-[#29c089] mb-3.5"><IconBar/></div>
+                <div className="text-[30px] font-bold text-[#29c089] leading-none tracking-tight">76%</div>
+                <div className="text-xs text-[#6c6f8a] mt-2">Avg score</div>
+                <div className="flex items-center gap-1 text-[11px] text-[#29c089] mt-2.5"><ArrowUp/> +6% vs last month</div>
+                <KpiChart type="green"/>
+              </CardContent>
+            </div>
+            {/* KPI 3 */}
+            <div className="relative overflow-hidden min-h-[138px] p-0 bg-white border border-gray-100 shadow-sm rounded-2xl">
+              <CardContent className="p-[18px]">
+                <div className="w-[30px] h-[30px] rounded-lg bg-[#e6efff] flex items-center justify-center text-[#4f7df3] mb-3.5"><IconBook/></div>
+                <div className="text-[30px] font-bold text-[#6d5cf6] leading-none tracking-tight">28</div>
+                <div className="text-xs text-[#6c6f8a] mt-2">Topics studied</div>
+                <div className="flex items-center gap-1 text-[11px] text-[#29c089] mt-2.5"><ArrowUp/> 9 this month</div>
+                <KpiChart type="blue"/>
+              </CardContent>
+            </div>
+            {/* KPI 4 */}
+            <div className="relative overflow-hidden min-h-[138px] p-0 bg-white border border-gray-100 shadow-sm rounded-2xl">
+              <CardContent className="p-[18px]">
+                <div className="w-[30px] h-[30px] rounded-lg bg-[#efecff] flex items-center justify-center text-[#8b6cf2] mb-3.5"><IconBolt/></div>
+                <div className="text-[30px] font-bold text-[#8b6cf2] leading-none tracking-tight">12</div>
+                <div className="text-xs text-[#6c6f8a] mt-2">Quizzes taken</div>
+                <div className="flex items-center gap-1 text-[11px] text-[#29c089] mt-2.5"><ArrowUp/> 3 this month</div>
+                <KpiChart type="violet"/>
+              </CardContent>
+            </div>
+          </div>
 
-              {/* Overall progress */}
-              <div className="md:col-span-4 bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-                <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-4">Overall Progress</p>
-                <div className="flex items-center gap-4 mb-4">
-                  <Donut pct={68} color="#4F46E5" label="Overall" />
-                  <div className="flex-1 space-y-2.5">
-                    {[
-                      { label:'Study time',   value:'24h 30m' },
-                      { label:'Cards reviewed',value:'28'     },
-                      { label:'Quizzes taken', value:'12'     },
-                    ].map((s) => (
-                      <div key={s.label}>
-                        <p className="text-[10px] text-gray-400">{s.label}</p>
-                        <p className="text-sm font-extrabold text-gray-900">{s.value}</p>
+          {/* ── Row 2 ──────────────────────────────────────── */}
+          <div className="grid gap-3.5 mb-3.5" style={{ gridTemplateColumns:'1.05fr 1.25fr 1.05fr' }}>
+
+            {/* Overall Progress */}
+            <div  className="bg-white border border-gray-100 shadow-sm rounded-xl">
+              <CardContent className="p-[18px]">
+                <p className="text-[11px] font-semibold tracking-[0.08em] text-[#6c6f8a] uppercase mb-3.5">Overall Progress</p>
+                <div className="grid gap-4" style={{ gridTemplateColumns:'130px 1fr', alignItems:'center' }}>
+                  <div className="relative w-[130px] h-[130px]">
+                    <svg width="130" height="130" viewBox="0 0 130 130">
+                      <circle cx="65" cy="65" r="52" fill="none" stroke="#f1f1f7" strokeWidth="14"/>
+                      <circle cx="65" cy="65" r="52" fill="none" stroke="#6d5cf6" strokeWidth="14"
+                        strokeDasharray="326.7" strokeDashoffset="104.5" strokeLinecap="round" transform="rotate(-90 65 65)"/>
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <div className="text-2xl font-bold text-[#6d5cf6] tracking-tight">68%</div>
+                      <div className="text-[11px] text-[#6c6f8a] mt-0.5">Overall</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3.5">
+                    {[['Study time','24h 30m'],['Cards reviewed','28'],['Quizzes taken','12']].map(([k,v]) => (
+                      <div key={k}>
+                        <div className="text-xs text-[#6c6f8a]">{k}</div>
+                        <div className="font-bold text-base mt-0.5">{v}</div>
                       </div>
                     ))}
                   </div>
                 </div>
-                {/* Score trend mini bars */}
-                <div className="pt-3 border-t border-gray-50">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-[10px] text-gray-400">Score trend</p>
-                    <p className="text-[11px] font-extrabold text-indigo-600">76% <span className="text-emerald-600 font-bold text-[10px]">↑+6%</span></p>
+                <Separator className="my-4"/>
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-xs text-[#6c6f8a]">Score trend</span>
+                  <span className="text-xs"><span className="font-bold text-[#11132b] mr-1.5">70%</span><span className="text-[#29c089] font-semibold">+6%</span></span>
+                </div>
+                <div className="grid grid-cols-5 gap-2.5 items-end h-[70px]">
+                  {[42,48,55,62,88].map((h,i) => (
+                    <div key={i} className="w-full rounded-t-md" style={{ height:`${h}%`, background: i===4?'#6d5cf6':'#efecff' }}/>
+                  ))}
+                </div>
+                <div className="grid grid-cols-5 gap-2.5 mt-2">
+                  {['Apr 14','Apr 21','Apr 28','May 5','May 12'].map(l => (
+                    <div key={l} className="text-[11px] text-[#9a9db4] text-center">{l}</div>
+                  ))}
+                </div>
+              </CardContent>
+            </div>
+
+            {/* Study Time */}
+            <div  className="bg-white border border-gray-100 shadow-sm rounded-xl">
+              <CardContent className="p-[18px]">
+                <div className="flex justify-between items-start">
+                  <p className="text-[11px] font-semibold tracking-[0.08em] text-[#6c6f8a] uppercase">Study Time</p>
+                  <span className="text-xs text-[#ec5b56] font-semibold flex items-center gap-0.5">-12% <ArrowDn/></span>
+                </div>
+                <div className="mt-3.5">
+                  <div className="text-[28px] font-bold text-[#11132b] tracking-tight leading-tight">24h 30m</div>
+                  <div className="text-xs text-[#6c6f8a] mt-0.5">Total this month</div>
+                </div>
+                <div className="mt-1.5">
+                  <svg viewBox="0 0 460 130" width="100%" height="130" preserveAspectRatio="none">
+                    <defs><linearGradient id="st-grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#6d5cf6" stopOpacity=".18"/><stop offset="100%" stopColor="#6d5cf6" stopOpacity="0"/></linearGradient></defs>
+                    <g stroke="#eef0f7" strokeWidth="1"><line x1="0" y1="20" x2="460" y2="20"/><line x1="0" y1="55" x2="460" y2="55"/><line x1="0" y1="90" x2="460" y2="90"/><line x1="0" y1="125" x2="460" y2="125"/></g>
+                    <path d="M20,95 L75,100 L130,80 L195,75 L260,55 L325,45 L390,30 L440,18 L440,130 L20,130 Z" fill="url(#st-grad)"/>
+                    <path d="M20,95 L75,100 L130,80 L195,75 L260,55 L325,45 L390,30 L440,18" fill="none" stroke="#6d5cf6" strokeWidth="2.2" strokeLinejoin="round"/>
+                    <g fill="#fff" stroke="#6d5cf6" strokeWidth="2">
+                      {[[20,95],[75,100],[130,80],[195,75],[260,55],[325,45],[390,30]].map(([cx,cy],i)=><circle key={i} cx={cx} cy={cy} r="3.5"/>)}
+                      <circle cx="440" cy="18" r="4" fill="#6d5cf6"/>
+                    </g>
+                  </svg>
+                  <div className="grid grid-cols-4 mt-1">
+                    {['Apr W3','Apr W4','May W1','May W2'].map(w=><div key={w} className="text-[11px] text-[#9a9db4] text-center">{w}</div>)}
                   </div>
-                  <div className="flex items-end gap-0.5 h-8">
-                    {[62,65,68,71,70,73,76,74,76].map((v,i) => (
-                      <div key={i} className={`flex-1 rounded-sm transition-colors ${i===8?'bg-indigo-500':'bg-indigo-200'} hover:bg-indigo-400`}
-                        style={{ height:`${((v-60)/20)*100}%` }} />
+                </div>
+                <div className="grid grid-cols-2 gap-2.5 mt-3.5">
+                  {[['Daily avg','2.5 hrs',false],['Best day','Saturday',true],['Longest session','3.5 hrs',false],['Sessions / week','6',false]].map(([k,v,g])=>(
+                    <div key={String(k)} className="bg-[#f7f7fc] rounded-[10px] px-3 py-2.5">
+                      <div className="text-[11px] text-[#9a9db4]">{k}</div>
+                      <div className={`font-bold text-sm mt-1 ${g?'text-[#29c089]':'text-[#11132b]'}`}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </div>
+
+            {/* Calendar */}
+            <div className="bg-white border border-gray-100 shadow-sm rounded-xl">
+              <CardContent className="p-[18px]">
+                <div className="flex items-center justify-between mb-3.5">
+                  <p className="text-[11px] font-semibold tracking-[0.08em] text-[#6c6f8a] uppercase">May 2026</p>
+                  <div className="flex gap-1.5">
+                    {['‹','›'].map(a=>(
+                      <button key={a} className="w-[22px] h-[22px] rounded-md border border-[#ececf3] bg-white text-[#6c6f8a] flex items-center justify-center cursor-pointer text-[13px] hover:bg-gray-50">{a}</button>
                     ))}
                   </div>
                 </div>
-              </div>
-
-              {/* Study time chart */}
-              <div className="md:col-span-5 bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-                <div className="flex items-start justify-between mb-1">
-                  <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest">Study Time</p>
-                  <span className="text-[10px] font-bold text-red-500">-12%</span>
+                <div className="grid grid-cols-7 gap-1">
+                  {['S','M','T','W','T','F','S'].map((d,i)=><div key={i} className="text-[11px] text-[#9a9db4] text-center py-1">{d}</div>)}
+                  {[...Array(5)].map((_,i)=><div key={`b${i}`}/>)}
+                  {[...Array(31)].map((_,i)=>{
+                    const d=i+1, isToday=d===19;
+                    const evts:Record<number,string[]>={19:['study'],21:['quiz'],22:['deadline'],25:['exam','study'],26:['quiz','study'],29:['quiz','study']};
+                    const dotC:Record<string,string>={exam:'#ec5b56',deadline:'#f3a23a',quiz:'#8b6cf2',study:'#6d5cf6'};
+                    return (
+                      <div key={d} className={`relative flex flex-col items-center justify-center text-xs rounded-lg cursor-pointer ${isToday?'bg-[#6d5cf6] text-white font-semibold':'text-[#11132b] hover:bg-gray-100'}`} style={{aspectRatio:'1.15'}}>
+                        {d}
+                        {evts[d]&&<div className="absolute bottom-0.5 flex gap-0.5">{evts[d].map((e,j)=><span key={j} className="w-1 h-1 rounded-full" style={{background:isToday?'rgba(255,255,255,.85)':dotC[e]}}/>)}</div>}
+                      </div>
+                    );
+                  })}
+                  {[...Array(6)].map((_,i)=><div key={`e${i}`}/>)}
                 </div>
-                <p className="text-2xl font-extrabold text-gray-900">24h 30m</p>
-                <p className="text-[11px] text-gray-400 mb-1">Total this month</p>
-                <BarChart data={WEEKLY} />
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  {[
-                    { label:'Daily avg',       value:'2.5 hrs',  color:'text-indigo-600' },
-                    { label:'Best day',         value:'Saturday', color:'text-emerald-600'},
-                    { label:'Longest session',  value:'3.5 hrs',  color:'text-purple-600' },
-                    { label:'Sessions / week',  value:'6',        color:'text-amber-600'  },
-                  ].map((s) => (
-                    <div key={s.label} className="bg-gray-50 rounded-xl p-2.5">
-                      <p className="text-[10px] text-gray-400 leading-tight">{s.label}</p>
-                      <p className={`text-sm font-extrabold ${s.color}`}>{s.value}</p>
-                    </div>
+                <div className="flex flex-wrap gap-x-3.5 gap-y-2 text-[11px] text-[#6c6f8a] mt-3.5 pt-3.5 border-t border-[#ececf3]">
+                  {[['#ec5b56','Exam'],['#f3a23a','Deadline'],['#8b6cf2','Quiz'],['#6d5cf6','Study']].map(([c,l])=>(
+                    <span key={l} className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{background:c}}/>{l}</span>
                   ))}
                 </div>
-              </div>
-
-              {/* Mini calendar */}
-              <div className="md:col-span-3 bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-                <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-3">May 2026</p>
-                <MiniCalendar />
-              </div>
+              </CardContent>
             </div>
+          </div>
 
-            {/* Bottom row — subjects + achievements */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          {/* ── Row 3 ──────────────────────────────────────── */}
+          <div className="grid grid-cols-2 gap-3.5 mb-3.5">
 
-              {/* Subject breakdown */}
-              <div className="md:col-span-7 bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-                <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-4">Subject Breakdown</p>
-                <div className="space-y-3.5">
-                  {SUBJECTS.map((s) => (
-                    <div key={s.name} className="flex items-center gap-3">
-                      <div className="w-24 md:w-32 flex-shrink-0">
-                        <p className="text-xs font-semibold text-gray-800 truncate">{s.name}</p>
-                        <p className="text-[10px] text-gray-400">{s.hrs}h · {s.pct}%</p>
-                      </div>
-                      <div className="flex-1">
-                        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className={`h-full ${s.color} rounded-full`} style={{ width:`${s.pct}%` }} />
-                        </div>
-                      </div>
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-extrabold flex-shrink-0 ${
-                        s.score>=85?'bg-emerald-100 text-emerald-700':s.score>=75?'bg-indigo-100 text-indigo-700':'bg-amber-100 text-amber-700'
-                      }`}>{s.score}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Achievements */}
-              <div className="md:col-span-5 bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-                <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-3">Achievements</p>
-                <div className="space-y-2">
-                  {ACHIEVEMENTS.map((a,i) => (
-                    <div key={i} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all ${
-                      a.earned ? 'bg-indigo-50 border-indigo-100' : 'bg-gray-50 border-gray-100 opacity-50'
-                    }`}>
-                      <span className="text-lg flex-shrink-0">{a.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-gray-900 truncate">{a.label}</p>
-                        <p className="text-[10px] text-gray-400">{a.sub}</p>
-                      </div>
-                      {a.earned
-                        ? <span className="text-[9px] font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded-full flex-shrink-0">Earned</span>
-                        : <span className="text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-full flex-shrink-0">Locked</span>
-                      }
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Anonymous class benchmark */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-base">🏆</span>
-                <p className="text-sm font-extrabold text-gray-900">How you compare — anonymous</p>
-                <Tooltip text="Compared anonymously against other Atlas students in the same classes. No names, no rankings shared." position="right" width="w-56" />
-              </div>
-              <p className="text-[11px] text-gray-400 mb-4">All comparisons are fully anonymous · opt-out in Privacy settings</p>
-              <div className="space-y-3">
+            {/* Subject Breakdown */}
+            <div className="bg-white border border-gray-100 shadow-sm rounded-xl">
+              <CardContent className="p-[18px]">
+                <p className="text-[11px] font-semibold tracking-[0.08em] text-[#6c6f8a] uppercase mb-3.5">Subject Breakdown</p>
                 {[
-                  { class:'Biology 101',    mastery:65, rank:28, total:100, color:'bg-indigo-500' },
-                  { class:'Statistics 201', mastery:72, rank:35, total:100, color:'bg-emerald-500' },
-                  { class:'English 301',    mastery:58, rank:44, total:100, color:'bg-blue-500'   },
-                ].map((c) => (
-                  <div key={c.class} className="flex items-center gap-3">
-                    <div className="w-28 flex-shrink-0">
-                      <p className="text-xs font-semibold text-gray-800 truncate">{c.class}</p>
-                      <p className="text-[10px] text-gray-400">Top {c.rank}% of students</p>
+                  {name:'Biology 101',   time:'52h 45m',pct:72,bar:'#6d5cf6',pill:'bg-[#efecff] text-[#6d5cf6]',iconBg:'bg-[#e2f6ee]',iconC:'text-[#29c089]'},
+                  {name:'Statistics 201',time:'31h 20m',pct:85,bar:'#29c089',pill:'bg-[#e2f6ee] text-[#29c089]',iconBg:'bg-[#e7efff]',iconC:'text-[#4f7df3]'},
+                  {name:'English 110',   time:'23h 20m',pct:78,bar:'#f3a23a',pill:'bg-[#fdeed8] text-[#f3a23a]',iconBg:'bg-[#fdeed8]',iconC:'text-[#f3a23a]'},
+                  {name:'History 105',   time:'16h 10m',pct:91,bar:'#8b6cf2',pill:'bg-[#efecff] text-[#8b6cf2]',iconBg:'bg-[#efecff]',iconC:'text-[#8b6cf2]'},
+                ].map((s,i)=>(
+                  <div key={s.name} className={`grid gap-3.5 items-center py-3 ${i>0?'border-t border-[#eef0f7]':''}`} style={{gridTemplateColumns:'38px 130px 1fr 56px'}}>
+                    <div className={`w-[38px] h-[38px] rounded-[10px] ${s.iconBg} flex items-center justify-center ${s.iconC}`}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/></svg>
                     </div>
-                    <div className="flex-1 relative h-5 bg-gray-100 rounded-full overflow-hidden">
-                      {/* Class average line */}
-                      <div className="absolute top-0 bottom-0 w-0.5 bg-gray-400 z-10" style={{ left:'50%' }} />
-                      {/* Your position */}
-                      <div className={`absolute top-1 bottom-1 ${c.color} rounded-full transition-all`}
-                        style={{ left:0, width:`${100-c.rank}%` }} />
+                    <div>
+                      <div className="font-semibold text-[13px] text-[#11132b]">{s.name}</div>
+                      <div className="text-[11px] text-[#9a9db4] mt-0.5">{s.time}</div>
                     </div>
-                    <span className={`text-xs font-extrabold flex-shrink-0 ${c.rank<=33?'text-emerald-600':c.rank<=66?'text-amber-600':'text-red-500'}`}>
-                      {c.rank <= 33 ? '🟢' : c.rank <= 66 ? '🟡' : '🔴'} Top {c.rank}%
-                    </span>
+                    <div className="h-[9px] bg-[#f1f1f7] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{width:`${s.pct}%`,background:s.bar}}/>
+                    </div>
+                    <div className={`text-center text-xs font-semibold py-1 rounded-md ${s.pill}`}>{s.pct}%</div>
                   </div>
                 ))}
-              </div>
+                <Separator className="mt-1.5"/>
+                <div className="text-center pt-3.5 text-xs font-semibold text-[#6d5cf6]">View all subjects →</div>
+              </CardContent>
             </div>
 
-            {/* Confidence calibration chart */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-base">🎯</span>
-                <p className="text-sm font-extrabold text-gray-900">Confidence calibration</p>
-                <Tooltip text="How accurate your self-confidence is before quizzes. Perfect calibration = the diagonal line. Above = overconfident. Below = underconfident." position="right" width="w-60" />
-              </div>
-              <p className="text-[11px] text-gray-400 mb-4">Your self-rated confidence vs actual quiz score — per topic</p>
-              <div className="relative">
-                <svg viewBox="0 0 200 120" className="w-full h-32">
-                  {/* Grid */}
-                  {[0,50,100].map((v) => (
-                    <g key={v}>
-                      <line x1={v*2} y1="0" x2={v*2} y2="100" stroke="#f3f4f6" strokeWidth="1" />
-                      <line x1="0" y1={100-v} x2="200" y2={100-v} stroke="#f3f4f6" strokeWidth="1" />
-                    </g>
-                  ))}
-                  {/* Perfect calibration diagonal */}
-                  <line x1="0" y1="100" x2="200" y2="0" stroke="#e5e7eb" strokeWidth="1.5" strokeDasharray="4,3" />
-                  {/* Data points */}
-                  {[
-                    { confidence:80, actual:91, topic:'Mitosis',    overconfident:false },
-                    { confidence:70, actual:62, topic:'Enzyme K.',  overconfident:true  },
-                    { confidence:50, actual:78, topic:'Cell Resp.', overconfident:false },
-                    { confidence:90, actual:85, topic:'DNA Rep.',   overconfident:true  },
-                    { confidence:40, actual:55, topic:'Krebs',      overconfident:false },
-                  ].map((d, i) => (
-                    <g key={i}>
-                      <circle
-                        cx={d.confidence * 2} cy={100 - d.actual}
-                        r="5" fill={d.overconfident ? '#F59E0B' : '#4F46E5'}
-                        stroke="white" strokeWidth="1.5"
-                      />
-                    </g>
-                  ))}
-                  {/* Axes labels */}
-                  <text x="100" y="115" textAnchor="middle" fontSize="8" fill="#9ca3af">Self-confidence →</text>
-                  <text x="8" y="50" textAnchor="middle" fontSize="8" fill="#9ca3af" transform="rotate(-90 8 50)">Actual score</text>
-                </svg>
-              </div>
-              <div className="flex items-center gap-4 mt-2 text-[10px] text-gray-500">
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500" /><span>Well calibrated</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-500" /><span>Overconfident</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-8 h-px bg-gray-300" style={{borderTop:'1.5px dashed #d1d5db'}} /><span>Perfect line</span></div>
-              </div>
-              <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5">
-                <p className="text-[11px] text-amber-700 font-semibold">⚠️ You tend to be overconfident on Enzyme Kinetics — you rated 70% confidence but scored 62%. Study this more before exams.</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ════ SUBJECTS ════ */}
-        {tab==='subjects' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {SUBJECTS.map((s) => (
-                <div key={s.name} className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
-                  <div className={`w-10 h-10 rounded-xl ${s.light} flex items-center justify-center mb-3`}>
-                    <BookOpen className={`w-5 h-5 ${s.text}`} />
-                  </div>
-                  <p className="text-sm font-bold text-gray-900 mb-1">{s.name}</p>
-                  <p className={`text-3xl font-extrabold ${s.score>=85?'text-emerald-600':s.score>=75?'text-indigo-600':'text-amber-600'} mb-0.5`}>{s.score}%</p>
-                  <p className="text-[11px] text-gray-400 mb-3">{s.hrs}h studied · {s.pct}% of total time</p>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
-                    <div className={`h-full ${s.color} rounded-full`} style={{ width:`${s.score}%` }} />
-                  </div>
-                  {/* Study time bar */}
-                  <div className="mt-2">
-                    <p className="text-[10px] text-gray-400 mb-1">Share of study time</p>
-                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className={`h-full ${s.color} rounded-full opacity-60`} style={{ width:`${s.pct}%` }} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Comparative bar */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-              <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-4">Score comparison</p>
-              <div className="space-y-3">
-                {SUBJECTS.map((s) => (
-                  <div key={s.name} className="flex items-center gap-3">
-                    <div className="w-28 md:w-36 flex-shrink-0">
-                      <p className="text-xs font-semibold text-gray-800 truncate">{s.name}</p>
-                    </div>
+            {/* Achievements */}
+            <div className="bg-white border border-gray-100 shadow-sm rounded-xl">
+              <CardContent className="p-[18px]">
+                <p className="text-[11px] font-semibold tracking-[0.08em] text-[#6c6f8a] uppercase mb-3.5">Achievements</p>
+                {[
+                  {ic:'🔥',icBg:'bg-[#ffe9df]',t:'5-day streak',         d:'Keep going!',           earned:true },
+                  {ic:'⭐',icBg:'bg-[#fff3d0]',t:'Quiz Master',           d:'10 quizzes completed',  earned:true },
+                  {ic:'📈',icBg:'bg-[#e2f6ee]',t:'+0.5 GPA improvement', d:'This semester',         earned:true },
+                  {ic:'🎯',icBg:'bg-[#fde2e1]',t:'100% plan completion', d:'Complete 5 in a row',   earned:false},
+                  {ic:'🏆',icBg:'bg-[#fff3d0]',t:'Top score 90%+',       d:'Score 90%+ on exam',    earned:false},
+                ].map((a,i)=>(
+                  <div key={a.t} className={`flex items-center gap-3 py-[11px] ${i>0?'border-t border-[#eef0f7]':''}`}>
+                    <div className={`w-9 h-9 rounded-[10px] ${a.icBg} flex items-center justify-center text-[18px] shrink-0`}>{a.ic}</div>
                     <div className="flex-1">
-                      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full ${s.color} rounded-full`} style={{ width:`${s.score}%` }} />
-                      </div>
+                      <div className="font-semibold text-[13px] text-[#11132b]">{a.t}</div>
+                      <div className="text-[11px] text-[#9a9db4] mt-0.5">{a.d}</div>
                     </div>
-                    <span className={`text-sm font-extrabold w-10 text-right flex-shrink-0 ${
-                      s.score>=85?'text-emerald-600':s.score>=75?'text-indigo-600':'text-amber-600'
-                    }`}>{s.score}%</span>
+                    <Badge variant={a.earned?'default':'outline'} className={a.earned?'bg-[#e2f6ee] text-[#29c089] border-0 hover:bg-[#e2f6ee]':'text-[#6c6f8a]'}>
+                      {a.earned?'Earned':'Locked'}
+                    </Badge>
                   </div>
                 ))}
-              </div>
+                <Separator className="mt-1.5"/>
+                <div className="text-center pt-3.5 text-xs font-semibold text-[#6d5cf6]">View all achievements →</div>
+              </CardContent>
             </div>
           </div>
-        )}
 
-        {/* ════ TOPICS ════ */}
-        {tab==='topics' && (
-          <div className="space-y-4">
-            {/* Summary row */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label:'Needs work', count: TOPICS.filter(t=>t.pct<40).length,  bg:'bg-red-50',     text:'text-red-600',     border:'border-red-100'     },
-                { label:'Developing', count: TOPICS.filter(t=>t.pct>=40&&t.pct<65).length, bg:'bg-amber-50', text:'text-amber-600', border:'border-amber-100' },
-                { label:'Strong',     count: TOPICS.filter(t=>t.pct>=65).length, bg:'bg-emerald-50', text:'text-emerald-600', border:'border-emerald-100' },
-              ].map((s) => (
-                <div key={s.label} className={`${s.bg} border ${s.border} rounded-2xl p-3.5 text-center`}>
-                  <p className={`text-2xl font-extrabold ${s.text}`}>{s.count}</p>
-                  <p className={`text-[11px] font-semibold ${s.text}`}>{s.label}</p>
+          {/* ── How You Compare ────────────────────────────── */}
+          <div className="bg-white border border-gray-100 shadow-sm rounded-xl mb-3.5">
+            <CardContent className="p-[18px]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center">
+                    <span className="text-[11px] font-semibold tracking-[0.08em] text-[#6c6f8a] uppercase">How you compare — anonymous</span>
+                    <InfoI/>
+                  </div>
+                  <div className="text-xs text-[#6c6f8a] mt-1">All comparisons are fully anonymous · opt-out in Privacy settings</div>
                 </div>
-              ))}
-            </div>
-
-            {/* Topic list */}
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-              <div className="px-4 md:px-5 py-3.5 border-b border-gray-50 flex items-center justify-between">
-                <p className="text-sm font-extrabold text-gray-900">Topic mastery — all classes</p>
-                <span className="text-[11px] text-gray-400">{TOPICS.length} topics</span>
+                <div className="flex items-center gap-2.5 text-xs text-[#6c6f8a] shrink-0">
+                  <span>Compared to</span>
+                  <div className="flex items-center gap-1.5 border border-[#ececf3] rounded-lg px-2.5 py-1.5 bg-white text-xs">
+                    Students in your courses
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                </div>
               </div>
-              <div className="divide-y divide-gray-50">
-                {TOPICS.map((t) => (
-                  <div key={t.name} className="flex items-center gap-3 px-4 md:px-5 py-3 hover:bg-gray-50 transition-all">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-gray-900">{t.name}</p>
-                        {t.exam && (
-                          <span className="text-[9px] font-bold bg-red-100 text-red-700 border border-red-200 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                            Exam
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-gray-400 mt-0.5">{t.cls}</p>
+              <div className="relative mt-3.5">
+                {[
+                  {iconBg:'bg-[#e2f6ee]',iconC:'text-[#29c089]',name:'Biology 101',   sub:'Top 28% of students',barW:'78%',bar:'bg-[#6d5cf6]',tag:'● Top 28%',tagC:'text-[#29c089]'},
+                  {iconBg:'bg-[#e7efff]',iconC:'text-[#4f7df3]',name:'Statistics 201',sub:'Top 35% of students',barW:'70%',bar:'bg-[#29c089]',tag:'● Top 35%',tagC:'text-[#f3a23a]'},
+                  {iconBg:'bg-[#fdeed8]',iconC:'text-[#f3a23a]',name:'English 110',   sub:'Top 44% of students',barW:'58%',bar:'bg-[#4f7df3]', tag:'● Top 44%',tagC:'text-[#f3a23a]'},
+                ].map((s,i)=>(
+                  <div key={s.name} className={`grid gap-3.5 items-center py-3 ${i>0?'border-t border-[#eef0f7]':''}`} style={{gridTemplateColumns:'38px 150px 1fr 80px'}}>
+                    <div className={`w-8 h-8 rounded-[10px] ${s.iconBg} flex items-center justify-center ${s.iconC}`}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/></svg>
                     </div>
-                    <div className="w-24 md:w-40 flex-shrink-0">
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full ${masteryColor(t.pct)} rounded-full`} style={{ width:`${t.pct}%` }} />
-                      </div>
+                    <div>
+                      <div className="font-semibold text-[13px]">{s.name}</div>
+                      <div className="text-[11px] text-[#9a9db4] mt-0.5">{s.sub}</div>
                     </div>
-                    <span className={`text-sm font-extrabold w-10 text-right flex-shrink-0 ${masteryText(t.pct)}`}>{t.pct}%</span>
-                    <span className="text-[10px] font-bold text-emerald-600 w-8 text-right flex-shrink-0 hidden sm:block">{t.trend}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border flex-shrink-0 hidden sm:block ${masteryBadge(t.pct)}`}>
-                      {masteryLabel(t.pct)}
-                    </span>
+                    <div className="relative h-3.5">
+                      <div className="absolute inset-0 bg-[#f1f1f7] rounded-full"/>
+                      <div className={`absolute inset-y-0 left-0 ${s.bar} rounded-full`} style={{width:s.barW}}/>
+                      <div className="absolute top-[-4px] bottom-[-4px] left-[64%] w-0.5"
+                        style={{background:'repeating-linear-gradient(to bottom,#9a9db4 0,#9a9db4 3px,transparent 3px,transparent 6px)'}}/>
+                    </div>
+                    <div className={`font-semibold text-xs ${s.tagC}`}>{s.tag}</div>
                   </div>
                 ))}
+                <div className="relative h-4">
+                  <div className="absolute text-[11px] text-[#9a9db4] -translate-x-1/2 whitespace-nowrap" style={{left:'calc(38px + 150px + 28px + 64% * 0.6)'}}>Class average</div>
+                </div>
               </div>
-            </div>
+            </CardContent>
           </div>
-        )}
 
-        {/* ════ TIME ════ */}
-        {tab==='time' && (
-          <div className="space-y-4">
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                { label:'This week',    value:'12.4h', delta:'+2h vs last week', good:true,  color:'text-indigo-600',  bg:'bg-indigo-50'  },
-                { label:'Daily avg',    value:'2.5h',  delta:'Goal: 3h',         good:false, color:'text-amber-600',   bg:'bg-amber-50'   },
-                { label:'Best session', value:'3.5h',  delta:'Last Saturday',    good:true,  color:'text-emerald-600', bg:'bg-emerald-50' },
-                { label:'Streak',       value:'5 days',delta:'Keep going!',      good:true,  color:'text-purple-600',  bg:'bg-purple-50'  },
-              ].map((s) => (
-                <div key={s.label} className={`${s.bg} border border-gray-100 rounded-2xl p-3.5 md:p-4`}>
-                  <p className={`text-xl md:text-2xl font-extrabold ${s.color}`}>{s.value}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">{s.label}</p>
-                  <p className={`text-[10px] font-bold mt-0.5 ${s.good?'text-emerald-600':'text-amber-600'}`}>{s.delta}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Weekly chart */}
-              <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-                <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Weekly Study Hours</p>
-                <BarChart data={WEEKLY} />
+          {/* ── Confidence Calibration ──────────────────────── */}
+          <div className="bg-white border border-gray-100 shadow-sm rounded-xl">
+            <CardContent className="p-[18px]">
+              <div className="flex items-center">
+                <span className="text-[11px] font-semibold tracking-[0.08em] text-[#6c6f8a] uppercase">Confidence Calibration</span>
+                <InfoI/>
               </div>
+              <p className="text-xs text-[#6c6f8a] mt-1 mb-3.5">Your self-rated confidence vs actual quiz score — per topic</p>
+              <div className="grid gap-5" style={{gridTemplateColumns:'220px 1fr 240px', alignItems:'stretch'}}>
 
-              {/* Time of day performance */}
-              <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest">Performance by time of day</p>
-                  <Tooltip text="Shows when you study most (hours) vs when you actually score best on quizzes. The gap reveals your optimal study time." position="top" width="w-60" />
-                </div>
-                <p className="text-[10px] text-gray-400 mb-4">Hours studied vs quiz score at each time</p>
-                <div className="space-y-3">
+                {/* Legend */}
+                <div className="flex flex-col gap-3 text-xs">
                   {[
-                    { label:'🌅 Morning  6–12',  hrs:3.2, score:78, scoreColor:'text-amber-600',  hrsBar:'bg-indigo-300' },
-                    { label:'☀️ Afternoon 12–6', hrs:4.1, score:72, scoreColor:'text-red-500',    hrsBar:'bg-indigo-400' },
-                    { label:'🌙 Evening  6–10',  hrs:4.8, score:91, scoreColor:'text-emerald-600',hrsBar:'bg-indigo-500' },
-                    { label:'🌌 Late night 10–2',hrs:0.4, score:61, scoreColor:'text-red-500',    hrsBar:'bg-indigo-200' },
-                  ].map((s) => (
-                    <div key={s.label}>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-600 font-medium">{s.label}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400">{s.hrs}h studied</span>
-                          <span className={`font-extrabold ${s.scoreColor}`}>{s.score}% avg score</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-1 h-3">
-                        {/* Hours bar */}
-                        <div className="flex-1 bg-gray-100 rounded-full overflow-hidden">
-                          <div className={`h-full ${s.hrsBar} rounded-full`} style={{ width:`${(s.hrs/5)*100}%` }} />
-                        </div>
-                        {/* Score bar */}
-                        <div className="flex-1 bg-gray-100 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${s.score>=85?'bg-emerald-500':s.score>=75?'bg-amber-400':'bg-red-400'}`}
-                            style={{ width:`${s.score}%` }} />
-                        </div>
+                    {c:'bg-[#29c089]',dash:false,label:'Well calibrated',  lc:'text-[#29c089]',desc:'Your confidence matches your performance'},
+                    {c:'bg-[#f3a23a]',dash:false,label:'Overconfident',     lc:'text-[#f3a23a]',desc:'You rated higher than your actual score'},
+                    {c:'bg-[#6d5cf6]',dash:false,label:'Underconfident',    lc:'text-[#6d5cf6]',desc:'You rated lower than your actual score'},
+                    {c:'',            dash:true, label:'Perfect line',      lc:'text-[#11132b]',desc:'Ideal calibration'},
+                  ].map(l=>(
+                    <div key={l.label} className="grid gap-2" style={{gridTemplateColumns:'12px 1fr', alignItems:'start'}}>
+                      {l.dash
+                        ? <span className="block mt-2" style={{width:14,height:2,background:'repeating-linear-gradient(to right,#9a9db4 0,#9a9db4 3px,transparent 3px,transparent 6px)'}}/>
+                        : <span className={`w-2 h-2 rounded-full ${l.c} mt-1.5 block`}/>
+                      }
+                      <div>
+                        <div className={`font-semibold ${l.lc}`}>{l.label}</div>
+                        <div className="text-[11px] text-[#6c6f8a] mt-0.5 leading-snug">{l.desc}</div>
                       </div>
                     </div>
                   ))}
                 </div>
-                {/* Insight */}
-                <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2.5">
-                  <p className="text-xs font-bold text-emerald-800 mb-0.5">💡 Your insight</p>
-                  <p className="text-[11px] text-emerald-700">You study most at <strong>6–10pm</strong> and score best then too (91%). But you study 4h in the afternoon and only score 72%. Shift afternoon study to evening for better results.</p>
-                </div>
-                <div className="flex items-center gap-3 mt-2.5 text-[10px] text-gray-400">
-                  <div className="flex items-center gap-1"><div className="w-3 h-2 rounded bg-indigo-400" /><span>Hours studied</span></div>
-                  <div className="flex items-center gap-1"><div className="w-3 h-2 rounded bg-emerald-400" /><span>Quiz score</span></div>
-                </div>
-              </div>
-            </div>
 
-            {/* Subject time breakdown */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
-              <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-4">Time by subject — this month</p>
-              <div className="space-y-3">
-                {SUBJECTS.map((s) => (
-                  <div key={s.name} className="flex items-center gap-3">
-                    <div className="w-24 md:w-36 flex-shrink-0">
-                      <p className="text-xs font-semibold text-gray-800 truncate">{s.name}</p>
-                      <p className="text-[10px] text-gray-400">{s.hrs}h</p>
-                    </div>
-                    <div className="flex-1">
-                      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full ${s.color} rounded-full`} style={{ width:`${s.pct}%` }} />
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-gray-600 w-8 text-right flex-shrink-0">{s.pct}%</span>
+                {/* Scatter */}
+                <div className="grid gap-1" style={{gridTemplateColumns:'14px 1fr'}}>
+                  <div className="text-[11px] text-[#6c6f8a] text-center" style={{writingMode:'vertical-rl',transform:'rotate(180deg)'}}>Actual quiz score →</div>
+                  <div>
+                    <svg viewBox="0 0 440 260" width="100%" preserveAspectRatio="xMidYMid meet">
+                      <g stroke="#eef0f7" strokeWidth="1">
+                        {[20,70,120,170,220].map(y=><line key={y} x1="40" y1={y} x2="430" y2={y}/>)}
+                        {[118,196,274,352].map(x=><line key={x} x1={x} y1="20" x2={x} y2="220"/>)}
+                      </g>
+                      <g fill="#9a9db4" fontSize="10">
+                        {[['100%',24],['80%',74],['60%',124],['40%',174],['20%',224]].map(([l,y])=><text key={String(l)} x="32" y={Number(y)} textAnchor="end">{l}</text>)}
+                      </g>
+                      <g fill="#9a9db4" fontSize="10" textAnchor="middle">
+                        {[['20%',118],['40%',196],['60%',274],['80%',352],['100%',430]].map(([l,x])=><text key={String(l)} x={Number(x)} y="240">{l}</text>)}
+                      </g>
+                      <line x1="40" y1="220" x2="430" y2="20" stroke="#c8cad9" strokeWidth="1.5" strokeDasharray="4 4"/>
+                      {[[305,78],[335,55],[365,40],[240,120],[395,28]].map(([cx,cy],i)=><circle key={i} cx={cx} cy={cy} r="6" fill="#29c089"/>)}
+                      {[[270,92],[295,105],[335,78]].map(([cx,cy],i)=><circle key={i} cx={cx} cy={cy} r="6" fill="#f3a23a"/>)}
+                      {[[180,100],[155,140],[115,180],[90,200]].map(([cx,cy],i)=><circle key={i} cx={cx} cy={cy} r="6" fill="#6d5cf6"/>)}
+                    </svg>
+                    <div className="text-[11px] text-[#6c6f8a] text-center mt-1">Self-rated confidence →</div>
                   </div>
-                ))}
+                </div>
+
+                {/* Tip */}
+                <div className="bg-[#efecff] rounded-[10px] p-3.5 text-xs text-[#11132b] leading-relaxed">
+                  <div className="flex items-center gap-1.5 font-semibold mb-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6d5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.01"/></svg>
+                    Tip
+                  </div>
+                  <p>You tend to be overconfident on <strong>Enzyme Kinetics</strong> — you rated 70% confidence but scored 62%.</p>
+                  <p className="mt-2.5">Study this more before assessments.</p>
+                </div>
               </div>
-            </div>
+            </CardContent>
           </div>
-        )}
+
+        </div>
       </div>
     </AppLayout>
   );
-
-
 }
