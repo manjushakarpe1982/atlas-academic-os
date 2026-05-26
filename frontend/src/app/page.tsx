@@ -120,9 +120,7 @@ function Hero() {
 
       {/* Description */}
       <p className="mt-6 text-lg leading-8 text-[#666382]">
-        Upload your syllabus, discover weak topics,
-        build smart study plans, and improve faster
-        with AI-powered learning guidance.
+        Drop your syllabus. Atlas reads every lecture, slide, and grade — then tells you exactly what to study, why it matters, and how it moves your grade.
       </p>
 
       {/* Buttons */}
@@ -144,7 +142,7 @@ function Hero() {
 
       {/* Features */}
       <div className="mt-8 flex gap-6 flex-wrap text-sm text-[#8A87A3]">
-        {["AI Powered", "Adaptive", "Track Progress"].map((item) => (
+        {["Grounded in your own materials", "Explains every recommendation", "Predicts your exam score"].map((item) => (
           <div key={item} className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-[#635BFF]" />
             {item}
@@ -164,8 +162,8 @@ function Hero() {
 
       {/* Floating Stat */}
       <div className="absolute -top-4 right-4 bg-white rounded-2xl shadow-xl px-5 py-4">
-        <p className="text-xs text-gray-500">Accuracy</p>
-        <h3 className="text-xl font-bold text-[#635BFF]">82%</h3>
+        <p className="text-xs text-gray-500">Exam prediction error</p>
+        <h3 className="text-xl font-bold text-[#635BFF]">&lt;8 pts</h3>
       </div>
 
       {/* Floating Card */}
@@ -190,6 +188,7 @@ const FEATURES = [
   { icon: Mic,        grad:"from-orange-500 to-amber-500",  tag:"Whisper AI",  title:"Lecture transcription",  desc:"Upload audio — Atlas transcribes with timestamps and detects topics your professor emphasised."                      },
   { icon: BookOpen,   grad:"from-pink-500 to-rose-500",     tag:"SM-2",        title:"Active study tools",     desc:"Flashcards, quizzes, SM-2 spaced repetition — all auto-generated from your own uploaded materials."                },
   { icon: Calendar,   grad:"from-teal-500 to-cyan-600",     tag:"Smart",       title:"Smart calendar",         desc:"Knows your classes, gym, sleep, and commute. Study blocks are scheduled around your real life."                     },
+  { icon: Zap,        grad:"from-yellow-500 to-orange-500",  tag:"Explainable", title:"Every recommendation explained", desc:"Atlas never guesses silently. Every top task shows exactly why: lecture mentions, quiz misses, exam proximity."    },
 ];
 
 function Features() {
@@ -250,8 +249,8 @@ function HowItWorks() {
     {
       n: 2,
       icon: Brain,
-      title: "Get your plan",
-      desc: "Atlas creates your smart study plan",
+      title: "Atlas reads everything",
+      desc: "Lectures, grades, and emphasis signals all fused into one engine",
       bg: "from-pink-500 to-rose-500",
       iconColor: "text-white",
       glow: "shadow-pink-300/40",
@@ -260,7 +259,7 @@ function HowItWorks() {
       n: 3,
       icon: Target,
       title: "Start studying",
-      desc: "Follow your plan and achieve goals",
+      desc: "One ranked task with a reason. Start studying — Atlas adjusts as you go",
       bg: "from-emerald-500 to-teal-500",
       iconColor: "text-white",
       glow: "shadow-emerald-300/40",
@@ -284,8 +283,8 @@ function HowItWorks() {
           </span>
 
           <h2 className="text-4xl md:text-5xl font-extrabold text-[#171232] mt-4 mb-3">
-            Start in
-            <span className="text-[#534AB7]"> 3 simple steps</span>
+            Drop a file.
+            <span className="text-[#534AB7]"> Eight things happen.</span>
           </h2>
 
           <p className="text-[#6B6A8A]">
@@ -415,7 +414,7 @@ function Testimonials() {
   const items = [
     { q:"It told me to study mitosis because Smith mentioned it three times and I missed two enzyme questions on Quiz 3. It's not guessing.",   name:"Priya Sharma",   role:"Pre-med student",     term:"Fall 2026" },
     { q:"It predicted I'd score 87 on Exam 2. I scored 89. It's accurate enough that I trust it completely now.",                              name:"Aditya Thomas",  role:"Biology student",     term:"Fall 2026" },
-    { q:"The study guides it creates are sourced directly from my professor's lectures — not random internet stuff. That matters enormously.",   name:"Sara Khan",      role:"Engineering student", term:"Fall 2026" },
+    { q:"It's honest. It tells me when it's only partly sure — like 'this section is general biology, Smith didn't cover it.' No other tool does that.",   name:"Sara Khan",      role:"Engineering student", term:"Fall 2026" },
   ];
   return (
     <section className="py-8 border-t border-[#EEEDFE]" style={{ background:"#fafafe" }}>
@@ -423,7 +422,7 @@ function Testimonials() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-[#EEEDFE] border border-[#ABA9FA]/40 rounded-full px-3.5 py-1 mb-4">
             <Star className="w-3 h-3 text-[#534AB7]" />
-            <span className="text-xs font-semibold text-[#534AB7]">4.9 out of 5 stars</span>
+            <span className="text-xs font-semibold text-[#534AB7]">What students say</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-extrabold text-[#18172B] mb-2">
             Students trust the plan
@@ -511,7 +510,7 @@ function Pricing() {
       btn: "bg-white border-2 border-[#534AB7] text-[#534AB7] hover:bg-[#EEEDFE]",
       features: [
         "Everything in Student",
-        "Per-student calibration (α-learning)",
+        "Per-student prediction calibration (improves over time)",
         "Cross-semester history",
         "Priority support",
         "Early access to new features",
@@ -607,8 +606,7 @@ function CTA() {
         </h2>
 
         <p className="text-[#4E4A72] text-sm md:text-base leading-relaxed mb-7 max-w-md">
-          Join thousands of students who study smarter — not harder.
-          Drop your syllabus and get your personalised plan.
+          Drop your syllabus. Get a ranked study plan calibrated to your class, your professor's signals, and your real schedule.
         </p>
 
         <div className="flex flex-wrap gap-3">
@@ -674,52 +672,12 @@ export default function LandingPage() {
   <Navbar />
 
   {/* RIGHT FLOAT IMAGE */}
-  <img
-    src="https://res.cloudinary.com/mview/image/upload/atlas/landingpage-4.webp"
-    alt=""
-    className="
-      absolute
-      right-2 sm:right-6 md:right-12 lg:right-[18%]
-      top-[18%] sm:top-[22%] md:top-[24%] lg:top-[17%]
-      -translate-y-1/2
-      w-14 sm:w-20 md:w-32 lg:w-44
-      h-auto
-      rotate-[8deg]
-      opacity-95
-      z-20
-      pointer-events-none
-      drop-shadow-2xl
-      rounded-2xl
-      hidden lg:block
-    "
-  />
-
-  {/* LEFT FLOAT IMAGE */}
-  {/* <img
-    src="https://res.cloudinary.com/mview/image/upload/atlas/landingpage-5.webp"
-    alt=""
-    className="
-      absolute
-      left-2 sm:left-6 md:left-12 lg:left-[19%]
-      top-[20%] sm:top-[23%] md:top-[25%] lg:top-[26%]
-      -translate-y-1/2
-      w-14 sm:w-20 md:w-32 lg:w-40
-      h-auto
-      -rotate-[8deg]
-      opacity-95
-      z-20
-      pointer-events-none
-      drop-shadow-2xl
-      rounded-2xl
-      hidden lg:block
-    "
-  /> */}
 
   <Hero />
   <Features />
   <HowItWorks />
   <Comparison />
-  <Pricing />
+  {/* <Pricing /> */}
   <Testimonials />
   <CTA />
   <Footer />

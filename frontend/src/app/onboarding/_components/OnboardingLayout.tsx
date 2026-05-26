@@ -89,7 +89,7 @@ export default function OnboardingLayout({ children, step, disableNext }: Props)
             </div>
             <span className="text-sm font-extrabold text-[#1A1A2E] tracking-wide">Atlas</span>
           </div>
-          <a href="#" className="text-xs font-medium text-[#6B6A8A] hover:text-[#534AB7] flex items-center gap-1.5 transition-colors">
+          <a href="/help" className="text-xs font-medium text-[#6B6A8A] hover:text-[#534AB7] flex items-center gap-1.5 transition-colors">
             <HelpCircle className="w-4 h-4" /> Need help?
           </a>
         </header>
