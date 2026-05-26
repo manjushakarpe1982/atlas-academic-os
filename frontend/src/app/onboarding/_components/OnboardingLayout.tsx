@@ -288,7 +288,7 @@ export default function OnboardingLayout({
 
             {/* Sticky bottom nav */}
             {step < 5 && (
-              <div className="flex-shrink-0 bg-white border-t border-[#EEEDFE] px-2 md:px-6 py-3 md:py-4 flex items-center justify-between">
+              <div className="flex-shrink-0 bg-white border-t border-[#EEEDFE] px-3 md:px-6 py-3 md:py-4 flex items-center justify-between">
                 {/* LEFT — Skip for now */}
                 <button
                   onClick={() => setShowSkip(true)}

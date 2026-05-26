@@ -78,7 +78,7 @@ export default function Step4Page() {
                 <Clock className="w-4 h-4 text-[#534AB7]" />
                 <p className="text-sm font-bold text-[#1A1A2E]">Preferred study time</p>
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5">
                 {TIME_OPTIONS.map((o) => (
                   <button key={o.id} type="button" onClick={() => setStudyTime(o.id)}
                     className={`flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all text-left ${
@@ -114,7 +114,7 @@ export default function Step4Page() {
                   {total}h / week total
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {[
                   { label:'Weekdays', val: weekday, set: setWeekday, color:'#534AB7' },
                   { label:'Weekends', val: weekend, set: setWeekend, color:'#059669' },
@@ -142,7 +142,7 @@ export default function Step4Page() {
                 <Target className="w-4 h-4 text-[#534AB7]" />
                 <p className="text-sm font-bold text-[#1A1A2E]">Session length</p>
               </div>
-              <div className="flex flex-wrap gap-2">
+               <div className="grid grid-cols-2 md:grid-cols-4 md:gap-10 gap-2">
                 {[{ v:'30 min',e:'⚡' },{ v:'45–60 min',e:'📖' },{ v:'90 min',e:'🎯' },{ v:'2+ hours',e:'🏆' }].map((o) => (
                   <button key={o.v} type="button" onClick={() => setSessionLen(o.v)}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border-2 transition-all ${
@@ -170,7 +170,7 @@ export default function Step4Page() {
                     No notifications during this time
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="bg-white/10 border border-white/20 rounded-xl p-3.5">
                     <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-wide mb-2">🌙 Bedtime</p>
                     <input
