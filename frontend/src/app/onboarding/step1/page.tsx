@@ -120,12 +120,12 @@ export default function Step1Page() {
 </div>
 
     {/* Feature strip */}
-    <div className="px-8 py-3">
+    <div className="px-8 py-3 pb-10">
     <div className="border border-[#F1EEFF] bg-[#FAFAFE] rounded-xl px-8 py-5">
       <p className="text-lg font-bold   text-black mb-4">
         What you&apos;ll get with ATLAS
       </p>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4  gap-3">
         {FEATURES.map((f) => (
           <div key={f.label} className="flex items-center gap-2.5">
             <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center flex-shrink-0`}>
@@ -140,27 +140,17 @@ export default function Step1Page() {
   </div>
 
   {/* ── RIGHT — Illustration (30%) ────────────────────────────── */}
-  <div
-    className="hidden lg:flex flex-col items-center justify-center flex-shrink-0 relative overflow-hidden"
-    style={{
-      width: '32%',
-      background: 'linear-gradient(145deg, #F2EEFF 0%, #EAE4FF 60%, #E0D8FF 100%)',
-    }}
-  >
-    {/* Sparkle dots */}
-    {[[10,8],[85,12],[5,70],[90,65],[50,5],[15,90]].map(([l,t],i)=>(
-      <div key={i} className="absolute text-[#7C6CFF]/20 text-base select-none pointer-events-none"
-        style={{ left:`${l}%`, top:`${t}%` }}>✦</div>
-    ))}
 
-    <Image
-      src="https://res.cloudinary.com/mview/image/upload/atlas/desktop-hero.webp"
-      alt="Atlas AI companion"
-      fill
-      priority
-      className="object-cover"
-    />
-  </div>
+    {/* Sparkle dots */}
+   
+ <div className="hidden lg:flex h-full overflow-hidden pr-4 pt-16 rounded-2xl items-center justify-center">
+      <img
+        src="https://res.cloudinary.com/mview/image/upload/atlas/desktop-hero.webp"
+        alt="Academic profile illustration"
+        className="w-[90%] h-auto max-h-[650px] rounded-2xl object-contain"
+      />
+    </div>
+  
 </div>
     </OnboardingLayout>
   );

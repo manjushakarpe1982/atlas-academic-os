@@ -198,28 +198,37 @@ export default function OnboardingLayout({ children, step, disableNext }: Props)
             {/* Sticky bottom nav */}
             {step < 5 && (
               <div className="flex-shrink-0 bg-white border-t border-[#EEEDFE] px-6 py-4 flex items-center justify-between">
-                {prevHref ? (
-                  <Link href={prevHref}
-                    className="flex items-center gap-2 text-sm font-semibold text-[#6B6A8A] hover:text-[#534AB7] transition-colors">
-                    <ArrowLeft className="w-4 h-4" /> Back
-                  </Link>
-                ) : (
-                  <button onClick={() => setShowSkip(true)}
-                    className="text-sm font-medium text-[#9B9AB5] hover:text-[#534AB7] transition-colors">
-                    Skip setup
-                  </button>
-                )}
-                {nextHref && (
-                  <Link href={disableNext ? '#' : nextHref}
-                    onClick={(e) => disableNext && e.preventDefault()}
-                    className={`flex items-center gap-2 font-extrabold px-8 py-3 rounded-2xl text-sm shadow-lg transition-all ${
-                      disableNext
-                        ? 'bg-[#534AB7]/30 text-white/60 cursor-not-allowed'
-                        : 'bg-[#534AB7] hover:bg-[#3C3489] text-white shadow-[#534AB7]/25'
-                    }`}>
-                    Continue <ArrowRight className="w-4 h-4" />
-                  </Link>
-                )}
+
+                {/* LEFT — Skip for now */}
+                <button onClick={() => setShowSkip(true)}
+                  className="text-sm font-medium text-[#9B9AB5] hover:text-[#534AB7] transition-colors underline underline-offset-2 decoration-dotted">
+                  Skip for now
+                </button>
+
+                {/* RIGHT — Back + Continue */}
+                <div className="flex items-center gap-3">
+                  {prevHref ? (
+                    <Link href={prevHref}
+                      className="flex items-center gap-1.5 text-sm font-semibold text-[#6B6A8A] hover:text-[#534AB7] border border-[#E8E5FD] hover:border-[#534AB7]/40 px-5 py-2.5 rounded-xl hover:bg-[#F8F7FF] transition-all">
+                      <ArrowLeft className="w-4 h-4" /> Back
+                    </Link>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-sm font-semibold text-[#D5D3F0] px-5 py-2.5 rounded-xl border border-[#F0EFF8] cursor-not-allowed select-none">
+                      <ArrowLeft className="w-4 h-4" /> Back
+                    </span>
+                  )}
+                  {nextHref && (
+                    <Link href={disableNext ? '#' : nextHref}
+                      onClick={(e) => disableNext && e.preventDefault()}
+                      className={`flex items-center gap-2 font-extrabold px-8 py-2.5 rounded-xl text-sm shadow-lg transition-all ${
+                        disableNext
+                          ? 'bg-[#534AB7]/30 text-white/60 cursor-not-allowed'
+                          : 'bg-[#534AB7] hover:bg-[#3C3489] text-white shadow-[#534AB7]/25'
+                      }`}>
+                      Continue <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  )}
+                </div>
               </div>
             )}
           </div>
