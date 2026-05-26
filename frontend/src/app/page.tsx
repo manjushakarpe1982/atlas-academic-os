@@ -39,14 +39,15 @@ function Navbar() {
         </Link>
 
         {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-8">
-          {["Features","How it works","Pricing"].map((l) => (
-            <a key={l} href={`#${l.toLowerCase().replace(/ /g,"-")}`}
+         <div className="hidden md:flex items-center gap-8">
+          {["Features","How it works", "Pricing"].map((l) => (
+            <a key={l} href={l === "Pricing" ? "/pricing" : `#${l.toLowerCase().replace(/ /g,"-")}`}
               className="text-sm font-medium text-[#6B6A8A] hover:text-[#534AB7] transition-colors">
               {l}
             </a>
           ))}
         </div>
+
 
         {/* CTAs */}
         <div className="hidden md:flex items-center gap-3">
@@ -639,24 +640,117 @@ function CTA() {
    FOOTER
 ══════════════════════════════════════════════════════════════ */
 function Footer() {
+  const groups = [
+    {
+      title: "Product",
+      links: [
+        { label: "Features",     href: "/#features"       },
+        { label: "How it works", href: "/#how-it-works"   },
+        { label: "Pricing",      href: "/pricing"          },
+        { label: "Changelog",    href: "/help"             },
+      ],
+    },
+    {
+      title: "App",
+      links: [
+        { label: "Dashboard",    href: "/home"             },
+        { label: "My Classes",   href: "/classes"          },
+        { label: "Study Plan",   href: "/study-plan"       },
+        { label: "Grades",       href: "/grades"           },
+        { label: "Analytics",    href: "/analytics"        },
+        { label: "Calendar",     href: "/calendar"         },
+      ],
+    },
+    {
+      title: "Tools",
+      links: [
+        { label: "Study Guide",  href: "/study-guide"      },
+        { label: "Flashcards",   href: "/flashcards"       },
+        { label: "Quiz",         href: "/quiz"             },
+        { label: "Exam Mode",    href: "/exam-mode"        },
+        { label: "Upload",       href: "/upload"           },
+      ],
+    },
+    {
+      title: "Account",
+      links: [
+        { label: "Sign up",      href: "/signup"           },
+        { label: "Log in",       href: "/login"            },
+        { label: "Settings",     href: "/settings/profile" },
+        { label: "Notifications",href: "/settings/notifications" },
+        { label: "Privacy",      href: "/settings/privacy" },
+      ],
+    },
+    {
+      title: "Support",
+      links: [
+        { label: "Help centre",  href: "/help"             },
+        { label: "Pricing",      href: "/pricing"          },
+        { label: "Privacy policy", href: "/settings/privacy" },
+        { label: "Terms of use", href: "/help"             },
+      ],
+    },
+  ];
+
   return (
-    <footer className="bg-white border-t border-[#EEEDFE] py-4">
-      <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#534AB7] flex items-center justify-center shadow-sm">
-            <span className="text-white font-extrabold text-xs">A</span>
+    <footer className="bg-[#18172B] text-white pt-14 pb-8">
+      <div className="max-w-6xl mx-auto px-6">
+
+        {/* Top row — logo + tagline + link groups */}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-10 mb-12">
+
+          {/* Brand col */}
+          <div className="col-span-2 md:col-span-1">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-[#534AB7] flex items-center justify-center shadow-lg">
+                <span className="text-white font-extrabold text-sm">A</span>
+              </div>
+              <span className="font-extrabold text-white tracking-wide">Atlas</span>
+            </div>
+            <p className="text-xs text-[#8B8AAB] leading-relaxed">
+              The AI academic OS for college students. One ranked plan, every day.
+            </p>
+            <Link href="/signup"
+              className="mt-4 inline-block bg-[#534AB7] hover:bg-[#3C3489] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all">
+              Get started free
+            </Link>
           </div>
-          <span className="text-sm font-medium text-[#9B9AB5]">© 2026 Atlas · Academic OS</span>
+
+          {/* Link groups */}
+          {groups.map((g) => (
+            <div key={g.title}>
+              <p className="text-[11px] font-extrabold text-[#534AB7] uppercase tracking-widest mb-3">{g.title}</p>
+              <ul className="space-y-2">
+                {g.links.map((l) => (
+                  <li key={l.label}>
+                    <Link href={l.href}
+                      className="text-xs text-[#8B8AAB] hover:text-white transition-colors">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-        <div className="flex items-center gap-6">
-          {[
-              { label:"Privacy",          href:"/settings/privacy" },
-              { label:"Terms",            href:"#terms"            },
-              { label:"Support",          href:"/help"             },
-              { label:"For universities", href:"#universities"     },
+
+        {/* Divider */}
+        <div className="border-t border-[#2E2D45] pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-[#5C5B78]">© 2026 Atlas · Academic OS · All rights reserved</p>
+          <div className="flex items-center gap-5">
+            {[
+              { label: "Privacy policy", href: "/settings/privacy" },
+              { label: "Terms of use",   href: "/help"             },
+              { label: "Help centre",    href: "/help"             },
+              { label: "Pricing",        href: "/pricing"          },
             ].map((l) => (
-              <a key={l.label} href={l.href} className="text-xs font-medium text-[#9B9AB5] hover:text-[#534AB7] transition-colors">{l.label}</a>
+              <Link key={l.label} href={l.href}
+                className="text-xs text-[#5C5B78] hover:text-white transition-colors">
+                {l.label}
+              </Link>
             ))}
+          </div>
+          <p className="text-xs text-[#5C5B78]">FERPA & GDPR compliant · No ads</p>
         </div>
       </div>
     </footer>
