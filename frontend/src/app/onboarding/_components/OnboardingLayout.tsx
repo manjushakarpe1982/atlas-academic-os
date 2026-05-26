@@ -84,12 +84,12 @@ export default function OnboardingLayout({ children, step, disableNext }: Props)
         {/* ── Top header ───────────────────────────────────────── */}
         <header className="h-14 flex-shrink-0 bg-white border-b border-[#EEEDFE] flex items-center px-5 justify-between z-40">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md shadow-[#534AB7]/25">
-              <span className="text-white font-extrabold text-sm">A</span>
+            <div className="w-9 h-9 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md shadow-[#534AB7]/30">
+              <span className="text-white font-extrabold text-base">A</span>
             </div>
-            <span className="text-sm font-extrabold text-[#1A1A2E] tracking-wide">Atlas</span>
+            <span className="text-base font-extrabold text-[#1A1A2E] tracking-tight">Atlas</span>
           </div>
-          <a href="/help" className="text-xs font-medium text-[#6B6A8A] hover:text-[#534AB7] flex items-center gap-1.5 transition-colors">
+          <a href="/help" className="text-sm font-medium text-[#6B6A8A] hover:text-[#534AB7] flex items-center gap-1.5 transition-colors">
             <HelpCircle className="w-4 h-4" /> Need help?
           </a>
         </header>
@@ -98,22 +98,22 @@ export default function OnboardingLayout({ children, step, disableNext }: Props)
         <div className="flex flex-1 min-h-0">
 
           {/* ── Sidebar ──────────────────────────────────────────── */}
-          <aside className="w-[260px] flex-shrink-0  flex-col bg-white border-r border-[#EEEDFE] p-5 overflow-y-auto hidden md:flex">
+          <aside className="w-[240px] flex-shrink-0 flex flex-col bg-white border-r border-[#EEEDFE] px-5 py-6 overflow-y-auto hidden md:flex">
 
-            {/* Onboarding Progress title + progress bar */}
-            <div className="mb-5">
+            {/* Progress title + bar */}
+            <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-extrabold text-[#1A1A2E]">Onboarding Progress</span>
                 <span className="text-xs font-semibold text-[#9B9AB5]">{step} of {STEPS.length}</span>
               </div>
-              <div className="h-2 bg-[#EEEDFE] rounded-full overflow-hidden">
+              <div className="h-1.5 bg-[#EEEDFE] rounded-full overflow-hidden">
                 <div className="h-full bg-[#534AB7] rounded-full transition-all duration-500"
                   style={{ width:`${pct}%` }} />
               </div>
             </div>
 
             {/* Step list */}
-            <div className="flex flex-col gap-1.5 flex-1">
+            <div className="flex flex-col gap-1 flex-1">
               {STEPS.map((s) => {
                 const done   = step > s.n;
                 const active = step === s.n;
@@ -121,18 +121,19 @@ export default function OnboardingLayout({ children, step, disableNext }: Props)
                   <Link key={s.n}
                     href={done ? s.href : '#'}
                     onClick={(e) => !done && !active && e.preventDefault()}
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl border-2 transition-all ${
+                    className={`flex items-center gap-3 px-3 py-3 rounded-2xl transition-all ${
                       active
-                        ? 'bg-white border-[#534AB7] shadow-sm'
+                        ? 'bg-[#F0EEFF] border border-[#D5D0FF]'
                         : done
-                        ? 'bg-[#f9f9fa] border-transparent hover:border-[#E8E5FD]'
-                        : 'bg-transparent border-transparent'
+                        ? 'hover:bg-[#F8F7FF]'
+                        : 'opacity-60'
                     }`}>
+
                     {/* Icon circle */}
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      active ? 'bg-[#534AB7]' :
-                      done   ? 'bg-[#534AB7]' :
-                               'bg-[#F0EFFE] border-2 border-[#D5D3FD]'
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${
+                      active ? 'bg-[#534AB7] border-[#534AB7]' :
+                      done   ? 'bg-[#534AB7] border-[#534AB7]' :
+                               'bg-white border-[#D5D3FD]'
                     }`}>
                       {done
                         ? <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
@@ -141,27 +142,31 @@ export default function OnboardingLayout({ children, step, disableNext }: Props)
                     </div>
 
                     {/* Text */}
-                    <div className="min-w-0">
-                      <p className={`text-sm font-bold leading-none mb-0.5 ${active ? 'text-[#534AB7]' : done ? 'text-[#1A1A2E]' : 'text-[#9B9AB5]'}`}>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-sm font-bold leading-none mb-0.5 ${
+                        active ? 'text-[#534AB7]' : done ? 'text-[#1A1A2E]' : 'text-[#9B9AB5]'
+                      }`}>
                         {s.n}. {s.label}
                       </p>
-                      <p className={`text-[11px] truncate ${active ? 'text-[#6B6A8A]' : done ? 'text-[#9B9AB5]' : 'text-[#C5C3E8]'}`}>
+                      <p className={`text-[11px] truncate ${
+                        active ? 'text-[#6B6A8A]' : done ? 'text-[#9B9AB5]' : 'text-[#C5C3E8]'
+                      }`}>
                         {s.sub}
                       </p>
                     </div>
 
                     {/* Active dot */}
-                    {active && <div className="ml-auto w-2 h-2 rounded-full bg-[#534AB7] flex-shrink-0" />}
+                    {active && <div className="w-2 h-2 rounded-full bg-[#534AB7] flex-shrink-0" />}
                   </Link>
                 );
               })}
             </div>
 
-            {/* Your Data is Safe card */}
-            <div className="mt-5 flex-shrink-0 bg-[#F8F7FF] border border-[#E8E5FD] rounded-2xl p-4">
+            {/* Your Data is Safe */}
+            <div className="mt-6 flex-shrink-0 bg-[#F8F7FF] border border-[#E8E5FD] rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-1.5">
-                <div className="w-8 h-8 rounded-xl bg-white border border-[#E8E5FD] flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-4 h-4 text-[#534AB7]" />
+                <div className="w-7 h-7 rounded-xl bg-[#EEEDFE] flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-3.5 h-3.5 text-[#534AB7]" />
                 </div>
                 <span className="text-sm font-extrabold text-[#1A1A2E]">Your Data is Safe</span>
               </div>
@@ -186,28 +191,28 @@ export default function OnboardingLayout({ children, step, disableNext }: Props)
             </div>
 
             {/* Scrollable content */}
-            <div className="flex-1  overflow-y-auto">
-              <div className="p-5 max-w-[1400px] mx-auto md:p-8">{children}</div>
+            <div className="flex-1 max-w-[1400px] mx-auto overflow-y-auto p-4 md:p-6">
+              {children}
             </div>
 
             {/* Sticky bottom nav */}
             {step < 5 && (
-              <div className="flex-shrink-0 border-t border-[#EEEDFE] bg-white px-6 py-4 flex items-center justify-between">
+              <div className="flex-shrink-0 bg-white border-t border-[#EEEDFE] px-6 py-4 flex items-center justify-between">
                 {prevHref ? (
                   <Link href={prevHref}
-                    className="flex items-center gap-2 text-sm font-semibold text-[#6B6A8A] hover:text-[#534AB7] border border-[#E8E5FD] hover:border-[#534AB7]/40 px-5 py-2.5 rounded-xl hover:bg-[#F8F7FF] transition-all">
+                    className="flex items-center gap-2 text-sm font-semibold text-[#6B6A8A] hover:text-[#534AB7] transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back
                   </Link>
                 ) : (
                   <button onClick={() => setShowSkip(true)}
-                    className="text-sm font-medium text-[#9B9AB5] hover:text-[#534AB7] transition-colors hover:underline underline-offset-2">
+                    className="text-sm font-medium text-[#9B9AB5] hover:text-[#534AB7] transition-colors">
                     Skip setup
                   </button>
                 )}
                 {nextHref && (
                   <Link href={disableNext ? '#' : nextHref}
                     onClick={(e) => disableNext && e.preventDefault()}
-                    className={`flex items-center gap-2 font-extrabold px-8 py-3 rounded-2xl text-sm shadow-lg transition-all active:scale-95 ${
+                    className={`flex items-center gap-2 font-extrabold px-8 py-3 rounded-2xl text-sm shadow-lg transition-all ${
                       disableNext
                         ? 'bg-[#534AB7]/30 text-white/60 cursor-not-allowed'
                         : 'bg-[#534AB7] hover:bg-[#3C3489] text-white shadow-[#534AB7]/25'
