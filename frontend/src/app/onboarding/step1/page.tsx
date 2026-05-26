@@ -143,11 +143,11 @@ export default function Step1Page() {
 
     {/* Sparkle dots */}
    
- <div className="hidden lg:flex h-full overflow-hidden pr-4 pt-16 rounded-2xl items-center justify-center">
+ <div className="hidden lg:flex  overflow-hidden rounded-2xl items-center justify-center">
       <img
-        src="https://res.cloudinary.com/mview/image/upload/atlas/desktop-hero.webp"
+        src="https://res.cloudinary.com/mview/image/upload/atlas/onboardingPage.webp"
         alt="Academic profile illustration"
-        className="w-[90%] h-auto max-h-[650px] rounded-2xl object-contain"
+        className="w-auto h-auto max-h-[650px] rounded-2xl object-contain"
       />
     </div>
   
