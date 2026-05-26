@@ -53,11 +53,11 @@ export default function Step4Page() {
 
   return (
     <OnboardingLayout step={4}>
-      <div className="bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg overflow-hidden max-w-4xl mx-auto">
-        <div className="grid grid-cols-1 max-w-6xl">
+      <div className="bg-white rounded-[28px]  border border-[#ECE9FF] shadow-lg  w-full max-w-[1000px] mx-auto">
+       
 
           {/* LEFT — preferences form */}
-          <div className="px-10 lg:px-14 py-8 space-y-5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+          <div className="px-10  py-8 space-y-5 " >
 
             {/* Header */}
             <div>
@@ -254,7 +254,7 @@ export default function Step4Page() {
           </div>
 
 
-        </div>
+       
       </div>
     </OnboardingLayout>
   );

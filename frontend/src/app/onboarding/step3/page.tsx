@@ -28,7 +28,7 @@ export default function Step3Page() {
 
   return (
     <OnboardingLayout step={3}>
-      <div className="bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg overflow-hidden">
+      <div className="bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg overflow-hidden w-full max-w-[1200px] mx-auto">
         <div className="grid lg:grid-cols-[1fr_400px] items-stretch">
 
           {/* LEFT — goals */}

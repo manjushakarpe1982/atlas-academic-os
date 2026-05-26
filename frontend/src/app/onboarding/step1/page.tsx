@@ -44,7 +44,7 @@ export default function Step1Page() {
 
   return (
     <OnboardingLayout step={1} disableNext={!role}>
-      <div className="bg-white rounded-xl border border-[#ECE9FF] shadow-sm overflow-hidden flex flex-col lg:flex-row min-h-[520px]">
+      <div className="bg-white rounded-xl border border-[#ECE9FF] shadow-sm w-full max-w-[1400px] mx-auto overflow-hidden flex flex-col lg:flex-row min-h-[520px]">
 
   {/* ── LEFT — Main Content (70%) ─────────────────────────────── */}
   <div className="lg:w-[70%] flex-1 flex flex-col">
@@ -82,7 +82,7 @@ export default function Step1Page() {
   </p>
 
   {/* 4 Cards in One Row */}
-  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
     {ROLES.map((r) => (
       <button
         key={r.id}
@@ -125,7 +125,7 @@ export default function Step1Page() {
       <p className="text-lg font-bold   text-black mb-4">
         What you&apos;ll get with ATLAS
       </p>
-      <div className="grid grid-cols-2 md:grid-cols-4  gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {FEATURES.map((f) => (
           <div key={f.label} className="flex items-center gap-2.5">
             <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center flex-shrink-0`}>

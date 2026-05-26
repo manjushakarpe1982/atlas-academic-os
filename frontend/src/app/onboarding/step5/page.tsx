@@ -16,7 +16,7 @@ export default function Step5Page() {
 
   return (
     <OnboardingLayout step={5}>
-      <div className="bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg overflow-hidden">
+      <div className="bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg overflow-hidden w-full max-w-[800px] mx-auto">
         <div className="px-8 md:px-12 py-10 md:py-12 flex flex-col items-center text-center max-w-2xl mx-auto w-full">
 
           {/* Pulsing check */}

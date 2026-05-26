@@ -28,7 +28,7 @@ export default function Step2Page() {
 
   return (
     <OnboardingLayout step={2}>
-<div className="min-h-full w-full bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg p-6 md:p-10">
+<div className="min-h-full w-full bg-white rounded-[28px] border border-[#ECE9FF]  max-w-[1250px] mx-auto shadow-lg p-6 md:p-10">
   <div className="grid lg:grid-cols-[60%_40%] h-full items-stretch gap-4 ">
 
     {/* LEFT SECTION - Larger (68%) */}
@@ -88,7 +88,7 @@ export default function Step2Page() {
         </div>
 
         {/* Year / Level  +  Target GPA */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
             <label className="block text-base font-bold text-[#3A3A52] mb-2">
               Year / Level
