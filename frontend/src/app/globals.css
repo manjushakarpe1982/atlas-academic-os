@@ -220,3 +220,23 @@ label, li, td, th, div {
     margin-bottom: 16pt;
   }
 }
+
+
+/* Thinner Horizontal Scrollbar */
+.custom-scroll::-webkit-scrollbar {
+  height: 6px;           /* Decreased height */
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #534AB7;
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #4338a3;
+}

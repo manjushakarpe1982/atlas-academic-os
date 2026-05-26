@@ -341,36 +341,52 @@ function FeatureCard({ f }: { f: (typeof FEATURES)[0] }) {
 
 function Features() {
   return (
-    <section id="features" className="py-8 bg-[#F5F4FF]">
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 bg-white border border-[#DDD8FF] rounded-full px-4 py-1.5 mb-3">
-            <span className="text-[11px] font-bold text-[#534AB7] uppercase tracking-widest">
-              Built for serious students
-            </span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-[#18172B] mb-3">
-            Everything you need to study smarter
-          </h2>
-          <p className="text-[#6B6A8A] max-w-2xl mx-auto">
-            Atlas brings everything together so you can focus on what truly
-            matters — learning.
-          </p>
-        </div>
-        {/* Top row — 4 cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          {FEATURES.slice(0, 4).map((f, i) => (
-            <FeatureCard key={i} f={f} />
-          ))}
-        </div>
-        {/* Bottom row — 3 cards */}
-        <div className="grid md:grid-cols-3 gap-4 md:px-16">
-          {FEATURES.slice(4).map((f, i) => (
-            <FeatureCard key={i} f={f} />
-          ))}
-        </div>
+   <section id="features" className="py-8 bg-[#F5F4FF]">
+  <div className="max-w-7xl mx-auto px-4 md:px-6">
+    <div className="text-center mb-8">
+      <div className="inline-flex items-center gap-2 bg-white border border-[#DDD8FF] rounded-full px-4 py-1.5 mb-3">
+        <span className="text-[11px] font-bold text-[#534AB7] uppercase tracking-widest">
+          Built for serious students
+        </span>
       </div>
-    </section>
+      <h2 className="text-4xl md:text-5xl font-extrabold text-[#18172B] mb-3">
+        Everything you need to study smarter
+      </h2>
+      <p className="text-[#6B6A8A] max-w-2xl mx-auto">
+        Atlas brings everything together so you can focus on what truly
+        matters — learning.
+      </p>
+    </div>
+
+    {/* Single Horizontal Scroll on Mobile - All Cards in One Row */}
+    <div className="overflow-x-auto  snap-x snap-mandatory scrollbar-thin custom-scroll -mx-1 px-1 md:hidden">
+      <div className="flex gap-4 min-w-full">
+        {FEATURES.map((f, i) => (
+          <div key={i} className="flex-shrink-0 w-[88%] sm:w-[80%]">
+            <FeatureCard f={f} />
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Desktop Layout - Two Rows */}
+    <div className="hidden md:block">
+      {/* Top Row — 4 cards */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        {FEATURES.slice(0, 4).map((f, i) => (
+          <FeatureCard key={i} f={f} />
+        ))}
+      </div>
+
+      {/* Bottom Row — 3 cards */}
+      <div className="grid md:grid-cols-3 gap-4 lg:px-16">
+        {FEATURES.slice(4).map((f, i) => (
+          <FeatureCard key={i} f={f} />
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
   );
 }
 /* ══════════════════════════════════════════════════════════════
@@ -659,58 +675,62 @@ function Testimonials() {
   ];
 
   return (
-    <section
-      id="testimonials"
-      className="py-8 bg-[#FAFAFE] border-t border-[#EEEDFE]"
-    >
-      <div className="max-w-5xl mx-auto px-4 md:px-6">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-[#EEEDFE] border border-[#ABA9FA]/40 rounded-full px-4 py-1.5 mb-4">
-            <Star className="w-3 h-3 text-[#534AB7]" />
-            <span className="text-xs font-bold text-[#534AB7] uppercase tracking-widest">
-              What students say
-            </span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-[#18172B] mb-2">
-            Students trust the plan
-          </h2>
-          <p className="text-[#6B6A8A]">Real results. Visible reasoning.</p>
-        </div>
+  <section
+  id="testimonials"
+  className="py-8 bg-[#FAFAFE] border-t border-[#EEEDFE]"
+>
+  <div className="max-w-5xl mx-auto px-4 md:px-6">
+    <div className="text-center mb-6">
+      <div className="inline-flex items-center gap-2 bg-[#EEEDFE] border border-[#ABA9FA]/40 rounded-full px-4 py-1.5 mb-4">
+        <Star className="w-3 h-3 text-[#534AB7]" />
+        <span className="text-xs font-bold text-[#534AB7] uppercase tracking-widest">
+          What students say
+        </span>
+      </div>
+      <h2 className="text-4xl md:text-5xl font-extrabold text-[#18172B] mb-2">
+        Students trust the plan
+      </h2>
+      <p className="text-[#6B6A8A]">Real results. Visible reasoning.</p>
+    </div>
 
-        <div className="grid md:grid-cols-3 gap-3 md:gap-5">
-          {items.map((t, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-xl p-6 border border-[#EEEDFE] hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
-              style={{ boxShadow: "0 2px 16px rgba(83,74,183,0.05)" }}
-            >
-              <div className="flex gap-0.5 mb-4">
-                {[...Array(5)].map((_, j) => (
-                  <Star
-                    key={j}
-                    className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
-                  />
-                ))}
+    {/* Horizontal Scroll with Thinner Scrollbar */}
+    <div className="overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin -mx-1 px-1 md:overflow-visible custom-scroll">
+      <div className="flex gap-4 md:gap-5 min-w-full md:min-w-0">
+        {items.map((t, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-xl p-6 border border-[#EEEDFE] hover:shadow-lg hover:-translate-y-1 transition-all duration-200 
+                       snap-center flex-shrink-0 w-[92%] sm:w-[85%] md:w-auto md:flex-1"
+            style={{ boxShadow: "0 2px 16px rgba(83,74,183,0.05)" }}
+          >
+            <div className="flex gap-0.5 mb-4">
+              {[...Array(5)].map((_, j) => (
+                <Star
+                  key={j}
+                  className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
+                />
+              ))}
+            </div>
+            <p className="text-sm text-[#6B6A8A] leading-relaxed mb-5 italic">
+              &ldquo;{t.q}&rdquo;
+            </p>
+            <div className="flex items-center gap-3 pt-4 border-t border-[#F0EFF8]">
+              <div className="w-9 h-9 rounded-full bg-[#EEEDFE] flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-extrabold text-[#534AB7]">
+                  {t.avatar}
+                </span>
               </div>
-              <p className="text-sm text-[#6B6A8A] leading-relaxed mb-5 italic">
-                &ldquo;{t.q}&rdquo;
-              </p>
-              <div className="flex items-center gap-3 pt-4 border-t border-[#F0EFF8]">
-                <div className="w-9 h-9 rounded-full bg-[#EEEDFE] flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-extrabold text-[#534AB7]">
-                    {t.avatar}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-[#18172B]">{t.name}</p>
-                  <p className="text-xs text-[#9B9AB5]">{t.role}</p>
-                </div>
+              <div>
+                <p className="text-sm font-bold text-[#18172B]">{t.name}</p>
+                <p className="text-xs text-[#9B9AB5]">{t.role}</p>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
-    </section>
+    </div>
+  </div>
+</section>
   );
 }
 
