@@ -6,7 +6,9 @@ import {
   Plus, X, Sunrise, Star,
 } from 'lucide-react';
 import OnboardingLayout from '../_components/OnboardingLayout';
-import { INP, DAYS, type FixedEvent } from '../_components/constants';
+import { DAYS } from '../_components/constants';
+import { useOnboarding } from '../_components/OnboardingContext';
+import type { FixedEvent } from '@/lib/onboarding';
 
 function DayPill({ d, active, onClick }: { d: string; active: boolean; onClick: () => void }) {
   return (
@@ -27,16 +29,24 @@ const TIME_OPTIONS = [
 ];
 
 export default function Step4Page() {
-  const [studyTime,  setStudyTime]  = useState('Evening');
-  const [sessionLen, setSessionLen] = useState('45–60 min');
-  const [weekday,    setWeekday]    = useState(2.5);
-  const [weekend,    setWeekend]    = useState(4.0);
-  const [sleepStart, setSleepStart] = useState('11:00 PM');
-  const [sleepEnd,   setSleepEnd]   = useState('7:30 AM');
-  const [events,     setEvents]     = useState<FixedEvent[]>([
-    { id:1, label:'Gym',     days:['Mon','Thu'],                   time:'7:00 AM', emoji:'🏃' },
-    { id:2, label:'Commute', days:['Mon','Tue','Wed','Thu','Fri'], time:'8:30 AM', emoji:'🚗' },
-  ]);
+  const { data, update } = useOnboarding();
+
+  const studyTime  = data.study_time || 'Evening';
+  const sessionLen = data.session_length || '45–60 min';
+  const weekday    = data.weekday_hours ?? 2.5;
+  const weekend    = data.weekend_hours ?? 4.0;
+  const sleepStart = data.sleep_start || '11:00 PM';
+  const sleepEnd   = data.sleep_end || '7:30 AM';
+  const events     = data.fixed_events;
+
+  const setStudyTime  = (v: string) => update({ study_time: v });
+  const setSessionLen = (v: string) => update({ session_length: v });
+  const setWeekday    = (v: number) => update({ weekday_hours: v });
+  const setWeekend    = (v: number) => update({ weekend_hours: v });
+  const setSleepStart = (v: string) => update({ sleep_start: v });
+  const setSleepEnd   = (v: string) => update({ sleep_end: v });
+  const setEvents     = (next: FixedEvent[]) => update({ fixed_events: next });
+
   const [addLabel, setAddLabel] = useState('');
   const [addDays,  setAddDays]  = useState<string[]>([]);
   const [addTime,  setAddTime]  = useState('');
@@ -47,9 +57,12 @@ export default function Step4Page() {
 
   const addEvent = () => {
     if (!addLabel) return;
-    setEvents((p) => [...p, { id: Date.now(), label: addLabel, days: addDays, time: addTime, emoji: addEmoji }]);
+    setEvents([...events, { label: addLabel, days: addDays, time: addTime, emoji: addEmoji }]);
     setAddLabel(''); setAddDays([]); setAddTime(''); setAdding(false);
   };
+
+  const removeEvent = (idx: number) =>
+    setEvents(events.filter((_, i) => i !== idx));
 
   return (
     <OnboardingLayout step={4}>
@@ -194,8 +207,8 @@ export default function Step4Page() {
                 <span className="text-[10px] text-[#9B9AB5] font-light">Atlas won&apos;t schedule over these</span>
               </div>
               <div className="space-y-2 mb-3">
-                {events.map((ev) => (
-                  <div key={ev.id} className="flex items-center gap-3 bg-white border border-[#EEEDFE] rounded-xl px-3.5 py-2.5">
+                {events.map((ev, idx) => (
+                  <div key={idx} className="flex items-center gap-3 bg-white border border-[#EEEDFE] rounded-xl px-3.5 py-2.5">
                     <span>{ev.emoji}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-[#1A1A2E]">{ev.label}</p>
@@ -206,7 +219,7 @@ export default function Step4Page() {
                         {ev.time && <span className="text-[9px] text-[#9B9AB5] ml-1">{ev.time}</span>}
                       </div>
                     </div>
-                    <button onClick={() => setEvents((p) => p.filter((e) => e.id !== ev.id))}
+                    <button onClick={() => removeEvent(idx)}
                       className="text-[#C5C3E8] hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-50">
                       <X className="w-3.5 h-3.5" />
                     </button>

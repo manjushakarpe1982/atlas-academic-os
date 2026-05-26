@@ -70,7 +70,10 @@ export default function LoginPage() {
       localStorage.setItem("atlas_user_id",       data.user_id);
       localStorage.setItem("atlas_full_name",     data.full_name || "");
       localStorage.setItem("atlas_email",         data.email || email);
-      router.push("/onboarding");
+      localStorage.setItem("atlas_onboarding_completed", data.onboarding_completed ? "true" : "false");
+
+      // Returning users who already finished onboarding go straight to the app.
+      router.push(data.onboarding_completed ? "/home" : "/onboarding");
     } catch {
       setError("Cannot connect to the server. Make sure the backend is running on port 8000.");
     } finally {

@@ -74,8 +74,30 @@ export default function SignupPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setError(data.detail || "Sign up failed. Please try again."); return; }
+
       setSuccess("Account created! Taking you to onboarding…");
-      setTimeout(() => { window.location.href = "/onboarding"; }, 1200);
+
+      // Auto-login so the new user has a session token and onboarding can save.
+      try {
+        const loginRes = await fetch(`${API}/api/auth/login`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), password }),
+        });
+        const loginData = await loginRes.json().catch(() => ({}));
+        if (loginRes.ok && loginData.access_token) {
+          localStorage.setItem("atlas_access_token",  loginData.access_token);
+          localStorage.setItem("atlas_refresh_token", loginData.refresh_token);
+          localStorage.setItem("atlas_user_id",       loginData.user_id);
+          localStorage.setItem("atlas_full_name",     loginData.full_name || `${firstName.trim()} ${lastName.trim()}`.trim());
+          localStorage.setItem("atlas_email",         loginData.email || email.trim());
+          localStorage.setItem("atlas_onboarding_completed", "false");
+        }
+      } catch {
+        /* If auto-login fails (e.g. email confirmation required), the user
+           can still log in manually later; proceed to onboarding regardless. */
+      }
+
+      setTimeout(() => { window.location.href = "/onboarding"; }, 1000);
     } catch {
       setError("Cannot connect to the server. Make sure the backend is running.");
     } finally { setLoading(false); }

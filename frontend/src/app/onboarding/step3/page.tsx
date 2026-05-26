@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { Target, Check, Star } from 'lucide-react';
 import OnboardingLayout from '../_components/OnboardingLayout';
+import { useOnboarding } from '../_components/OnboardingContext';
 
 const ALL_GOALS = [
   { label: 'Improve grades',              emoji: '📈' },
@@ -20,11 +20,21 @@ const ALL_GOALS = [
 ];
 
 export default function Step3Page() {
-  const [selected, setSelected] = useState<string[]>(['Improve grades', 'Exam preparation']);
-  const [priority, setPriority] = useState('Improve grades');
+  const { data, update } = useOnboarding();
+  const selected = data.goals;
+  const priority = data.top_priority ?? '';
 
-  const toggle = (g: string) =>
-    setSelected((p) => (p.includes(g) ? p.filter((x) => x !== g) : [...p, g]));
+  const toggle = (g: string) => {
+    const next = selected.includes(g)
+      ? selected.filter((x ) => x !== g)
+      : [...selected, g];
+    // Keep priority valid: clear or default it based on the new selection.
+    let nextPriority = priority;
+    if (!next.includes(priority)) nextPriority = next[0] ?? '';
+    update({ goals: next, top_priority: nextPriority || null });
+  };
+
+  const setPriority = (g: string) => update({ top_priority: g });
 
   return (
     <OnboardingLayout step={3}>

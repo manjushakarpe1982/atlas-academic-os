@@ -40,6 +40,7 @@ export default function AuthCallbackPage() {
             session.user.user_metadata?.name ||
             "";
           localStorage.setItem("atlas_full_name", fullName);
+          localStorage.setItem("atlas_onboarding_completed", "false");
 
           // Redirect to onboarding
           router.push("/onboarding");

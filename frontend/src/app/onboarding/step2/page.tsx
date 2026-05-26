@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import {
   GraduationCap, Landmark, BookOpen, CalendarDays, BarChart3, Lightbulb, ChevronDown,
 } from 'lucide-react';
 import OnboardingLayout from '../_components/OnboardingLayout';
+import { useOnboarding } from '../_components/OnboardingContext';
 
 /* Small left-hand icon box that sits beside a field */
 function IconBox({ icon: Icon }: { icon: typeof Landmark }) {
@@ -16,10 +16,16 @@ function IconBox({ icon: Icon }: { icon: typeof Landmark }) {
 }
 
 export default function Step2Page() {
-  const [institution, setInstitution] = useState('');
-  const [fieldStudy, setFieldStudy] = useState('');
-  const [yearLevel, setYearLevel] = useState('');
-  const [targetGPA, setTargetGPA] = useState('3.70');
+  const { data, update } = useOnboarding();
+  const institution = data.institution;
+  const fieldStudy = data.field_of_study;
+  const yearLevel = data.year_level;
+  const targetGPA = data.target_gpa != null ? data.target_gpa.toFixed(2) : '3.70';
+
+  const setInstitution = (v: string) => update({ institution: v });
+  const setFieldStudy = (v: string) => update({ field_of_study: v });
+  const setYearLevel = (v: string) => update({ year_level: v });
+  const setTargetGPA = (v: string) => update({ target_gpa: parseFloat(v) });
 
   const fieldInput =
     'h-14 w-full rounded-xl border border-[#E8E8F3] bg-white px-5 text-sm font-medium ' +

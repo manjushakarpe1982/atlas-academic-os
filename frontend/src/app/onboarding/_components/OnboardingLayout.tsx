@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { STEPS } from "./constants";
+import { useOnboarding } from "./OnboardingContext";
 
 interface Props {
   children: React.ReactNode;
@@ -103,8 +104,10 @@ export default function OnboardingLayout({
   disableNext,
 }: Props) {
   const router = useRouter();
+  const { save, skip, saving } = useOnboarding();
   const [userName, setUserName] = useState("Student");
   const [showSkip, setShowSkip] = useState(false);
+  const [navError, setNavError] = useState("");
 
   useEffect(() => {
     const n = localStorage.getItem("atlas_full_name");
@@ -115,12 +118,37 @@ export default function OnboardingLayout({
   const prevHref = step > 1 ? STEPS[step - 2].href : null;
   const nextHref = step < 5 ? STEPS[step].href : null;
 
+  // Save the current step's data, then navigate to the next step.
+  const handleContinue = async () => {
+    if (disableNext || !nextHref) return;
+    setNavError("");
+    try {
+      // Step 4 is the last data-entry step → mark complete when leaving it.
+      await save(step === 4);
+      router.push(nextHref);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Could not save. Please try again.";
+      setNavError(msg);
+    }
+  };
+
+  // Skip the rest of onboarding: flag complete and go to the dashboard.
+  const handleSkip = async () => {
+    try {
+      await skip();
+    } catch {
+      /* non-fatal — still let them through */
+    }
+    router.push("/home");
+  };
+
   return (
     <>
       {showSkip && (
         <SkipModal
           onClose={() => setShowSkip(false)}
-          onDashboard={() => router.push("/home")}
+          onDashboard={handleSkip}
         />
       )}
 
@@ -312,20 +340,27 @@ export default function OnboardingLayout({
                     </span>
                   )}
                   {nextHref && (
-                    <Link
-                      href={disableNext ? "#" : nextHref}
-                      onClick={(e) => disableNext && e.preventDefault()}
+                    <button
+                      type="button"
+                      onClick={handleContinue}
+                      disabled={disableNext || saving}
                       className={`flex items-center gap-2 font-extrabold px-4 md:px-8 py-2.5 rounded-xl text-sm shadow-lg transition-all ${
-                        disableNext
+                        disableNext || saving
                           ? "bg-[#534AB7]/30 text-white/60 cursor-not-allowed"
                           : "bg-[#534AB7] hover:bg-[#3C3489] text-white shadow-[#534AB7]/25"
                       }`}
                     >
-                      Continue <ArrowRight className="w-4 h-4" />
-                    </Link>
+                      {saving ? "Saving…" : "Continue"}{" "}
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
                   )}
                 </div>
               </div>
+            )}
+            {navError && step < 5 && (
+              <p className="flex-shrink-0 bg-red-50 border-t border-red-100 text-red-600 text-xs font-medium px-6 py-2 text-center">
+                {navError}
+              </p>
             )}
           </div>
         </div>

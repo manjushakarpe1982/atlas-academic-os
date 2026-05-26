@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import {
   GraduationCap, BookOpen, FlaskConical, Briefcase,
   Check, Sparkles, Bot, BarChart2, FileText, TrendingUp,
 } from 'lucide-react';
 import OnboardingLayout from '../_components/OnboardingLayout';
 import { type Role } from '../_components/constants';
-import Image from 'next/image';
+import { useOnboarding } from '../_components/OnboardingContext';
 
 const ROLES = [
   {
@@ -40,7 +39,9 @@ const FEATURES = [
 ];
 
 export default function Step1Page() {
-  const [role, setRole] = useState<Role>(null);
+  const { data, update } = useOnboarding();
+  const role = (data.role as Role) ?? null;
+  const setRole = (r: Role) => update({ role: r });
 
   return (
     <OnboardingLayout step={1} disableNext={!role}>

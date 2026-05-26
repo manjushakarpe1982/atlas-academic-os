@@ -4,15 +4,27 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, ArrowRight } from 'lucide-react';
 import OnboardingLayout from '../_components/OnboardingLayout';
+import { useOnboarding } from '../_components/OnboardingContext';
 
 export default function Step5Page() {
   const router = useRouter();
+  const { save } = useOnboarding();
   const [name, setName] = useState('Jordan');
 
   useEffect(() => {
     const n = localStorage.getItem('atlas_full_name');
     if (n) setName(n.split(' ')[0]);
+    // Safety net: ensure onboarding is flagged complete if the user
+    // reached this screen (e.g. via back/forward navigation).
+    save(true).catch(() => {});
+    localStorage.setItem('atlas_onboarding_completed', 'true');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const goToDashboard = () => {
+    localStorage.setItem('atlas_onboarding_completed', 'true');
+    router.push('/home');
+  };
 
   return (
     <OnboardingLayout step={5}>
@@ -76,7 +88,7 @@ export default function Step5Page() {
           </div>
 
           <button
-            onClick={() => router.push('/home')}
+            onClick={goToDashboard}
             className="bg-gradient-to-r from-[#534AB7] to-[#6B5FE8] hover:from-[#3C3489] hover:to-[#534AB7] text-white font-extrabold px-10 py-3.5 rounded-2xl text-sm flex items-center gap-2.5 shadow-xl shadow-[#534AB7]/25 transition-all active:scale-95"
           >
             Go to my Dashboard <ArrowRight className="w-5 h-5" />

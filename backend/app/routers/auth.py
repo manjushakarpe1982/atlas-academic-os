@@ -29,6 +29,7 @@ class LoginResponse(BaseModel):
     access_token:  str
     refresh_token: str
     full_name:     str
+    onboarding_completed: bool = False
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
@@ -164,16 +165,18 @@ async def login(body: LoginRequest):
 
     # 2. Fetch profile
     full_name = ""
+    onboarding_completed = False
     try:
         profile = (
             supabase.table("users")
-            .select("full_name")
+            .select("full_name, onboarding_completed")
             .eq("id", user_id)
             .single()
             .execute()
         )
         if profile.data:
             full_name = profile.data.get("full_name", "")
+            onboarding_completed = bool(profile.data.get("onboarding_completed", False))
     except Exception as e:
         print(f"[login] profile fetch failed for {user_id}: {e}")
 
@@ -184,4 +187,5 @@ async def login(body: LoginRequest):
         access_token=access_token,
         refresh_token=refresh_token,
         full_name=full_name,
+        onboarding_completed=onboarding_completed,
     )
