@@ -169,7 +169,7 @@ function Hero() {
         </div>
       ))}
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 flex flex-col lg:flex-row items-center ">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-5 md:py-8 flex flex-col lg:flex-row items-center ">
         {/* LEFT */}
         <div className="flex-1 max-w-[600px]">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#EAE6FF] border border-[#C4B5FD]/40 mb-4">
@@ -179,13 +179,13 @@ function Hero() {
             </span>
           </div>
 
-          <h1 className="text-[46px] md:text-[54px] font-black leading-[1.1] text-[#171232] mb-1">
+          <h1 className="text-[40px] md:text-[54px] font-black leading-[1.1] text-[#171232] mb-1">
             Stop wondering
             <br />
             what to study next.
           </h1>
           <h2
-            className="text-[46px] md:text-[54px] font-black leading-[1.1] mb-5"
+            className="text-[42px] md:text-[54px] font-black leading-[1.1] mb-5"
             style={{
               background: "linear-gradient(135deg, #534AB7, #7C3AED)",
               WebkitBackgroundClip: "text",
@@ -201,16 +201,16 @@ function Hero() {
             moves your grade.
           </p>
 
-          <div className="flex gap-3 flex-wrap mb-5">
+          <div className="flex gap-2 md:gap-3 flex-wrap mb-5">
             <Link
               href="/signup"
-              className="flex items-center gap-2 bg-[#534AB7] hover:bg-[#3C3489] text-white font-bold px-6 py-3 rounded-xl text-sm shadow-lg shadow-[#534AB7]/30 transition-all"
+              className="flex items-center gap-2 bg-[#534AB7] hover:bg-[#3C3489] text-white font-bold px-3 md:px-6 py-3 rounded-xl text-sm shadow-lg shadow-[#534AB7]/30 transition-all"
             >
               Get started free <ArrowRight className="w-4 h-4" />
             </Link>
             <a
               href="#how-it-works"
-              className="flex items-center gap-2 bg-white hover:bg-gray-50 text-[#171232] font-semibold px-6 py-3 rounded-xl text-sm border border-gray-200 shadow-sm transition-all"
+              className="flex items-center gap-2 bg-white hover:bg-gray-50 text-[#171232] font-semibold px-3 md:px-6 py-3 rounded-xl text-sm border border-gray-200 shadow-sm transition-all"
             >
               See how it works{" "}
               <ArrowRight className="w-3.5 h-3.5 text-[#534AB7]" />
@@ -232,7 +232,7 @@ function Hero() {
         </div>
 
         {/* RIGHT — dashboard image */}
-        <div className=" relative flex justify-center lg:justify-end items-center">
+        <div className=" relative hidden lg:flex justify-center lg:justify-end items-center">
           <img
             src="https://res.cloudinary.com/mview/image/upload/atlas/landingpage.webp"
             alt="Atlas dashboard"
@@ -342,7 +342,7 @@ function FeatureCard({ f }: { f: (typeof FEATURES)[0] }) {
 function Features() {
   return (
     <section id="features" className="py-8 bg-[#F5F4FF]">
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-white border border-[#DDD8FF] rounded-full px-4 py-1.5 mb-3">
             <span className="text-[11px] font-bold text-[#534AB7] uppercase tracking-widest">
@@ -403,7 +403,7 @@ function HowItWorks() {
 
   return (
     <section id="how-it-works" className="py-8 bg-[#FAFAFE]">
-      <div className="max-w-5xl mx-auto px-6">
+      <div className="max-w-5xl mx-auto px-4 md:px-6">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-[#EEEDFE] border border-[#ABA9FA]/40 rounded-full px-4 py-1.5 mb-4">
             <span className="text-xs font-bold text-[#534AB7] uppercase tracking-widest">
@@ -663,7 +663,7 @@ function Testimonials() {
       id="testimonials"
       className="py-8 bg-[#FAFAFE] border-t border-[#EEEDFE]"
     >
-      <div className="max-w-5xl mx-auto px-6">
+      <div className="max-w-5xl mx-auto px-4 md:px-6">
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 bg-[#EEEDFE] border border-[#ABA9FA]/40 rounded-full px-4 py-1.5 mb-4">
             <Star className="w-3 h-3 text-[#534AB7]" />
@@ -677,7 +677,7 @@ function Testimonials() {
           <p className="text-[#6B6A8A]">Real results. Visible reasoning.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-3 gap-3 md:gap-5">
           {items.map((t, i) => (
             <div
               key={i}
@@ -702,8 +702,8 @@ function Testimonials() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-[#18172B]">{t.name}</p>
-                  <p className="text-[10px] text-[#9B9AB5]">{t.role}</p>
+                  <p className="text-sm font-bold text-[#18172B]">{t.name}</p>
+                  <p className="text-xs text-[#9B9AB5]">{t.role}</p>
                 </div>
               </div>
             </div>
@@ -720,7 +720,7 @@ function Testimonials() {
 function CTA() {
   return (
     <section className="py-5 bg-white border-t border-[#EEEDFE]">
-      <div className="max-w-5xl mx-auto px-6">
+      <div className="max-w-5xl mx-auto  px-4 md:px-6">
         <div
           className="relative rounded-xl overflow-hidden min-h-[420px] flex items-center"
           style={{
@@ -735,7 +735,7 @@ function CTA() {
           <div className="absolute inset-0 bg-white/10"></div>
 
           {/* Text Over Image */}
-          <div className="relative z-10 max-w-xl p-10 md:p-14">
+          <div className="relative z-10 max-w-xl p-4 md:p-14">
             <div className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-1.5 mb-5 shadow-sm">
               <span className="text-xs font-semibold text-[#534AB7]">
                 Free to start for students
