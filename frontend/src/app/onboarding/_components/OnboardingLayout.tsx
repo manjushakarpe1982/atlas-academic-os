@@ -163,6 +163,7 @@ export default function OnboardingLayout({
               Atlas
             </span>
           </div>
+
           <a
             href="/help"
             className="text-sm font-medium text-[#6B6A8A] hover:text-[#534AB7] flex items-center gap-1.5 transition-colors"
@@ -316,7 +317,7 @@ export default function OnboardingLayout({
 
             {/* Sticky bottom nav */}
             {step < 5 && (
-              <div className="flex-shrink-0 bg-white border-t border-[#EEEDFE] px-3 md:px-6 py-3 md:py-4 flex items-center justify-between">
+              <div className="relative flex-shrink-0 bg-white border-t border-[#EEEDFE] px-3 md:px-6 py-3 md:py-4 flex items-center justify-between">
                 {/* LEFT — Skip for now */}
                 <button
                   onClick={() => setShowSkip(true)}
@@ -324,6 +325,26 @@ export default function OnboardingLayout({
                 >
                   Skip for now
                 </button>
+
+                {/* CENTER — Segmented step pills */}
+                <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-2 bg-[#F4F2FF] border border-[#ECE9FF] rounded-full px-3 py-2 shadow-sm">
+                  {STEPS.map((s) => {
+                    const active = step === s.n;
+                    const done = step > s.n;
+                    return (
+                      <span
+                        key={s.n}
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          active
+                            ? "w-8 bg-[#534AB7]"
+                            : done
+                              ? "w-5 bg-[#534AB7]/40"
+                              : "w-5 bg-[#DEDCF0]"
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
 
                 {/* RIGHT — Back + Continue */}
                 <div className="flex items-center gap-3">
