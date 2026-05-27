@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sliders,
   Clock,
@@ -83,8 +83,8 @@ export default function Step4Page() {
   const sessionLen = data.session_length || "45–60 min";
   const weekday = data.weekday_hours ?? 2.5;
   const weekend = data.weekend_hours ?? 4.0;
-  const sleepStart = data.sleep_start || "11:00 PM";
-  const sleepEnd = data.sleep_end || "7:30 AM";
+  const sleepStart = data.sleep_start;
+  const sleepEnd = data.sleep_end;
   const events = data.fixed_events;
 
   const setStudyTime = (v: string) => update({ study_time: v });
@@ -94,6 +94,18 @@ export default function Step4Page() {
   const setSleepStart = (v: string) => update({ sleep_start: v });
   const setSleepEnd = (v: string) => update({ sleep_end: v });
   const setEvents = (next: FixedEvent[]) => update({ fixed_events: next });
+
+  // Seed sensible defaults into shared state once, so they persist and the
+  // sleep text fields remain fully editable (including clearing them).
+  useEffect(() => {
+    const patch: Record<string, unknown> = {};
+    if (!data.study_time) patch.study_time = "Evening";
+    if (!data.session_length) patch.session_length = "45–60 min";
+    if (!data.sleep_start) patch.sleep_start = "11:00 PM";
+    if (!data.sleep_end) patch.sleep_end = "7:30 AM";
+    if (Object.keys(patch).length) update(patch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [addLabel, setAddLabel] = useState("");
   const [addDays, setAddDays] = useState<string[]>([]);

@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   AlertTriangle,
   X,
+  Loader2,
 } from "lucide-react";
 import { STEPS } from "./constants";
 import { useOnboarding } from "./OnboardingContext";
@@ -118,9 +119,9 @@ export default function OnboardingLayout({
   const prevHref = step > 1 ? STEPS[step - 2].href : null;
   const nextHref = step < 5 ? STEPS[step].href : null;
 
-  // Save the current step's data, then navigate to the next step.
+  // Save the current step's data (shows loading), then navigate.
   const handleContinue = async () => {
-    if (disableNext || !nextHref) return;
+    if (disableNext || !nextHref || saving) return;
     setNavError("");
     try {
       // Step 4 is the last data-entry step → mark complete when leaving it.
@@ -150,6 +151,14 @@ export default function OnboardingLayout({
           onClose={() => setShowSkip(false)}
           onDashboard={handleSkip}
         />
+      )}
+
+      {/* Full-page loading overlay while the step is being saved */}
+      {saving && (
+        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm">
+          <Loader2 className="w-10 h-10 text-[#534AB7] animate-spin mb-3" />
+          <p className="text-sm font-semibold text-[#534AB7]">Saving your progress…</p>
+        </div>
       )}
 
       <div className="h-screen flex flex-col overflow-hidden bg-[#F7F6FF]">
@@ -371,8 +380,15 @@ export default function OnboardingLayout({
                           : "bg-[#534AB7] hover:bg-[#3C3489] text-white shadow-[#534AB7]/25"
                       }`}
                     >
-                      {saving ? "Saving…" : "Continue"}{" "}
-                      <ArrowRight className="w-4 h-4" />
+                      {saving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Saving…
+                        </>
+                      ) : (
+                        <>
+                          Continue <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
                     </button>
                   )}
                 </div>

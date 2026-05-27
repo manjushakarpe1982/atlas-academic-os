@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  GraduationCap, Landmark, BookOpen, CalendarDays, BarChart3, Lightbulb, ChevronDown,
+  GraduationCap, Landmark, BookOpen, CalendarDays, BarChart3, Lightbulb,
 } from 'lucide-react';
 import OnboardingLayout from '../_components/OnboardingLayout';
 import { useOnboarding } from '../_components/OnboardingContext';
@@ -20,12 +20,12 @@ export default function Step2Page() {
   const institution = data.institution;
   const fieldStudy = data.field_of_study;
   const yearLevel = data.year_level;
-  const targetGPA = data.target_gpa != null ? data.target_gpa.toFixed(2) : '3.70';
+  const targetGPA = data.target_gpa != null ? String(data.target_gpa) : '';
 
   const setInstitution = (v: string) => update({ institution: v });
   const setFieldStudy = (v: string) => update({ field_of_study: v });
   const setYearLevel = (v: string) => update({ year_level: v });
-  const setTargetGPA = (v: string) => update({ target_gpa: parseFloat(v) });
+  const setTargetGPA = (v: string) => update({ target_gpa: v === '' ? null : parseFloat(v) });
 
   const fieldInput =
     'h-14 w-full rounded-xl border border-[#E8E8F3] bg-white px-5 text-sm font-medium ' +
@@ -117,19 +117,12 @@ export default function Step2Page() {
       </label>
       <div className="flex items-center gap-3">
         <IconBox icon={CalendarDays} />
-        <div className="relative flex-1">
-          <select
-            className={`${fieldInput} appearance-none pr-10`}
-            value={yearLevel}
-            onChange={(e) => setYearLevel(e.target.value)}
-          >
-            <option value="">Select Year</option>
-            {['Freshman (Year 1)', 'Sophomore (Year 2)', 'Junior (Year 3)', 'Senior (Year 4)', 'Graduate Year 1', 'Graduate Year 2', 'PhD'].map((y) => (
-              <option key={y}>{y}</option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B89A5]" />
-        </div>
+        <input
+          className={fieldInput}
+          value={yearLevel}
+          onChange={(e) => setYearLevel(e.target.value)}
+          placeholder="e.g. Freshman, Year 2, Final year"
+        />
       </div>
     </div>
 
@@ -139,18 +132,17 @@ export default function Step2Page() {
       </label>
       <div className="flex items-center gap-3">
         <IconBox icon={BarChart3} />
-        <div className="relative flex-1">
-          <select
-            className={`${fieldInput} appearance-none pr-10`}
-            value={targetGPA}
-            onChange={(e) => setTargetGPA(e.target.value)}
-          >
-            {['4.00', '3.90', '3.80', '3.70', '3.60', '3.50', '3.00'].map((g) => (
-              <option key={g}>{g}</option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B89A5]" />
-        </div>
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          max="10"
+          inputMode="decimal"
+          className={fieldInput}
+          value={targetGPA}
+          onChange={(e) => setTargetGPA(e.target.value)}
+          placeholder="e.g. 3.70"
+        />
       </div>
     </div>
   </div>
