@@ -45,10 +45,10 @@ export default function Step1Page() {
 
   return (
     <OnboardingLayout step={1} disableNext={!role}>
-      <div className="bg-white rounded-xl border border-[#ECE9FF] shadow-sm w-full max-w-[1400px] mx-auto overflow-hidden flex flex-col lg:flex-row min-h-[520px]">
+      <div className="bg-white rounded-2xl border border-[#ECE9FF] shadow-sm w-full max-w-[1180px] mx-auto overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_420px] min-h-[540px]">
 
-  {/* ── LEFT — Main Content (70%) ─────────────────────────────── */}
-  <div className="lg:w-[70%] flex-1 flex flex-col">
+  {/* ── LEFT — Main Content ─────────────────────────────── */}
+  <div className="flex flex-col min-w-0">
 
     {/* Step badge */}
     <div className="px-8 pt-7 pb-3">
@@ -140,18 +140,14 @@ export default function Step1Page() {
     </div>
   </div>
 
-  {/* ── RIGHT — Illustration (30%) ────────────────────────────── */}
-
-    {/* Sparkle dots */}
-   
- <div className="hidden  xl:flex  overflow-hidden rounded-2xl items-center justify-center">
+  {/* ── RIGHT — Illustration ────────────────────────────── */}
+  <div className="hidden lg:flex items-center justify-center bg-gradient-to-b from-[#F6F4FF] to-[#EFEBFF] p-6 xl:p-8">
       <img
         src="https://res.cloudinary.com/mview/image/upload/atlas/onboardingPage.webp"
         alt="Academic profile illustration"
-        className="w-auto h-auto max-h-[650px] rounded-2xl object-contain"
+        className="w-full h-auto max-h-[440px] object-contain"
       />
     </div>
-  
 </div>
     </OnboardingLayout>
   );

@@ -38,11 +38,11 @@ export default function Step3Page() {
 
   return (
     <OnboardingLayout step={3}>
-      <div className="bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg overflow-hidden w-full max-w-[1200px] mx-auto">
-        <div className="grid lg:grid-cols-[1fr_400px] items-stretch">
+      <div className="bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg overflow-hidden w-full max-w-[1180px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_420px] items-stretch">
 
           {/* LEFT — goals */}
-          <div className="px-8 lg:px-10 py-8 flex max-w-3xl flex-col">
+          <div className="px-8 lg:px-10 py-8 flex min-w-0 flex-col">
 
             {/* Header */}
             <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[#534AB7]/10 text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-5">
@@ -131,13 +131,13 @@ export default function Step3Page() {
           </div>
 
           {/* RIGHT — illustration */}
-        <div className="hidden xl:flex h-full pr-4 overflow-hidden rounded-2xl items-center justify-center">
-      <img
-        src="https://res.cloudinary.com/mview/image/upload/atlas/onboarding3.webp"
-        alt="Academic profile illustration"
-        className="w-[100%] h-auto max-h-[650px] object-contain"
-      />
-    </div>
+          <div className="hidden lg:flex items-center justify-center bg-gradient-to-b from-[#F6F4FF] to-[#EFEBFF] p-6 xl:p-8">
+            <img
+              src="https://res.cloudinary.com/mview/image/upload/atlas/onboarding3.webp"
+              alt="Goals and interests illustration"
+              className="w-full h-auto max-h-[440px] object-contain"
+            />
+          </div>
         </div>
       </div>
     </OnboardingLayout>

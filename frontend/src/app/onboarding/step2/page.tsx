@@ -34,11 +34,11 @@ export default function Step2Page() {
 
   return (
     <OnboardingLayout step={2}>
-<div className="min-h-full w-full bg-white rounded-[28px] border border-[#ECE9FF]  max-w-[1250px] mx-auto shadow-lg p-6 md:p-10">
-  <div className=" h-full items-stretch gap-4 ">
+<div className="min-h-full w-full bg-white rounded-[28px] border border-[#ECE9FF] max-w-[1180px] mx-auto shadow-lg overflow-hidden">
+  <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_420px] items-stretch">
 
-    {/* LEFT SECTION - Larger (68%) */}
-    <div className="xl:grid xl:grid-cols-[60%] max-w-2xl  flex-col h-full">
+    {/* LEFT SECTION */}
+    <div className="flex flex-col min-w-0 p-6 md:p-10">
 
       {/* Header */}
       <div className="mb-8">
@@ -168,12 +168,12 @@ export default function Step2Page() {
       </div>
     </div>
 
-    {/* RIGHT IMAGE PANEL - Smaller (32%) */}
-    <div className="xl:grid xl:w-[40%] hidden  h-full overflow-hidden rounded-2xl items-center justify-center">
+    {/* RIGHT IMAGE PANEL */}
+    <div className="hidden lg:flex items-center justify-center bg-gradient-to-b from-[#F6F4FF] to-[#EFEBFF] p-6 xl:p-8">
       <img
         src="https://res.cloudinary.com/mview/image/upload/atlas/onboarding2.webp"
         alt="Academic profile illustration"
-        className="w-[100%] h-auto max-h-[650px] object-contain"
+        className="w-full h-auto max-h-[440px] object-contain"
       />
     </div>
   </div>
