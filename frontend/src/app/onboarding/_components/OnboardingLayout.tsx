@@ -79,7 +79,7 @@ function SkipModal({
               ))}
             </ul>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col md:flex-row gap-3">
             <button
               onClick={onClose}
               className="flex-1 border-2 border-[#E8E5FD] hover:border-[#534AB7]/40 text-[#6B6A8A] hover:text-[#534AB7] font-semibold py-3 rounded-2xl text-sm transition-all hover:bg-[#F8F7FF]"
