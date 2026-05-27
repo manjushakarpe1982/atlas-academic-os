@@ -83,7 +83,7 @@ export default function Step1Page() {
   </p>
 
   {/* 4 Cards in One Row */}
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2  xl:grid-cols-4 gap-3">
     {ROLES.map((r) => (
       <button
         key={r.id}
@@ -144,7 +144,7 @@ export default function Step1Page() {
 
     {/* Sparkle dots */}
    
- <div className="hidden lg:flex  overflow-hidden rounded-2xl items-center justify-center">
+ <div className="hidden  xl:flex  overflow-hidden rounded-2xl items-center justify-center">
       <img
         src="https://res.cloudinary.com/mview/image/upload/atlas/onboardingPage.webp"
         alt="Academic profile illustration"

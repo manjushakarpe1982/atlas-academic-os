@@ -174,7 +174,7 @@ export default function OnboardingLayout({
         {/* ── Main row ─────────────────────────────────────────── */}
         <div className="flex flex-1 min-h-0">
           {/* ── Sidebar ──────────────────────────────────────────── */}
-          <aside className="w-[270px] flex-shrink-0  flex-col bg-white border-r border-[#EEEDFE] px-5 py-6 overflow-y-auto hidden md:flex">
+          <aside className="w-[240px] flex-shrink-0  flex-col bg-white border-r border-[#EEEDFE] px-5 py-6 overflow-y-auto hidden md:flex">
             {/* Progress title + bar */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
