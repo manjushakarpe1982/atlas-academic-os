@@ -131,7 +131,7 @@ export default function Step3Page() {
           </div>
 
           {/* RIGHT — illustration */}
-        <div className="hidden lg:flex h-full pr-4 overflow-hidden rounded-2xl items-center justify-center">
+        <div className="hidden xl:flex h-full pr-4 overflow-hidden rounded-2xl items-center justify-center">
       <img
         src="https://res.cloudinary.com/mview/image/upload/atlas/onboarding3.webp"
         alt="Academic profile illustration"

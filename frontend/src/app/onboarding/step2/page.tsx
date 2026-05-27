@@ -35,10 +35,10 @@ export default function Step2Page() {
   return (
     <OnboardingLayout step={2}>
 <div className="min-h-full w-full bg-white rounded-[28px] border border-[#ECE9FF]  max-w-[1250px] mx-auto shadow-lg p-6 md:p-10">
-  <div className="grid lg:grid-cols-[60%_40%] h-full items-stretch gap-4 ">
+  <div className=" h-full items-stretch gap-4 ">
 
     {/* LEFT SECTION - Larger (68%) */}
-    <div className="max-w-2xl flex flex-col h-full">
+    <div className="xl:grid xl:grid-cols-[60%] max-w-2xl  flex-col h-full">
 
       {/* Header */}
       <div className="mb-8">
@@ -169,7 +169,7 @@ export default function Step2Page() {
     </div>
 
     {/* RIGHT IMAGE PANEL - Smaller (32%) */}
-    <div className="hidden lg:flex h-full overflow-hidden rounded-2xl items-center justify-center">
+    <div className="xl:grid xl:w-[40%] hidden  h-full overflow-hidden rounded-2xl items-center justify-center">
       <img
         src="https://res.cloudinary.com/mview/image/upload/atlas/onboarding2.webp"
         alt="Academic profile illustration"
