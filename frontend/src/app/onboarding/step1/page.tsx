@@ -45,110 +45,92 @@ export default function Step1Page() {
 
   return (
     <OnboardingLayout step={1} disableNext={!role}>
-      <div className="bg-white rounded-2xl border border-[#ECE9FF] shadow-sm w-full max-w-[1180px] mx-auto overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_420px] min-h-[540px]">
+      <div className="w-full max-w-[1080px] mx-auto bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg p-3  md:p-5 overflow-hidden">
 
-  {/* ── LEFT — Main Content ─────────────────────────────── */}
-  <div className="flex flex-col min-w-0">
+        {/* ── Full-width header banner: text overlaps image ──────── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#EFEBFF] via-[#F2EEFF] to-[#E9E3FF] mb-5 min-h-[250px] lg:min-h-[260px]">
 
-    {/* Step badge */}
-    <div className="px-8 pt-7 pb-3">
-      <span className="inline-flex items-center gap-2 rounded-full bg-[#F0EEFF] border border-[#D8D3FF] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5">
-        <Sparkles className="w-3.5 h-3.5" /> Step 1 of 5
-      </span>
-    </div>
+  {/* Background Image - Visible only on large screens */}
+  <img
+    src="https://res.cloudinary.com/mview/image/upload/atlas/onBoardingPage1.webp"
+    alt="Atlas welcome illustration"
+    className="hidden lg:block absolute inset-0 w-full h-full object-cover"
+  />
 
-    {/* Title + subtitle */}
-    <div className="px-8 pb-4 border-b border-[#F1EEFF]">
-      <h1 className="text-3xl font-extrabold text-[#14142B] leading-tight mb-2">
-        Welcome to Atlas! 👋
-      </h1>
-      <p className="text-[15px] text-[#6B6A8A] leading-relaxed">
-        Your AI-powered academic companion.<br />
-        Tell us a little about yourself so we can personalise your experience.
-      </p>
-    </div>
-
-    {/* Role picker */}
-   
-
-      {/* Role picker */}
-
-
-  {/* 4 Cards in One Row */}
- {/* Role picker */}
-{/* Role picker */}
-<div className="px-8 py-4 flex-1 flex flex-col justify-center">
-  <p className="text-base font-extrabold  text-black mb-6 border-b-2 border-[#534AB7] inline-block pb-1">
-    What best describes you?
-  </p>
-
-  {/* 4 Cards in One Row */}
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2  xl:grid-cols-4 gap-3">
-    {ROLES.map((r) => (
-      <button
-        key={r.id}
-        onClick={() => setRole(r.id)}
-        className={`relative text-left rounded-2xl border-2 p-4 transition-all duration-200 h-full flex flex-col ${
-          role === r.id
-            ? `${r.lightBg} ${r.border} shadow-sm`
-            : 'border-[#ECE9FF] bg-white hover:border-[#D5D0FF] hover:bg-[#FAFAFE]'
-        }`}>
-
-        {/* Checkmark */}
-        {role === r.id && (
-          <div className="absolute top-4 right-4 w-5 h-5 rounded-full bg-[#534AB7] flex items-center justify-center shadow-sm">
-            <Check className="w-3 h-3 text-white" strokeWidth={3} />
-          </div>
-        )}
-
-        {/* Icon */}
-        <div className={`w-14 h-14 rounded-2xl ${r.bg} flex items-center justify-center mb-5 shadow-md flex-shrink-0`}>
-          <r.icon className="w-7 h-7 text-white" />
-        </div>
-
-        {/* Text Content */}
-        <div className="flex-1 flex flex-col">
-          <p className="text-base font-extrabold text-[#16162E] mb-2 leading-tight">
-            {r.label}
-          </p>
-          <p className="text-base text-[#6B6A8A] leading-relaxed">
-            {r.desc}
-          </p>
-        </div>
-      </button>
-    ))}
+  {/* Text overlay on left side */}
+  <div className="relative z-10 px-7 lg:px-10 py-8 max-w-xl">
+    <span className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur border border-[#D8D3FF] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-4">
+      <Sparkles className="w-3.5 h-3.5" /> Step 1 of 5
+    </span>
+    
+    <h1 className="text-4xl lg:text-[44px] font-extrabold text-[#14142B] leading-[1.1] mb-3">
+      Welcome to Atlas! 👋
+    </h1>
+    
+    <p className="text-base text-[#5C5A78] leading-relaxed max-w-sm">
+      Your AI-powered academic companion. Tell us a little about
+      yourself so we can personalise your experience.
+    </p>
   </div>
 </div>
 
-    {/* Feature strip */}
-    <div className="px-8 py-3 pb-10">
-    <div className="border border-[#F1EEFF] bg-[#FAFAFE] rounded-xl px-8 py-5">
-      <p className="text-lg font-bold   text-black mb-4">
-        What you&apos;ll get with ATLAS
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        {FEATURES.map((f) => (
-          <div key={f.label} className="flex items-center gap-2.5">
-            <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center flex-shrink-0`}>
-              <f.icon className={`w-5 h-5 ${f.color}`} style={{ width:20, height:20 }} />
-            </div>
-            <span className="text-[15px] font-semibold text-[#343452] leading-snug whitespace-pre-line">{f.label}</span>
+        {/* ── Role picker card ───────────────────────────────────── */}
+        <div className="pb-3 ">
+          <p className="text-lg font-extrabold text-[#14142B] mb-3">
+            What best describes you?
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {ROLES.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => setRole(r.id)}
+                className={`relative text-center rounded-2xl border-2 p-3 transition-all duration-200 flex flex-col items-center ${
+                  role === r.id
+                    ? `${r.lightBg} ${r.border} shadow-sm`
+                    : 'border-[#ECE9FF] bg-white hover:border-[#D5D0FF] hover:bg-[#FAFAFE]'
+                }`}>
+
+                {/* Icon */}
+                <div className={`w-14 h-14 rounded-2xl ${r.bg} flex items-center justify-center mb-4 shadow-md`}>
+                  <r.icon className="w-7 h-7 text-white" />
+                </div>
+
+                <p className="text-base font-extrabold text-[#16162E] mb-2">
+                  {r.label}
+                </p>
+                <p className="text-[13px] text-[#6B6A8A] leading-relaxed mb-4 flex-1">
+                  {r.desc}
+                </p>
+
+                {/* Radio circle */}
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
+                  role === r.id ? 'bg-[#534AB7] border-[#534AB7]' : 'border-[#D8D6EA]'
+                }`}>
+                  {role === r.id && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+                </span>
+              </button>
+            ))}
           </div>
-        ))}
+        </div>
+
+        {/* ── Feature strip ──────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-[#ECE9FF] shadow-sm p-6 lg:p-7">
+          <p className="text-base font-bold text-[#14142B] mb-5">
+            What you&apos;ll get with ATLAS
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {FEATURES.map((f) => (
+              <div key={f.label} className="flex items-center gap-3">
+                <div className={`w-11 h-11 rounded-xl ${f.bg} flex items-center justify-center flex-shrink-0`}>
+                  <f.icon className={`w-5 h-5 ${f.color}`} />
+                </div>
+                <span className="text-[14px] font-semibold text-[#343452] leading-snug whitespace-pre-line">{f.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
-    </div>
-    </div>
-  </div>
-
-  {/* ── RIGHT — Illustration ────────────────────────────── */}
-  <div className="hidden lg:flex items-center justify-center bg-gradient-to-b from-[#F6F4FF] to-[#EFEBFF] p-6 xl:p-8">
-      <img
-        src="https://res.cloudinary.com/mview/image/upload/atlas/onboardingPage.webp"
-        alt="Academic profile illustration"
-        className="w-full h-auto max-h-[440px] object-contain"
-      />
-    </div>
-</div>
     </OnboardingLayout>
   );
 }

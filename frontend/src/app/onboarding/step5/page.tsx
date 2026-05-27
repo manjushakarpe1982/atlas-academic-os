@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, ArrowRight } from 'lucide-react';
+import {
+  Check, ArrowRight, GraduationCap, Landmark, Target, Clock,
+  CalendarDays, Moon, Star, BookOpen, Upload, Brain, ArrowRight as ArrowFlow,
+} from 'lucide-react';
 import OnboardingLayout from '../_components/OnboardingLayout';
 import { useOnboarding } from '../_components/OnboardingContext';
 
 export default function Step5Page() {
   const router = useRouter();
-  const { save } = useOnboarding();
-  const [name, setName] = useState('Jordan');
+  const { save, data } = useOnboarding();
+  const [name, setName] = useState('there');
 
   useEffect(() => {
     const n = localStorage.getItem('atlas_full_name');
@@ -26,77 +29,168 @@ export default function Step5Page() {
     router.push('/home');
   };
 
+  const roleLabel = data.role
+    ? data.role.charAt(0).toUpperCase() + data.role.slice(1)
+    : '—';
+
+  // Build the summary rows from the user's actual answers.
+  const summary: { icon: typeof GraduationCap; label: string; value: string }[] = [
+    { icon: GraduationCap, label: 'Role',          value: roleLabel },
+    { icon: Landmark,      label: 'Institution',   value: data.institution || 'Not provided' },
+    { icon: BookOpen,      label: 'Field of study',value: data.field_of_study || 'Not provided' },
+    { icon: CalendarDays,  label: 'Year / Level',  value: data.year_level || 'Not provided' },
+    { icon: Target,        label: 'Target GPA',    value: data.target_gpa != null ? data.target_gpa.toFixed(2) : 'Not set' },
+    { icon: Clock,         label: 'Study time',    value: data.study_time || 'Not set' },
+  ];
+
+  const weeklyTotal = +((data.weekday_hours || 0) * 5 + (data.weekend_hours || 0) * 2).toFixed(1);
+
   return (
     <OnboardingLayout step={5}>
-      <div className="bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg overflow-hidden w-full max-w-[800px] mx-auto">
-        <div className="px-8 md:px-12 py-10 md:py-12 flex flex-col items-center text-center max-w-2xl mx-auto w-full">
+      <div className="bg-white rounded-[28px] border border-[#ECE9FF] shadow-lg overflow-hidden w-full max-w-[1080px] mx-auto">
+        <div className="px-7 md:px-10 py-9 md:py-11 flex flex-col items-center text-center w-full">
 
-          {/* Pulsing check */}
-          <div className="relative mb-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#534AB7] to-[#7B6FE8] flex items-center justify-center shadow-2xl shadow-[#534AB7]/30">
-              <Check className="w-10 h-10 text-white" strokeWidth={3} />
+          {/* Success check */}
+          <div className="relative mb-5">
+            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-[#534AB7] to-[#7B6FE8] flex items-center justify-center shadow-2xl shadow-[#534AB7]/30">
+              <Check className="w-9 h-9 text-white" strokeWidth={3} />
             </div>
             <div className="absolute inset-0 rounded-full border-4 border-[#534AB7]/20 animate-ping" />
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-extrabold text-[#14142B] mb-2">
+          {/* Success message */}
+          <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] mb-2">
             You&apos;re all set, {name}! 🎉
           </h1>
-          <p className="text-sm text-[#6B6A8A] font-light leading-relaxed mb-8 max-w-lg">
-            Your personalised Atlas workspace is ready. Your AI study companion has mapped your goals
-            and built your first study plan.
+          <p className="text-sm text-[#6B6A8A] leading-relaxed mb-7 max-w-md">
+            Your profile is complete. Here&apos;s a quick summary of what you told
+            us — Atlas will use this to personalise your experience.
           </p>
 
-          {/* Stats — 4 cols */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 w-full">
-            {[
-              { n:'4',  l:'Classes ready',    bg:'bg-indigo-50',  text:'text-indigo-600' },
-              { n:'47', l:'Deadlines mapped', bg:'bg-green-50',   text:'text-green-600'  },
-              { n:'18', l:'Topics detected',  bg:'bg-blue-50',    text:'text-blue-600'   },
-              { n:'2',  l:'Exams this month', bg:'bg-orange-50',  text:'text-orange-500' },
-            ].map((s) => (
-              <div key={s.l} className={`${s.bg} rounded-2xl p-4 border border-white shadow-sm`}>
-                <p className={`text-2xl font-extrabold ${s.text}`}>{s.n}</p>
-                <p className="text-[11px] font-medium text-[#9B9AB5] mt-0.5 leading-tight">{s.l}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Plan preview — full width capped */}
-          <div className="bg-[#F8F7FF] border border-[#E8E5FD] rounded-2xl p-5 w-full mb-8 text-left">
-            <p className="text-[10px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
-              Your first study plan — today
+          {/* ── Summary of onboarding responses ──────────────────── */}
+          <div className="w-full bg-[#FAFAFE] border border-[#EEEDFE] rounded-2xl p-5 mb-5 text-left">
+            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-4">
+              Your responses
             </p>
-            <div className="bg-[#f0effe] border border-[#c4bbff]/50 rounded-xl p-3.5 mb-2.5">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-extrabold text-[#534AB7] uppercase tracking-widest">Biology 101</span>
-                <span className="text-[10px] text-[#9B9AB5]">45 min</span>
-              </div>
-              <p className="text-sm font-extrabold text-[#1A1A2E]">Review Mitosis</p>
-              <p className="text-[11px] text-[#6B6A8A] mt-0.5">Exam Thursday · weakest topic</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {summary.map((s) => (
+                <div key={s.label} className="flex items-center gap-3 bg-white border border-[#EEEDFE] rounded-xl px-3.5 py-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#F4F2FF] flex items-center justify-center flex-shrink-0">
+                    <s.icon className="w-4 h-4 text-[#534AB7]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-[#9B9AB5]">{s.label}</p>
+                    <p className="text-sm font-bold text-[#1A1A2E] truncate">{s.value}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            {[
-              { c:'Statistics', t:'Problem set #4',  m:'40m' },
-              { c:'English',    t:'Essay 2 outline', m:'20m' },
-            ].map((r, i) => (
-              <div key={i} className="flex items-center gap-2.5 py-2 border-t border-[#f0effe]">
-                <div className="w-5 h-5 rounded-full border-2 border-[#e8e7f5] flex items-center justify-center text-[9px] text-[#9B9AB5] font-bold flex-shrink-0">{i+2}</div>
-                <p className="text-xs font-semibold text-[#1A1A2E] truncate flex-1">{r.c} — {r.t}</p>
-                <span className="text-[10px] text-[#9B9AB5]">{r.m}</span>
+
+            {/* Daily hours + sleep window */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+              <div className="flex items-center gap-3 bg-white border border-[#EEEDFE] rounded-xl px-3.5 py-3">
+                <div className="w-9 h-9 rounded-lg bg-[#F4F2FF] flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-4 h-4 text-[#534AB7]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium text-[#9B9AB5]">Weekly study target</p>
+                  <p className="text-sm font-bold text-[#1A1A2E]">{weeklyTotal}h / week</p>
+                </div>
               </div>
-            ))}
+              <div className="flex items-center gap-3 bg-white border border-[#EEEDFE] rounded-xl px-3.5 py-3">
+                <div className="w-9 h-9 rounded-lg bg-[#F4F2FF] flex items-center justify-center flex-shrink-0">
+                  <Moon className="w-4 h-4 text-[#534AB7]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium text-[#9B9AB5]">Sleep window</p>
+                  <p className="text-sm font-bold text-[#1A1A2E]">
+                    {data.sleep_start || '—'} → {data.sleep_end || '—'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
+          {/* ── Goals chips ──────────────────────────────────────── */}
+          {data.goals.length > 0 && (
+            <div className="w-full bg-[#F8F7FF] border border-[#E8E5FD] rounded-2xl p-5 mb-7 text-left">
+              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+                Goals you selected
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {data.goals.map((g) => {
+                  const isTop = g === data.top_priority;
+                  return (
+                    <span
+                      key={g}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border ${
+                        isTop
+                          ? 'bg-[#534AB7] border-[#534AB7] text-white'
+                          : 'bg-white border-[#E8E5FD] text-[#5C5A78]'
+                      }`}
+                    >
+                      {isTop && <Star className="w-3 h-3 fill-amber-300 text-amber-300" />}
+                      {g}
+                    </span>
+                  );
+                })}
+              </div>
+              {data.top_priority && (
+                <p className="text-[11px] text-[#9B9AB5] mt-3">
+                  <Star className="w-3 h-3 inline fill-amber-400 text-amber-400 mr-1" />
+                  Top priority: <span className="font-bold text-[#534AB7]">{data.top_priority}</span>
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* ── Dashboard button (two lines) ─────────────────────── */}
           <button
             onClick={goToDashboard}
-            className="bg-gradient-to-r from-[#534AB7] to-[#6B5FE8] hover:from-[#3C3489] hover:to-[#534AB7] text-white font-extrabold px-10 py-3.5 rounded-2xl text-sm flex items-center gap-2.5 shadow-xl shadow-[#534AB7]/25 transition-all active:scale-95"
+            className="bg-gradient-to-r from-[#534AB7] to-[#6B5FE8] hover:from-[#3C3489] hover:to-[#534AB7] text-white px-9 py-3 rounded-2xl flex items-center gap-3 shadow-xl shadow-[#534AB7]/25 transition-all active:scale-95"
           >
-            Go to my Dashboard <ArrowRight className="w-5 h-5" />
+            <span className="text-left leading-tight">
+              <span className="block text-sm font-extrabold">Go to my Dashboard</span>
+              <span className="block text-[11px] font-medium text-white/70">
+                Upload files, add grades &amp; start planning
+              </span>
+            </span>
+            <ArrowRight className="w-5 h-5 flex-shrink-0" />
           </button>
 
           <p className="text-xs text-[#9B9AB5] mt-3 font-light">
-            Upload files, add grades, and adjust your schedule any time in Settings.
+            You can update any of these any time in Settings.
           </p>
+
+          {/* ── Simple "how it works" flow ───────────────────────── */}
+          <div className="w-full mt-8 pt-7 border-t border-[#EEEDFE]">
+            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-5">
+              What happens next
+            </p>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-start justify-center gap-3 sm:gap-2">
+              {[
+                { icon: Upload, color: 'bg-[#534AB7]', title: 'Upload syllabus', desc: 'Add your syllabus or files.' },
+                { icon: Brain,  color: 'bg-[#7B6FE8]', title: 'Atlas reads it',  desc: 'Lectures, grades & deadlines parsed.' },
+                { icon: Target, color: 'bg-emerald-500', title: 'Start studying', desc: 'Get your first ranked task.' },
+              ].map((s, i, arr) => (
+                <div key={s.title} className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2 flex-1">
+                  <div className="flex sm:flex-col items-center gap-3 sm:gap-2 flex-1">
+                    <div className={`w-11 h-11 rounded-xl ${s.color} flex items-center justify-center shadow-md flex-shrink-0`}>
+                      <s.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left sm:text-center">
+                      <p className="text-sm font-bold text-[#1A1A2E]">{s.title}</p>
+                      <p className="text-[11px] text-[#9B9AB5] leading-tight">{s.desc}</p>
+                    </div>
+                  </div>
+                  {/* connector arrow between steps (desktop only) */}
+                  {i < arr.length - 1 && (
+                    <ArrowFlow className="hidden sm:block w-4 h-4 text-[#D8D6EA] flex-shrink-0 mt-3" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </OnboardingLayout>
