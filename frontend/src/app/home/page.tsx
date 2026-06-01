@@ -1,54 +1,147 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import AppLayout from '@/components/layout/AppLayout';
-import { PageSkeleton } from '@/components/Skeleton';
-import Tooltip from '@/components/Tooltip';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import AppLayout from "@/components/layout/AppLayout";
+import { PageSkeleton } from "@/components/Skeleton";
+import Tooltip from "@/components/Tooltip";
 import {
-  Play, SkipForward, Info, ChevronRight, ChevronDown,
-  Clock, Brain, Search, BarChart2, TrendingUp,
-  Upload, Sparkles, ArrowRight, Activity,
-  Zap, Target, AlertTriangle, X, MoreVertical,
-  Calendar, BookOpen,
-} from 'lucide-react';
+  Play,
+  SkipForward,
+  Info,
+  ChevronRight,
+  ChevronDown,
+  Clock,
+  Brain,
+  Search,
+  TrendingUp,
+  Upload,
+  Sparkles,
+  ArrowRight,
+  Activity,
+  Zap,
+  Target,
+  AlertTriangle,
+  X,
+  MoreVertical,
+  Calendar,
+  BookOpen,
+  Shield,
+  Check,
+} from "lucide-react";
 
 /* ─── Data ───────────────────────────────────────────────────── */
 const TODAY_TASKS = [
-  { id:1, class:'Biology 101', classColor:'bg-indigo-100 text-indigo-700', classDot:'bg-indigo-500', topic:'Study Cell Division — Mitosis', duration:45, priority:'High',   priorityColor:'text-red-500 bg-red-50',    reason:'Bio Midterm in 3 days · Weakest topic (28%) · High syllabus weight (24%)' },
-  { id:2, class:'Biology 101', classColor:'bg-indigo-100 text-indigo-700', classDot:'bg-green-500',  topic:'DNA Replication',               duration:40, priority:'High',   priorityColor:'text-red-500 bg-red-50',    reason:'Mentioned 5× in lectures · Likely exam question' },
-  { id:3, class:'Stats 201',   classColor:'bg-orange-100 text-orange-700', classDot:'bg-orange-500', topic:'Problem Set #4',               duration:40, priority:'Medium', priorityColor:'text-orange-500 bg-orange-50', reason:'Due Friday — 2 days away' },
-  { id:4, class:'English 110', classColor:'bg-blue-100 text-blue-700',     classDot:'bg-blue-500',   topic:'Essay 2 — Outline',            duration:20, priority:'Medium', priorityColor:'text-orange-500 bg-orange-50', reason:'Due Monday — start now' },
+  {
+    id: 1,
+    class: "Biology 101",
+    classColor: "bg-indigo-100 text-indigo-700",
+    classDot: "bg-indigo-500",
+    topic: "Study Cell Division — Mitosis",
+    duration: 45,
+    priority: "High",
+    priorityColor: "text-red-500 bg-red-50",
+    reason:
+      "Bio Midterm in 3 days · Weakest topic (28%) · High syllabus weight (24%)",
+  },
+  {
+    id: 2,
+    class: "Biology 101",
+    classColor: "bg-indigo-100 text-indigo-700",
+    classDot: "bg-green-500",
+    topic: "DNA Replication",
+    duration: 40,
+    priority: "High",
+    priorityColor: "text-red-500 bg-red-50",
+    reason: "Mentioned 5× in lectures · Likely exam question",
+  },
+  {
+    id: 3,
+    class: "Stats 201",
+    classColor: "bg-orange-100 text-orange-700",
+    classDot: "bg-orange-500",
+    topic: "Problem Set #4",
+    duration: 40,
+    priority: "Medium",
+    priorityColor: "text-orange-500 bg-orange-50",
+    reason: "Due Friday — 2 days away",
+  },
+  {
+    id: 4,
+    class: "English 110",
+    classColor: "bg-blue-100 text-blue-700",
+    classDot: "bg-blue-500",
+    topic: "Essay 2 — Outline",
+    duration: 20,
+    priority: "Medium",
+    priorityColor: "text-orange-500 bg-orange-50",
+    reason: "Due Monday — start now",
+  },
 ];
 
 const UPCOMING = [
-  { name:'Biology Midterm',    sub:'BIO 101 · Exam',      days:3, dot:'bg-red-500',    daysColor:'text-red-500',    rowBg:'bg-red-50'    },
-  { name:'Statistics Quiz 3',  sub:'STAT 201 · Quiz',     days:4, dot:'bg-orange-400', daysColor:'text-orange-500', rowBg:'bg-orange-50' },
-  { name:'Biology Lab Report', sub:'BIO 101 · Deadline',  days:0, dot:'bg-violet-500', daysColor:'text-violet-600', rowBg:'bg-violet-50' },
-  { name:'Statistics PS #4',   sub:'STAT 201 · Deadline', days:2, dot:'bg-amber-400',  daysColor:'text-amber-600',  rowBg:'bg-amber-50'  },
+  {
+    name: "Biology Midterm",
+    sub: "BIO 101 · Exam",
+    days: 3,
+    dot: "bg-red-500",
+    daysColor: "text-red-500",
+    rowBg: "bg-red-50",
+  },
+  {
+    name: "Statistics Quiz 3",
+    sub: "STAT 201 · Quiz",
+    days: 4,
+    dot: "bg-orange-400",
+    daysColor: "text-orange-500",
+    rowBg: "bg-orange-50",
+  },
+  {
+    name: "Biology Lab Report",
+    sub: "BIO 101 · Deadline",
+    days: 0,
+    dot: "bg-violet-500",
+    daysColor: "text-violet-600",
+    rowBg: "bg-violet-50",
+  },
+  {
+    name: "Statistics PS #4",
+    sub: "STAT 201 · Deadline",
+    days: 2,
+    dot: "bg-amber-400",
+    daysColor: "text-amber-600",
+    rowBg: "bg-amber-50",
+  },
 ];
 
 const WEAK_TOPICS = [
-  { name:'Cell Division (Mitosis)', pct:28, color:'bg-red-500'   },
-  { name:'DNA Replication',         pct:35, color:'bg-orange-500'},
-  { name:'Enzyme Kinetics',         pct:44, color:'bg-amber-400' },
-  { name:'Cellular Respiration',    pct:65, color:'bg-green-500' },
+  { name: "Cell Division (Mitosis)", pct: 28, color: "bg-red-500" },
+  { name: "DNA Replication", pct: 35, color: "bg-orange-500" },
+  { name: "Enzyme Kinetics", pct: 44, color: "bg-amber-400" },
+  { name: "Cellular Respiration", pct: 65, color: "bg-green-500" },
 ];
 
 const STUDY_PROGRESS = [
-  { day:'M', hrs:1.5 },{ day:'T', hrs:2.0 },{ day:'W', hrs:0.5 },
-  { day:'T', hrs:2.5 },{ day:'F', hrs:1.0 },{ day:'S', hrs:3.0 },{ day:'S', hrs:2.0 },
+  { day: "M", hrs: 1.5 },
+  { day: "T", hrs: 2.0 },
+  { day: "W", hrs: 0.5 },
+  { day: "T", hrs: 2.5 },
+  { day: "F", hrs: 1.0 },
+  { day: "S", hrs: 3.0 },
+  { day: "S", hrs: 2.0 },
 ];
 
 /* ─── Mini bar chart ─────────────────────────────────────────── */
 function MiniBarChart() {
-  const max = Math.max(...STUDY_PROGRESS.map(d => d.hrs));
+  const max = Math.max(...STUDY_PROGRESS.map((d) => d.hrs));
   return (
     <div className="flex items-end gap-1 h-10">
       {STUDY_PROGRESS.map((d, i) => (
         <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-          <div className={`w-full rounded-md transition-colors ${i === 5 ? 'bg-indigo-600' : 'bg-indigo-200'}`}
-            style={{ height:`${(d.hrs/max)*36}px` }} />
+          <div
+            className={`w-full rounded-md transition-colors ${i === 5 ? "bg-indigo-600" : "bg-indigo-200"}`}
+            style={{ height: `${(d.hrs / max) * 36}px` }}
+          />
           <span className="text-[9px] text-gray-400">{d.day}</span>
         </div>
       ))}
@@ -58,18 +151,18 @@ function MiniBarChart() {
 
 /* ─── Main ───────────────────────────────────────────────────── */
 export default function HomePage() {
-  const [loading,    setLoading]    = useState(true);
-  const [tasks,      setTasks]      = useState(TODAY_TASKS);
-  const [userName,   setUserName]   = useState('Ananya');
+  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState(TODAY_TASKS);
+  const [userName, setUserName] = useState("Ananya");
   const [showEngine, setShowEngine] = useState(false);
   const [tipDismiss, setTipDismiss] = useState(false);
-    const [search,   setSearch]   = useState('');
+  const [search, setSearch] = useState("");
   // Two-flag check decides which dashboard state to render:
   //   1. onboardingDone = false → user just logged in, hasn't gone through onboarding
   //   2. onboardingDone = true  but hasMaterials = false → onboarded, no uploads yet
   //   3. onboardingDone = true  and hasMaterials = true  → full personalised dashboard
   const [onboardingDone, setOnboardingDone] = useState(false);
-  const [hasMaterials,   setHasMaterials]   = useState(false);
+  const [hasMaterials, setHasMaterials] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 600);
@@ -77,29 +170,56 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const n = localStorage.getItem('atlas_full_name');
-    if (n) setUserName(n.split(' ')[0]);
-    if (localStorage.getItem('atlas_onboarding_completed') === 'true') setOnboardingDone(true);
-    if (localStorage.getItem('atlas_has_materials') === 'true') setHasMaterials(true);
+    const n = localStorage.getItem("atlas_full_name");
+    if (n) setUserName(n.split(" ")[0]);
+    if (localStorage.getItem("atlas_onboarding_completed") === "true")
+      setOnboardingDone(true);
+    if (localStorage.getItem("atlas_has_materials") === "true")
+      setHasMaterials(true);
   }, []);
 
-  const skipTask = (id: number) => setTasks(p => {
-    const i = p.findIndex(t => t.id === id);
-    if (i < 0) return p;
-    const a = [...p]; const [t] = a.splice(i, 1); a.push(t); return a;
-  });
+  const skipTask = (id: number) =>
+    setTasks((p) => {
+      const i = p.findIndex((t) => t.id === id);
+      if (i < 0) return p;
+      const a = [...p];
+      const [t] = a.splice(i, 1);
+      a.push(t);
+      return a;
+    });
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const heroTask   = tasks[0];
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const heroTask = tasks[0];
   const otherTasks = tasks.slice(1);
-  const doneMins   = 65; const goalMins = 150;
-  const gPct       = Math.round((doneMins/goalMins)*100);
-  const r = 34; const circ = 2*Math.PI*r;
+  const doneMins = 65;
+  const goalMins = 150;
+  const gPct = Math.round((doneMins / goalMins) * 100);
+  const r = 34;
+  const circ = 2 * Math.PI * r;
 
   const engineScores = [
-    { label:'Mastery',   value:28, color:'bg-red-500',    icon:'🧠', desc:'Your current knowledge' },
-    { label:'Emphasis',  value:95, color:'bg-indigo-500', icon:'📢', desc:'Professor weight'        },
-    { label:'Proximity', value:88, color:'bg-amber-500',  icon:'⏱',  desc:'Days until exam'         },
+    {
+      label: "Mastery",
+      value: 28,
+      color: "bg-red-500",
+      icon: "🧠",
+      desc: "Your current knowledge",
+    },
+    {
+      label: "Emphasis",
+      value: 95,
+      color: "bg-indigo-500",
+      icon: "📢",
+      desc: "Professor weight",
+    },
+    {
+      label: "Proximity",
+      value: 88,
+      color: "bg-amber-500",
+      icon: "⏱",
+      desc: "Days until exam",
+    },
   ];
 
   if (loading) return <PageSkeleton />;
@@ -115,7 +235,6 @@ export default function HomePage() {
       <AppLayout>
         <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-6">
           <div className="max-w-[1000px] mx-auto">
-
             {/* Greeting */}
             <div className="mb-6">
               <p className="text-sm text-[#6B6A8A] mb-1">{greeting},</p>
@@ -145,14 +264,19 @@ export default function HomePage() {
                     Tell us your role, goals, and study preferences so Atlas can
                     build a plan that actually fits your day.
                   </p>
-                  <Link href="/onboarding"
-                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95">
+                  <Link
+                    href="/onboarding"
+                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95"
+                  >
                     <Sparkles className="w-4 h-4" /> Start setup
                   </Link>
                 </div>
 
                 <div className="hidden md:flex items-center justify-center w-[160px] h-[160px] rounded-3xl bg-white/10 backdrop-blur border border-white/20">
-                  <Target className="w-16 h-16 text-white/90" strokeWidth={1.5} />
+                  <Target
+                    className="w-16 h-16 text-white/90"
+                    strokeWidth={1.5}
+                  />
                 </div>
               </div>
             </div>
@@ -163,16 +287,40 @@ export default function HomePage() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
               {[
-                { icon: BookOpen, color: 'bg-[#534AB7]',   title: 'Your academic profile', desc: 'Institution, field of study, and year level.' },
-                { icon: Target,   color: 'bg-emerald-500', title: 'Your goals',            desc: 'Pick what matters — grades, exams, or skills.' },
-                { icon: Calendar, color: 'bg-orange-500',  title: 'Your study preferences',desc: 'When you study best and how long sessions run.' },
+                {
+                  icon: BookOpen,
+                  color: "bg-[#534AB7]",
+                  title: "Your academic profile",
+                  desc: "Institution, field of study, and year level.",
+                },
+                {
+                  icon: Target,
+                  color: "bg-emerald-500",
+                  title: "Your goals",
+                  desc: "Pick what matters — grades, exams, or skills.",
+                },
+                {
+                  icon: Calendar,
+                  color: "bg-orange-500",
+                  title: "Your study preferences",
+                  desc: "When you study best and how long sessions run.",
+                },
               ].map((c) => (
-                <div key={c.title} className="bg-white border border-[#ECE9FF] rounded-2xl p-5">
-                  <div className={`w-11 h-11 rounded-xl ${c.color} flex items-center justify-center mb-3 shadow-md`}>
+                <div
+                  key={c.title}
+                  className="bg-white border border-[#ECE9FF] rounded-2xl p-5"
+                >
+                  <div
+                    className={`w-11 h-11 rounded-xl ${c.color} flex items-center justify-center mb-3 shadow-md`}
+                  >
                     <c.icon className="w-5 h-5 text-white" />
                   </div>
-                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">{c.title}</p>
-                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
+                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">
+                    {c.title}
+                  </p>
+                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed">
+                    {c.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -180,9 +328,9 @@ export default function HomePage() {
             {/* Reassurance row */}
             <div className="flex items-center justify-center gap-2 text-xs text-[#9B9AB5]">
               <Sparkles className="w-3.5 h-3.5 text-[#534AB7]" />
-              Takes about 2 minutes. You can update any answer later in Settings.
+              Takes about 2 minutes. You can update any answer later in
+              Settings.
             </div>
-
           </div>
         </div>
       </AppLayout>
@@ -199,7 +347,6 @@ export default function HomePage() {
       <AppLayout>
         <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-6">
           <div className="max-w-[1200px] mx-auto">
-
             {/* ── "Finish your profile first" banner (Scenario 1 only) ─ */}
             {!onboardingDone && (
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-gradient-to-r from-[#FFF7E6] to-[#FFF1D6] border border-[#FFD98A] rounded-2xl p-4 md:p-5 mb-5">
@@ -207,10 +354,12 @@ export default function HomePage() {
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-extrabold text-[#7A5A1F]">Finish setting up your profile</p>
+                  <p className="text-sm font-extrabold text-[#7A5A1F]">
+                    Finish setting up your profile
+                  </p>
                   <p className="text-[12.5px] text-[#8A7242] leading-relaxed">
-                    You can keep exploring — but Atlas will personalise things much better
-                    once you complete the 5-step onboarding.
+                    You can keep exploring — but Atlas will personalise things
+                    much better once you complete the 5-step onboarding.
                   </p>
                 </div>
                 <Link
@@ -223,117 +372,174 @@ export default function HomePage() {
             )}
 
             {/* ── Greeting ───────────────────────────────────────── */}
-            <div className="mb-6">
+            <div className="mb-5">
               <p className="text-sm text-[#6B6A8A] mb-1">{greeting},</p>
               <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight">
                 Welcome to Atlas, {userName} 👋
               </h1>
               <p className="text-sm text-[#6B6A8A] mt-1.5 max-w-xl">
                 {onboardingDone
-                  ? 'Your profile is set up. Upload your syllabus or course materials to unlock your personalised study plan, grades, and deadlines.'
-                  : 'Get started by uploading your syllabus — or finish your profile first so Atlas can tailor everything to your goals.'}
+                  ? "Your profile is set up. Upload your syllabus or course materials to unlock your personalised study plan, grades, and deadlines."
+                  : "Get started by uploading your syllabus — or finish your profile first so Atlas can tailor everything to your goals."}
               </p>
             </div>
 
-            {/* ── Hero upload card ───────────────────────────────── */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#6B5FE8] rounded-3xl p-7 md:p-9 mb-6 shadow-xl shadow-[#534AB7]/20">
-              {/* Decorative sparkles */}
-              <Sparkles className="absolute top-6 right-12 w-5 h-5 text-white/30" />
-              <Sparkles className="absolute bottom-8 right-1/3 w-3 h-3 text-white/30" />
-              <Sparkles className="absolute top-12 left-1/3 w-3 h-3 text-white/20" />
+            {/* ── Hero upload card — full-width image with overlay ─ */}
+           <div className="relative overflow-hidden rounded-3xl mb-6 shadow-xl shadow-[#534AB7]/20 min-h-[320px] md:min-h-[360px] bg-[#534AB7]">
 
-              <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-6">
-                <div>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
-                    <Sparkles className="w-3 h-3" /> Let&apos;s get you started
-                  </span>
-                  <h2 className="text-2xl md:text-[26px] font-extrabold text-white mb-2 leading-tight">
-                    Upload your first syllabus
-                  </h2>
-                  <p className="text-sm text-white/85 leading-relaxed max-w-md mb-5">
-                    Atlas will parse your lectures, deadlines, and grading weights
-                    automatically — then build a ranked study plan around your goals.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Link href="/upload"
-                      className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95">
-                      <Upload className="w-4 h-4" /> Upload syllabus
-                    </Link>
-                    {!onboardingDone && (
-                      <Link href="/onboarding"
-                        className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95">
-                        <Sparkles className="w-4 h-4" /> Start setup
-                      </Link>
-                    )}
-                  </div>
-                </div>
+  {/* Full-width Background Image - Large screens only */}
+  <img
+    src="https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage5.webp"
+    alt="Upload syllabus illustration"
+    className="absolute inset-0 w-full h-full object-cover hidden lg:block"
+  />
 
-                {/* Inline upload icon illustration */}
-                <div className="hidden md:flex items-center justify-center w-[160px] h-[160px] rounded-3xl bg-white/10 backdrop-blur border border-white/20">
-                  <Upload className="w-16 h-16 text-white/90" strokeWidth={1.5} />
-                </div>
-              </div>
-            </div>
+  {/* Purple Gradient Overlay - Visible on lg and above */}
+<div className="absolute inset-0 bg-gradient-to-r from-[#6357e2] via-[#534AB7]/90 to-[#534AB7] lg:hidden" />
+  {/* Foreground Content */}
+  <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[77%_23%] items-start gap-6 p-6 md:p-9 min-h-[320px] md:min-h-[360px]">
+    
+    {/* LEFT — 77% */}
+    <div className="max-w-lg">
+      <span className="inline-flex items-center gap-2 rounded-full bg-white backdrop-blur text-[#534AB7] text-[12px] font-bold px-3 py-1.5 mb-3">
+        <Sparkles className="w-3 h-3" /> Let&apos;s get you started
+      </span>
 
-            {/* ── 3 quick-start action cards ─────────────────────── */}
-            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+      <h2 className="text-2xl md:text-[30px] font-extrabold text-white mb-2 leading-tight drop-shadow">
+        Upload your first syllabus
+      </h2>
+
+      <p className="text-[14px] text-white leading-relaxed max-w-md mb-5">
+        Atlas will parse your lectures, deadlines, and grading
+        weights automatically — then build a ranked study plan
+        around your goals.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <Link
+          href="/upload"
+          className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95"
+        >
+          <Upload className="w-4 h-4" /> Upload syllabus
+        </Link>
+
+        {!onboardingDone && (
+          <Link
+            href="/onboarding"
+            className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95"
+          >
+            <Sparkles className="w-4 h-4" /> Start setup
+          </Link>
+        )}
+      </div>
+
+      <p className="flex items-center gap-1.5 text-[14px] text-white">
+        <Shield className="w-3.5 h-3.5" /> Your data is private and secure
+      </p>
+    </div>
+
+    {/* RIGHT — Why upload? */}
+    <div className="bg-white/95 backdrop-blur rounded-2xl p-5 shadow-2xl lg:mt-8 hidden xl:block">
+      <p className="text-lg font-extrabold text-[#1A1A2E] mb-1">
+        Why upload?
+      </p>
+      <ul className="space-y-2.5">
+        {[
+          "Get a personalised study plan",
+          "Track important dates",
+          "Receive smart recommendations",
+          "Improve your grades",
+        ].map((b) => (
+          <li
+            key={b}
+            className="flex items-center gap-2.5 text-[14px] text-[#3A3A52] font-medium"
+          >
+            <span className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <Check
+                className="w-3 h-3 text-emerald-600"
+                strokeWidth={3.5}
+              />
+            </span>
+            {b}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</div>
+            {/* ── 3 action cards with illustrations ──────────────── */}
+            <p className="text-base font-extrabold text-black uppercase tracking-widest mb-3">
               Or get started another way
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               {[
-                { icon: Upload,   color: 'bg-[#534AB7]',   href: '/upload',     title: 'Upload files',     desc: 'PDFs, slides, notes — Atlas reads them all.' },
-                { icon: BookOpen, color: 'bg-emerald-500', href: '/classes',    title: 'Add classes manually', desc: 'No syllabus? Add classes one at a time.' },
-                { icon: Calendar, color: 'bg-orange-500',  href: '/calendar',   title: 'Plan your week',   desc: 'Block out study time and key deadlines.' },
+                {
+                  icon: Upload,
+                  color: "bg-[#534AB7]",
+                  href: "/upload",
+                  title: "Upload files",
+                  desc: "PDFs, slides, notes — Atlas reads them all.",
+                  img: "https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage2.webp",
+                },
+                {
+                  icon: BookOpen,
+                  color: "bg-emerald-500",
+                  href: "/classes",
+                  title: "Add classes manually",
+                  desc: "No syllabus? Add classes one at a time.",
+                  img: "https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage3.webp",
+                },
+                {
+                  icon: Calendar,
+                  color: "bg-orange-500",
+                  href: "/calendar",
+                  title: "Plan your week",
+                  desc: "Block out study time and key deadlines.",
+                  img: "https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage4.webp",
+                },
               ].map((c) => (
-                <Link key={c.title} href={c.href}
-                  className="group bg-white border border-[#ECE9FF] rounded-2xl p-5 shadow-sm hover:shadow-lg hover:border-[#534AB7]/40 transition-all">
-                  <div className={`w-11 h-11 rounded-xl ${c.color} flex items-center justify-center mb-3 shadow-md`}>
-                    <c.icon className="w-5 h-5 text-white" />
+                <Link
+                  key={c.title}
+                  href={c.href}
+                  className="group relative overflow-hidden bg-white border border-[#ECE9FF] rounded-2xl shadow-sm hover:shadow-lg hover:border-[#534AB7]/40 transition-all"
+                >
+                  <div className="flex items-stretch">
+                    {/* Left — text */}
+                    <div className="flex-1 p-5">
+                      <div className="flex items-start gap-3 mb-3">
+                        {/* Icon */}
+                        <div
+                          className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md flex-shrink-0`}
+                        >
+                          <c.icon className="w-5 h-5 text-white" />
+                        </div>
+
+                        {/* Title + Description + Button */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-extrabold text-[#1A1A2E] mb-1">
+                            {c.title}
+                          </p>
+                          <p className="text-[14px] text-[#6B6A8A] leading-relaxed mb-3">
+                            {c.desc}
+                          </p>
+                          <span className="text-[13px] font-bold text-[#534AB7] inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                            Get started <ArrowRight className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Right — illustration */}
+                    <div className="hidden sm:flex w-[110px]  flex-shrink-0 items-center justify-center pr-2">
+                      <img
+                        src={c.img}
+                        alt={c.title}
+                        className="w-full h-auto max-h-[110px] object-contain rounded-lg bg-white/80 p-1.5 shadow-md"
+                      />
+                    </div>
                   </div>
-                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">{c.title}</p>
-                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed mb-3">{c.desc}</p>
-                  <span className="text-[12px] font-bold text-[#534AB7] inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-                    Get started <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
                 </Link>
               ))}
             </div>
-
-            {/* ── Empty-state placeholders for the usual dashboard sections */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
-
-              {/* Today's plan — empty */}
-              <div className="bg-white border border-[#ECE9FF] rounded-2xl p-6 text-center">
-                <div className="w-12 h-12 rounded-xl bg-[#F4F2FF] flex items-center justify-center mx-auto mb-3">
-                  <Target className="w-6 h-6 text-[#534AB7]" />
-                </div>
-                <p className="text-base font-extrabold text-[#1A1A2E] mb-1">Your study plan will appear here</p>
-                <p className="text-sm text-[#6B6A8A] max-w-md mx-auto">
-                  Once you upload a syllabus, Atlas ranks the most important tasks
-                  for today based on your goals and exam timelines.
-                </p>
-              </div>
-
-              {/* Right sidebar — placeholders */}
-              <div className="space-y-4">
-                <div className="bg-white border border-[#ECE9FF] rounded-2xl p-5 text-center">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mx-auto mb-2.5">
-                    <Calendar className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">No upcoming deadlines</p>
-                  <p className="text-[12px] text-[#6B6A8A]">Add your classes to track exams &amp; due dates.</p>
-                </div>
-
-                <div className="bg-white border border-[#ECE9FF] rounded-2xl p-5 text-center">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-2.5">
-                    <BarChart2 className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">No grade data yet</p>
-                  <p className="text-[12px] text-[#6B6A8A]">Atlas will surface your weakest topics once data is available.</p>
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
       </AppLayout>
@@ -348,57 +554,68 @@ export default function HomePage() {
     <AppLayout>
       <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-6">
         <div className="max-w-[1200px] mx-auto">
-
           {/* ── Atlas tip banner ───────────────────────────────── */}
-           {/* ── Header ───────────────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-5 gap-4">
-          <div>
-            <h1 className="text-xl font-extrabold text-gray-900">
-              {greeting}, {userName}! 👋
-            </h1>
-            <p className="text-xs text-gray-400 mt-0.5">Let&apos;s make today productive.</p>
+          {/* ── Header ───────────────────────────────────────────── */}
+          <div className="flex items-center justify-between mb-5 gap-4">
+            <div>
+              <h1 className="text-xl font-extrabold text-gray-900">
+                {greeting}, {userName}! 👋
+              </h1>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Let&apos;s make today productive.
+              </p>
+            </div>
+
+            <div className="relative flex-1 max-w-xs hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search anything…"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-sm text-gray-700 placeholder:text-gray-400 outline-none focus:border-indigo-400 focus:bg-white transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link
+                href="/analytics"
+                className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-indigo-600 border border-gray-200 hover:border-indigo-300 px-3 py-2 rounded-xl transition-all hover:bg-indigo-50"
+              >
+                <Activity className="w-3.5 h-3.5" /> Analytics
+              </Link>
+              <Link
+                href="/upload"
+                className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all shadow-sm"
+              >
+                <Upload className="w-3.5 h-3.5" /> Upload
+              </Link>
+            </div>
           </div>
 
-          <div className="relative flex-1 max-w-xs hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search anything…"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-sm text-gray-700 placeholder:text-gray-400 outline-none focus:border-indigo-400 focus:bg-white transition-all"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Link href="/analytics"
-              className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-indigo-600 border border-gray-200 hover:border-indigo-300 px-3 py-2 rounded-xl transition-all hover:bg-indigo-50">
-              <Activity className="w-3.5 h-3.5" /> Analytics
+          {/* ── Conflict banner ──────────────────────────────────── */}
+          <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-5">
+            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+            <p className="text-xs font-semibold text-amber-800">
+              <strong>Atlas detected:</strong> Biology Midterm in 3 days +
+              Statistics Quiz in 4 days. Cell Division is your weakest topic —
+              prioritised at top of today&apos;s plan.
+            </p>
+            <Link
+              href="/study-plan"
+              className="ml-auto text-[11px] font-bold text-amber-700 hover:text-amber-900 whitespace-nowrap flex items-center gap-1"
+            >
+              View plan <ChevronRight className="w-3 h-3" />
             </Link>
-            <Link href="/upload"
-              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all shadow-sm">
-              <Upload className="w-3.5 h-3.5" /> Upload
-            </Link>
           </div>
-        </div>
-
-        {/* ── Conflict banner ──────────────────────────────────── */}
-        <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-5">
-          <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-          <p className="text-xs font-semibold text-amber-800">
-            <strong>Atlas detected:</strong> Biology Midterm in 3 days + Statistics Quiz in 4 days. Cell Division is your weakest topic — prioritised at top of today&apos;s plan.
-          </p>
-          <Link href="/study-plan" className="ml-auto text-[11px] font-bold text-amber-700 hover:text-amber-900 whitespace-nowrap flex items-center gap-1">
-            View plan <ChevronRight className="w-3 h-3" />
-          </Link>
-        </div>
           {/* ── Main layout ──────────────────────────────────────── */}
           <div className="flex flex-col lg:flex-row gap-4 items-start">
-
             {/* ── LEFT ─────────────────────────────────────────── */}
             <div className="lg:w-[70%] min-w-0 space-y-4">
-
               {/* Hero card — image as background, text overlaid */}
-              <div className="relative rounded-3xl overflow-hidden" style={{ minHeight: 280 }}>
-
+              <div
+                className="relative rounded-3xl overflow-hidden"
+                style={{ minHeight: 280 }}
+              >
                 {/* Background image */}
                 <img
                   src="https://res.cloudinary.com/mview/image/upload/atlas/homepage.webp"
@@ -406,13 +623,13 @@ export default function HomePage() {
                   className="absolute inset-0 w-full h-full object-cover"
                 />
 
-
                 {/* Text content on top */}
                 <div className="relative z-10 p-6" style={{ minHeight: 280 }}>
-
                   {/* Top row */}
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-widest">Today's Focus</span>
+                    <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-widest">
+                      Today's Focus
+                    </span>
                     <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-white/70 backdrop-blur px-2.5 py-1 rounded-full">
                       <Clock className="w-3.5 h-3.5" /> {heroTask.duration} min
                     </div>
@@ -435,20 +652,35 @@ export default function HomePage() {
 
                   {/* Reason pills */}
                   <div className="flex items-center gap-3 mb-4 flex-wrap max-w-[60%]">
-                    {['Bio Midterm in 3 days', 'Weakest topic (28%)', 'High syllabus weight (24%)'].map((r) => (
-                      <span key={r} className="text-[11px] text-gray-600 flex items-center gap-1.5">
-                        <span className="w-3.5 h-3.5 rounded-full bg-gray-400 inline-flex items-center justify-center text-white text-[8px] flex-shrink-0">i</span>
+                    {[
+                      "Bio Midterm in 3 days",
+                      "Weakest topic (28%)",
+                      "High syllabus weight (24%)",
+                    ].map((r) => (
+                      <span
+                        key={r}
+                        className="text-[11px] text-gray-600 flex items-center gap-1.5"
+                      >
+                        <span className="w-3.5 h-3.5 rounded-full bg-gray-400 inline-flex items-center justify-center text-white text-[8px] flex-shrink-0">
+                          i
+                        </span>
                         {r}
                       </span>
                     ))}
                   </div>
 
                   {/* Why toggle */}
-                  <button onClick={() => setShowEngine(!showEngine)}
-                    className="flex items-center gap-2 text-sm text-gray-600 bg-white/70 backdrop-blur hover:bg-white/90 px-3.5 py-2 rounded-xl border border-white/60 mb-4 transition-all">
-                    <span className="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center text-[9px] text-gray-500 flex-shrink-0">?</span>
+                  <button
+                    onClick={() => setShowEngine(!showEngine)}
+                    className="flex items-center gap-2 text-sm text-gray-600 bg-white/70 backdrop-blur hover:bg-white/90 px-3.5 py-2 rounded-xl border border-white/60 mb-4 transition-all"
+                  >
+                    <span className="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center text-[9px] text-gray-500 flex-shrink-0">
+                      ?
+                    </span>
                     Why is this task #1?
-                    <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${showEngine ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-gray-400 transition-transform ${showEngine ? "rotate-180" : ""}`}
+                    />
                   </button>
 
                   {showEngine && (
@@ -456,11 +688,20 @@ export default function HomePage() {
                       {engineScores.map((s) => (
                         <div key={s.label}>
                           <div className="flex justify-between text-[11px] mb-1">
-                            <span className="font-semibold text-gray-700">{s.icon} {s.label}</span>
-                            <span className={`font-extrabold ${s.value<40?'text-red-600':s.value<70?'text-amber-600':'text-indigo-600'}`}>{s.value}%</span>
+                            <span className="font-semibold text-gray-700">
+                              {s.icon} {s.label}
+                            </span>
+                            <span
+                              className={`font-extrabold ${s.value < 40 ? "text-red-600" : s.value < 70 ? "text-amber-600" : "text-indigo-600"}`}
+                            >
+                              {s.value}%
+                            </span>
                           </div>
                           <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                            <div className={`h-full ${s.color} rounded-full`} style={{ width:`${s.value}%` }} />
+                            <div
+                              className={`h-full ${s.color} rounded-full`}
+                              style={{ width: `${s.value}%` }}
+                            />
                           </div>
                         </div>
                       ))}
@@ -469,12 +710,16 @@ export default function HomePage() {
 
                   {/* Buttons */}
                   <div className="flex items-center gap-3">
-                    <Link href="/study-session"
-                      className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-2xl text-sm transition-all shadow-lg shadow-indigo-500/30">
+                    <Link
+                      href="/study-session"
+                      className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-2xl text-sm transition-all shadow-lg shadow-indigo-500/30"
+                    >
                       <Play className="w-4 h-4" /> Start Study Session
                     </Link>
-                    <button onClick={() => skipTask(heroTask.id)}
-                      className="flex items-center gap-2 bg-white/80 hover:bg-white text-gray-700 font-semibold px-5 py-3 rounded-2xl text-sm transition-all border border-white/60 backdrop-blur">
+                    <button
+                      onClick={() => skipTask(heroTask.id)}
+                      className="flex items-center gap-2 bg-white/80 hover:bg-white text-gray-700 font-semibold px-5 py-3 rounded-2xl text-sm transition-all border border-white/60 backdrop-blur"
+                    >
                       <SkipForward className="w-4 h-4" /> Switch Task
                     </button>
                   </div>
@@ -484,17 +729,44 @@ export default function HomePage() {
               {/* Stats strip — 3 cards */}
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { icon:'🎯', label:'Study Streak',      value:'7 days',  sub:'Keep it going! 🔥',  valueColor:'text-gray-900' },
-                  { icon:'📈', label:'Weekly Progress',   value:'72%',     sub:'On track ↑ 12%',      valueColor:'text-gray-900' },
-                  { icon:'⏰', label:'Focus Time Today',  value:'65 min',  sub:'Great start! 🎉',     valueColor:'text-gray-900' },
+                  {
+                    icon: "🎯",
+                    label: "Study Streak",
+                    value: "7 days",
+                    sub: "Keep it going! 🔥",
+                    valueColor: "text-gray-900",
+                  },
+                  {
+                    icon: "📈",
+                    label: "Weekly Progress",
+                    value: "72%",
+                    sub: "On track ↑ 12%",
+                    valueColor: "text-gray-900",
+                  },
+                  {
+                    icon: "⏰",
+                    label: "Focus Time Today",
+                    value: "65 min",
+                    sub: "Great start! 🎉",
+                    valueColor: "text-gray-900",
+                  },
                 ].map((s) => (
-                  <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3">
+                  <div
+                    key={s.label}
+                    className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3"
+                  >
                     <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-xl flex-shrink-0">
                       {s.icon}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] text-gray-400 font-medium">{s.label}</p>
-                      <p className={`text-lg font-extrabold leading-tight ${s.valueColor}`}>{s.value}</p>
+                      <p className="text-[10px] text-gray-400 font-medium">
+                        {s.label}
+                      </p>
+                      <p
+                        className={`text-lg font-extrabold leading-tight ${s.valueColor}`}
+                      >
+                        {s.value}
+                      </p>
                       <p className="text-[10px] text-gray-400">{s.sub}</p>
                     </div>
                   </div>
@@ -506,23 +778,43 @@ export default function HomePage() {
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-indigo-500" />
-                    <p className="text-sm font-extrabold text-gray-900">Today&apos;s Plan</p>
-                    <p className="text-xs text-gray-400 hidden sm:block">Your prioritized study roadmap for today.</p>
+                    <p className="text-sm font-extrabold text-gray-900">
+                      Today&apos;s Plan
+                    </p>
+                    <p className="text-xs text-gray-400 hidden sm:block">
+                      Your prioritized study roadmap for today.
+                    </p>
                   </div>
-                  <Link href="/study-plan" className="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1">
+                  <Link
+                    href="/study-plan"
+                    className="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1"
+                  >
                     View full plan <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
                 <div className="divide-y divide-gray-50">
                   {tasks.map((t, i) => (
-                    <div key={t.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-all group">
-                      <span className="text-sm font-bold text-gray-300 w-4 flex-shrink-0">{i+1}</span>
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${t.classDot}`} />
+                    <div
+                      key={t.id}
+                      className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-all group"
+                    >
+                      <span className="text-sm font-bold text-gray-300 w-4 flex-shrink-0">
+                        {i + 1}
+                      </span>
+                      <div
+                        className={`w-2 h-2 rounded-full flex-shrink-0 ${t.classDot}`}
+                      />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{t.topic}</p>
-                        <p className="text-[11px] text-gray-400">{t.class} · {t.duration} min</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {t.topic}
+                        </p>
+                        <p className="text-[11px] text-gray-400">
+                          {t.class} · {t.duration} min
+                        </p>
                       </div>
-                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${t.priorityColor}`}>
+                      <span
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${t.priorityColor}`}
+                      >
                         {t.priority}
                       </span>
                       <button className="w-7 h-7 rounded-xl bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center flex-shrink-0 transition-all shadow-sm shadow-indigo-500/20">
@@ -542,12 +834,19 @@ export default function HomePage() {
                       <Sparkles className="w-3.5 h-3.5 text-white" />
                     </div>
                     <div>
-                      <p className="text-xs font-extrabold text-indigo-700">AI Recommendation</p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">Focus on Cell Division and DNA Replication — both have exams this week and low mastery.</p>
+                      <p className="text-xs font-extrabold text-indigo-700">
+                        AI Recommendation
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        Focus on Cell Division and DNA Replication — both have
+                        exams this week and low mastery.
+                      </p>
                     </div>
                   </div>
-                  <Link href="/study-plan"
-                    className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex-shrink-0">
+                  <Link
+                    href="/study-plan"
+                    className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex-shrink-0"
+                  >
                     View Study Plan <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -556,27 +855,50 @@ export default function HomePage() {
 
             {/* ── RIGHT sidebar ───────────────────────────────── */}
             <div className="lg:w-[30%] lg:flex-shrink-0 space-y-4">
-
               {/* Daily Goal ring */}
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
                 <div className="flex items-center gap-4 mb-4">
                   {/* Ring */}
                   <div className="relative flex-shrink-0">
                     <svg width="76" height="76" viewBox="0 0 76 76">
-                      <circle cx="38" cy="38" r={r} fill="none" stroke="#EEF2FF" strokeWidth="8" />
-                      <circle cx="38" cy="38" r={r} fill="none" stroke="#4F46E5" strokeWidth="8"
-                        strokeLinecap="round" strokeDasharray={circ}
-                        strokeDashoffset={circ*(1-gPct/100)} transform="rotate(-90 38 38)"
-                        style={{ transition:'stroke-dashoffset 0.8s ease' }} />
+                      <circle
+                        cx="38"
+                        cy="38"
+                        r={r}
+                        fill="none"
+                        stroke="#EEF2FF"
+                        strokeWidth="8"
+                      />
+                      <circle
+                        cx="38"
+                        cy="38"
+                        r={r}
+                        fill="none"
+                        stroke="#4F46E5"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                        strokeDasharray={circ}
+                        strokeDashoffset={circ * (1 - gPct / 100)}
+                        transform="rotate(-90 38 38)"
+                        style={{ transition: "stroke-dashoffset 0.8s ease" }}
+                      />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <p className="text-base font-extrabold text-indigo-600">{gPct}%</p>
+                      <p className="text-base font-extrabold text-indigo-600">
+                        {gPct}%
+                      </p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm font-extrabold text-gray-900">Daily Goal</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{doneMins}m of {goalMins}m</p>
-                    <p className="text-sm font-extrabold text-orange-500 mt-1">{goalMins-doneMins}m left</p>
+                    <p className="text-sm font-extrabold text-gray-900">
+                      Daily Goal
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {doneMins}m of {goalMins}m
+                    </p>
+                    <p className="text-sm font-extrabold text-orange-500 mt-1">
+                      {goalMins - doneMins}m left
+                    </p>
                   </div>
                 </div>
 
@@ -585,11 +907,17 @@ export default function HomePage() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5">
                       <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
-                      <p className="text-[11px] font-bold text-gray-500">This Week</p>
+                      <p className="text-[11px] font-bold text-gray-500">
+                        This Week
+                      </p>
                     </div>
                   </div>
-                  <p className="text-2xl font-extrabold text-gray-900 leading-none mb-0.5">12.4h</p>
-                  <p className="text-[11px] text-emerald-600 font-semibold mb-2">+16% vs last week</p>
+                  <p className="text-2xl font-extrabold text-gray-900 leading-none mb-0.5">
+                    12.4h
+                  </p>
+                  <p className="text-[11px] text-emerald-600 font-semibold mb-2">
+                    +16% vs last week
+                  </p>
                   <MiniBarChart />
                 </div>
               </div>
@@ -597,21 +925,35 @@ export default function HomePage() {
               {/* Upcoming — matches design image exactly */}
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-base font-extrabold text-gray-900">Upcoming</p>
-                  <Link href="/calendar" className="text-sm font-semibold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition-colors">
+                  <p className="text-base font-extrabold text-gray-900">
+                    Upcoming
+                  </p>
+                  <Link
+                    href="/calendar"
+                    className="text-sm font-semibold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition-colors"
+                  >
                     View calendar <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
                 <div className="space-y-2">
                   {UPCOMING.map((u) => (
-                    <div key={u.name} className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl ${u.rowBg}`}>
-                      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${u.dot}`} />
+                    <div
+                      key={u.name}
+                      className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl ${u.rowBg}`}
+                    >
+                      <div
+                        className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${u.dot}`}
+                      />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-900 leading-tight">{u.name}</p>
+                        <p className="text-sm font-bold text-gray-900 leading-tight">
+                          {u.name}
+                        </p>
                         <p className="text-xs text-gray-400 mt-0.5">{u.sub}</p>
                       </div>
-                      <span className={`text-sm font-extrabold flex-shrink-0 ${u.daysColor}`}>
-                        {u.days === 0 ? 'Tomorrow' : `${u.days}d`}
+                      <span
+                        className={`text-sm font-extrabold flex-shrink-0 ${u.daysColor}`}
+                      >
+                        {u.days === 0 ? "Tomorrow" : `${u.days}d`}
                       </span>
                     </div>
                   ))}
@@ -621,8 +963,13 @@ export default function HomePage() {
               {/* Weak Topics */}
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-extrabold text-gray-900">Weak Topics</p>
-                  <Link href="/study-guide" className="text-[11px] font-semibold text-indigo-600 hover:underline flex items-center gap-0.5">
+                  <p className="text-sm font-extrabold text-gray-900">
+                    Weak Topics
+                  </p>
+                  <Link
+                    href="/study-guide"
+                    className="text-[11px] font-semibold text-indigo-600 hover:underline flex items-center gap-0.5"
+                  >
                     View all <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -630,15 +977,22 @@ export default function HomePage() {
                   {WEAK_TOPICS.map((t) => (
                     <div key={t.name} className="flex items-center gap-2.5">
                       <div className="w-6 h-6 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 text-sm">
-                        {t.pct < 40 ? '🔴' : t.pct < 55 ? '🟠' : '🟡'}
+                        {t.pct < 40 ? "🔴" : t.pct < 55 ? "🟠" : "🟡"}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-[11px] font-semibold text-gray-800 truncate">{t.name}</p>
-                          <span className="text-[11px] font-extrabold text-gray-600 ml-2 flex-shrink-0">{t.pct}%</span>
+                          <p className="text-[11px] font-semibold text-gray-800 truncate">
+                            {t.name}
+                          </p>
+                          <span className="text-[11px] font-extrabold text-gray-600 ml-2 flex-shrink-0">
+                            {t.pct}%
+                          </span>
                         </div>
                         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className={`h-full ${t.color} rounded-full`} style={{ width:`${t.pct}%` }} />
+                          <div
+                            className={`h-full ${t.color} rounded-full`}
+                            style={{ width: `${t.pct}%` }}
+                          />
                         </div>
                       </div>
                     </div>
