@@ -64,6 +64,12 @@ export default function HomePage() {
   const [showEngine, setShowEngine] = useState(false);
   const [tipDismiss, setTipDismiss] = useState(false);
     const [search,   setSearch]   = useState('');
+  // Two-flag check decides which dashboard state to render:
+  //   1. onboardingDone = false → user just logged in, hasn't gone through onboarding
+  //   2. onboardingDone = true  but hasMaterials = false → onboarded, no uploads yet
+  //   3. onboardingDone = true  and hasMaterials = true  → full personalised dashboard
+  const [onboardingDone, setOnboardingDone] = useState(false);
+  const [hasMaterials,   setHasMaterials]   = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 600);
@@ -73,6 +79,8 @@ export default function HomePage() {
   useEffect(() => {
     const n = localStorage.getItem('atlas_full_name');
     if (n) setUserName(n.split(' ')[0]);
+    if (localStorage.getItem('atlas_onboarding_completed') === 'true') setOnboardingDone(true);
+    if (localStorage.getItem('atlas_has_materials') === 'true') setHasMaterials(true);
   }, []);
 
   const skipTask = (id: number) => setTasks(p => {
@@ -96,6 +104,246 @@ export default function HomePage() {
 
   if (loading) return <PageSkeleton />;
 
+  /* ─────────────────────────────────────────────────────────────
+   * STATE 1 — User just logged in but hasn't gone through (or
+   * finished) onboarding. Without their goals/preferences nothing
+   * else can be personalised, so the dashboard nudges them to
+   * complete onboarding first.
+   * ───────────────────────────────────────────────────────────── */
+  if (!onboardingDone) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-6">
+          <div className="max-w-[1000px] mx-auto">
+
+            {/* Greeting */}
+            <div className="mb-6">
+              <p className="text-sm text-[#6B6A8A] mb-1">{greeting},</p>
+              <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight">
+                Welcome back, {userName} 👋
+              </h1>
+              <p className="text-sm text-[#6B6A8A] mt-1.5 max-w-xl">
+                You&apos;re almost there. Finish a quick setup so Atlas can
+                personalise your study plan, grades, and recommendations.
+              </p>
+            </div>
+
+            {/* Hero — finish setup */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#6B5FE8] rounded-3xl p-7 md:p-9 mb-6 shadow-xl shadow-[#534AB7]/20">
+              <Sparkles className="absolute top-6 right-12 w-5 h-5 text-white/30" />
+              <Sparkles className="absolute bottom-8 right-1/3 w-3 h-3 text-white/30" />
+
+              <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-6">
+                <div>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
+                    <Sparkles className="w-3 h-3" /> 5 quick steps · 2 min
+                  </span>
+                  <h2 className="text-2xl md:text-[26px] font-extrabold text-white mb-2 leading-tight">
+                    Let&apos;s personalise Atlas for you
+                  </h2>
+                  <p className="text-sm text-white/85 leading-relaxed max-w-md mb-5">
+                    Tell us your role, goals, and study preferences so Atlas can
+                    build a plan that actually fits your day.
+                  </p>
+                  <Link href="/onboarding"
+                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95">
+                    <Sparkles className="w-4 h-4" /> Start setup
+                  </Link>
+                </div>
+
+                <div className="hidden md:flex items-center justify-center w-[160px] h-[160px] rounded-3xl bg-white/10 backdrop-blur border border-white/20">
+                  <Target className="w-16 h-16 text-white/90" strokeWidth={1.5} />
+                </div>
+              </div>
+            </div>
+
+            {/* What you'll set up */}
+            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+              What you&apos;ll set up
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
+              {[
+                { icon: BookOpen, color: 'bg-[#534AB7]',   title: 'Your academic profile', desc: 'Institution, field of study, and year level.' },
+                { icon: Target,   color: 'bg-emerald-500', title: 'Your goals',            desc: 'Pick what matters — grades, exams, or skills.' },
+                { icon: Calendar, color: 'bg-orange-500',  title: 'Your study preferences',desc: 'When you study best and how long sessions run.' },
+              ].map((c) => (
+                <div key={c.title} className="bg-white border border-[#ECE9FF] rounded-2xl p-5">
+                  <div className={`w-11 h-11 rounded-xl ${c.color} flex items-center justify-center mb-3 shadow-md`}>
+                    <c.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">{c.title}</p>
+                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Reassurance row */}
+            <div className="flex items-center justify-center gap-2 text-xs text-[#9B9AB5]">
+              <Sparkles className="w-3.5 h-3.5 text-[#534AB7]" />
+              Takes about 2 minutes. You can update any answer later in Settings.
+            </div>
+
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * STATE 2 — Student finished onboarding but hasn't uploaded any
+   * materials yet. Show a friendly empty-state dashboard with a
+   * clear path to upload, instead of pre-populated mock data.
+   * ───────────────────────────────────────────────────────────── */
+  if (!hasMaterials) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-6">
+          <div className="max-w-[1200px] mx-auto">
+
+            {/* ── "Finish your profile first" banner (Scenario 1 only) ─ */}
+            {!onboardingDone && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-gradient-to-r from-[#FFF7E6] to-[#FFF1D6] border border-[#FFD98A] rounded-2xl p-4 md:p-5 mb-5">
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-extrabold text-[#7A5A1F]">Finish setting up your profile</p>
+                  <p className="text-[12.5px] text-[#8A7242] leading-relaxed">
+                    You can keep exploring — but Atlas will personalise things much better
+                    once you complete the 5-step onboarding.
+                  </p>
+                </div>
+                <Link
+                  href="/onboarding"
+                  className="flex-shrink-0 inline-flex items-center gap-1.5 bg-[#534AB7] hover:bg-[#3C3489] text-white px-4 py-2 rounded-lg font-bold text-xs shadow-md transition-all active:scale-95"
+                >
+                  Continue onboarding <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            )}
+
+            {/* ── Greeting ───────────────────────────────────────── */}
+            <div className="mb-6">
+              <p className="text-sm text-[#6B6A8A] mb-1">{greeting},</p>
+              <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight">
+                Welcome to Atlas, {userName} 👋
+              </h1>
+              <p className="text-sm text-[#6B6A8A] mt-1.5 max-w-xl">
+                {onboardingDone
+                  ? 'Your profile is set up. Upload your syllabus or course materials to unlock your personalised study plan, grades, and deadlines.'
+                  : 'Get started by uploading your syllabus — or finish your profile first so Atlas can tailor everything to your goals.'}
+              </p>
+            </div>
+
+            {/* ── Hero upload card ───────────────────────────────── */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#6B5FE8] rounded-3xl p-7 md:p-9 mb-6 shadow-xl shadow-[#534AB7]/20">
+              {/* Decorative sparkles */}
+              <Sparkles className="absolute top-6 right-12 w-5 h-5 text-white/30" />
+              <Sparkles className="absolute bottom-8 right-1/3 w-3 h-3 text-white/30" />
+              <Sparkles className="absolute top-12 left-1/3 w-3 h-3 text-white/20" />
+
+              <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-6">
+                <div>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
+                    <Sparkles className="w-3 h-3" /> Let&apos;s get you started
+                  </span>
+                  <h2 className="text-2xl md:text-[26px] font-extrabold text-white mb-2 leading-tight">
+                    Upload your first syllabus
+                  </h2>
+                  <p className="text-sm text-white/85 leading-relaxed max-w-md mb-5">
+                    Atlas will parse your lectures, deadlines, and grading weights
+                    automatically — then build a ranked study plan around your goals.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Link href="/upload"
+                      className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95">
+                      <Upload className="w-4 h-4" /> Upload syllabus
+                    </Link>
+                    {!onboardingDone && (
+                      <Link href="/onboarding"
+                        className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95">
+                        <Sparkles className="w-4 h-4" /> Start setup
+                      </Link>
+                    )}
+                  </div>
+                </div>
+
+                {/* Inline upload icon illustration */}
+                <div className="hidden md:flex items-center justify-center w-[160px] h-[160px] rounded-3xl bg-white/10 backdrop-blur border border-white/20">
+                  <Upload className="w-16 h-16 text-white/90" strokeWidth={1.5} />
+                </div>
+              </div>
+            </div>
+
+            {/* ── 3 quick-start action cards ─────────────────────── */}
+            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+              Or get started another way
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
+              {[
+                { icon: Upload,   color: 'bg-[#534AB7]',   href: '/upload',     title: 'Upload files',     desc: 'PDFs, slides, notes — Atlas reads them all.' },
+                { icon: BookOpen, color: 'bg-emerald-500', href: '/classes',    title: 'Add classes manually', desc: 'No syllabus? Add classes one at a time.' },
+                { icon: Calendar, color: 'bg-orange-500',  href: '/calendar',   title: 'Plan your week',   desc: 'Block out study time and key deadlines.' },
+              ].map((c) => (
+                <Link key={c.title} href={c.href}
+                  className="group bg-white border border-[#ECE9FF] rounded-2xl p-5 shadow-sm hover:shadow-lg hover:border-[#534AB7]/40 transition-all">
+                  <div className={`w-11 h-11 rounded-xl ${c.color} flex items-center justify-center mb-3 shadow-md`}>
+                    <c.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">{c.title}</p>
+                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed mb-3">{c.desc}</p>
+                  <span className="text-[12px] font-bold text-[#534AB7] inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                    Get started <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+
+            {/* ── Empty-state placeholders for the usual dashboard sections */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
+
+              {/* Today's plan — empty */}
+              <div className="bg-white border border-[#ECE9FF] rounded-2xl p-6 text-center">
+                <div className="w-12 h-12 rounded-xl bg-[#F4F2FF] flex items-center justify-center mx-auto mb-3">
+                  <Target className="w-6 h-6 text-[#534AB7]" />
+                </div>
+                <p className="text-base font-extrabold text-[#1A1A2E] mb-1">Your study plan will appear here</p>
+                <p className="text-sm text-[#6B6A8A] max-w-md mx-auto">
+                  Once you upload a syllabus, Atlas ranks the most important tasks
+                  for today based on your goals and exam timelines.
+                </p>
+              </div>
+
+              {/* Right sidebar — placeholders */}
+              <div className="space-y-4">
+                <div className="bg-white border border-[#ECE9FF] rounded-2xl p-5 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mx-auto mb-2.5">
+                    <Calendar className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">No upcoming deadlines</p>
+                  <p className="text-[12px] text-[#6B6A8A]">Add your classes to track exams &amp; due dates.</p>
+                </div>
+
+                <div className="bg-white border border-[#ECE9FF] rounded-2xl p-5 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-2.5">
+                    <BarChart2 className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">No grade data yet</p>
+                  <p className="text-[12px] text-[#6B6A8A]">Atlas will surface your weakest topics once data is available.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * STATE 3 — Student has uploaded materials. Show the full
+   * personalised dashboard (existing implementation below).
+   * ───────────────────────────────────────────────────────────── */
   return (
     <AppLayout>
       <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-6">
