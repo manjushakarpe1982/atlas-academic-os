@@ -264,12 +264,23 @@ export default function HomePage() {
                     Tell us your role, goals, and study preferences so Atlas can
                     build a plan that actually fits your day.
                   </p>
-                  <Link
-                    href="/onboarding"
-                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95"
-                  >
-                    <Sparkles className="w-4 h-4" /> Start setup
-                  </Link>
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
+        <Link
+          href="/upload"
+          className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95"
+        >
+          <Upload className="w-4 h-4" /> Upload syllabus
+        </Link>
+
+      
+          <Link
+            href="/onboarding"
+            className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95"
+          >
+            <Sparkles className="w-4 h-4" /> Start setup
+          </Link>
+      
+      </div>
                 </div>
 
                 <div className="hidden md:flex items-center justify-center w-[160px] h-[160px] rounded-3xl bg-white/10 backdrop-blur border border-white/20">
@@ -423,14 +434,8 @@ export default function HomePage() {
           <Upload className="w-4 h-4" /> Upload syllabus
         </Link>
 
-        {!onboardingDone && (
-          <Link
-            href="/onboarding"
-            className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95"
-          >
-            <Sparkles className="w-4 h-4" /> Start setup
-          </Link>
-        )}
+   
+        
       </div>
 
       <p className="flex items-center gap-1.5 text-[14px] text-white">
