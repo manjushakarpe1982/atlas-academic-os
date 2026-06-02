@@ -60,26 +60,33 @@ class SaveResponse(BaseModel):
 
 # ── helpers ────────────────────────────────────────────────────────────────
 
-def _ensure_user_row(user_id: str) -> None:
+def _ensure_user_row(user_id: str) -> bool:
     """
     Make sure a public.users row exists for this auth user.
 
     Email/password signup creates this row, but OAuth (Google) users may not
     have one yet. The onboarding table has an FK to public.users, so we create
     a minimal profile row from the auth record if it's missing.
+
+    Returns True if a profile row exists (either already existed or was just
+    created). Returns False on failure so the caller can return a clean error
+    instead of letting the FK violation surface to the user.
     """
+    # 1. Does the profile row already exist?
     try:
         existing = (
             supabase.table("users").select("id").eq("id", user_id).limit(1).execute()
         )
         if existing.data:
-            return
-    except Exception:
-        pass  # fall through and attempt the insert
+            return True
+    except Exception as e:
+        print(f"[ensure_user_row] existence check failed for {user_id}: {e}")
 
-    # Pull basic profile info from the auth user, if available.
+    # 2. Pull basic profile info from the auth user, if available.
     email = None
     full_name = ""
+    first_name = ""
+    last_name = ""
     try:
         admin_user = supabase.auth.admin.get_user_by_id(user_id)
         u = getattr(admin_user, "user", None)
@@ -87,16 +94,35 @@ def _ensure_user_row(user_id: str) -> None:
             email = getattr(u, "email", None)
             meta = getattr(u, "user_metadata", None) or {}
             full_name = meta.get("full_name") or meta.get("name") or ""
-    except Exception:
-        pass
-
-    try:
-        supabase.table("users").upsert(
-            {"id": user_id, "email": email, "full_name": full_name},
-            on_conflict="id",
-        ).execute()
+            first_name = meta.get("first_name") or (full_name.split(" ")[0] if full_name else "")
+            last_name  = meta.get("last_name")  or (" ".join(full_name.split(" ")[1:]) if full_name else "")
     except Exception as e:
-        print(f"[onboarding] could not ensure user row {user_id}: {e}")
+        print(f"[ensure_user_row] auth fetch failed for {user_id}: {e}")
+        # Continue anyway — we can create a row without an email.
+
+    # 3. Insert the profile row.
+    payload = {
+        "id": user_id,
+        "email": email or "",          # column is nullable but use empty string defensively
+        "full_name": full_name,
+        "first_name": first_name,
+        "last_name": last_name,
+        "onboarding_completed": False,
+    }
+    try:
+        supabase.table("users").upsert(payload, on_conflict="id").execute()
+        return True
+    except Exception as e:
+        print(f"[ensure_user_row] insert failed for {user_id}: {e}")
+        # Retry with the absolute minimum payload in case extra columns are the issue.
+        try:
+            supabase.table("users").upsert(
+                {"id": user_id, "onboarding_completed": False}, on_conflict="id"
+            ).execute()
+            return True
+        except Exception as e2:
+            print(f"[ensure_user_row] minimal insert also failed for {user_id}: {e2}")
+            return False
 
 
 def _row_to_response(row: dict) -> OnboardingResponse:
@@ -172,7 +198,11 @@ async def save_onboarding(
     payload["user_id"] = user_id
     payload["completed"] = complete
 
-    _ensure_user_row(user_id)
+    if not _ensure_user_row(user_id):
+        raise HTTPException(
+            status_code=500,
+            detail="Could not initialise your account profile. Please log out and back in, then try again.",
+        )
 
     try:
         supabase.table("onboarding").upsert(payload, on_conflict="user_id").execute()
@@ -203,7 +233,11 @@ async def save_onboarding(
 )
 async def complete_onboarding(user_id: str = Depends(get_current_user_id)):
     """Used by the 'Skip for now' action — flag complete, leave data as-is."""
-    _ensure_user_row(user_id)
+    if not _ensure_user_row(user_id):
+        raise HTTPException(
+            status_code=500,
+            detail="Could not initialise your account profile. Please log out and back in, then try again.",
+        )
     try:
         supabase.table("onboarding").upsert(
             {"user_id": user_id, "completed": True}, on_conflict="user_id"

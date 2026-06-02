@@ -29,6 +29,8 @@ import {
   Shield,
   Check,
   Star,
+  Lightbulb,
+  ThumbsUp,
 } from "lucide-react";
 
 /* ─── Data ───────────────────────────────────────────────────── */
@@ -339,21 +341,21 @@ export default function HomePage() {
                         </div>
                         {/* Text Content */}
                         <div className="flex-1 flex flex-col">
-  <p className="text-base font-extrabold text-[#1A1A2E] mb-1 leading-tight">
-    {c.title}
-  </p>
-  
-  <p className="text-[14px] text-[#6B6A8A] leading-relaxed mb-2 flex-1">
-    {c.desc}
-  </p>
+                          <p className="text-base font-extrabold text-[#1A1A2E] mb-1 leading-tight">
+                            {c.title}
+                          </p>
 
-  {/* Arrow - Pushed to the End (Right) */}
-  <div className="flex justify-end md:justify-start">
-    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#F4F2FF] text-[#534AB7] group-hover:bg-[#534AB7] group-hover:text-white transition-colors">
-      <ArrowRight className="w-3.5 h-3.5" />
-    </span>
-  </div>
-</div>
+                          <p className="text-[14px] text-[#6B6A8A] leading-relaxed mb-2 flex-1">
+                            {c.desc}
+                          </p>
+
+                          {/* Arrow - Pushed to the End (Right) */}
+                          <div className="flex justify-end md:justify-start">
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#F4F2FF] text-[#534AB7] group-hover:bg-[#534AB7] group-hover:text-white transition-colors">
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     {/* Right — illustration */}
@@ -465,35 +467,34 @@ export default function HomePage() {
             </div>
 
             {/* ── Hero upload card — image left + Why-upload right ── */}
-            <div className="relative overflow-hidden rounded-3xl mb-6 shadow-xl shadow-[#534AB7]/20 bg-gradient-to-br from-[#3F3795] via-[#534AB7] to-[#7B6FE8] min-h-[320px] md:min-h-[360px]">
-              {/* Background image — covers only the LEFT side, image visible there */}
+            <div className="relative overflow-hidden rounded-3xl mb-6 shadow-xl shadow-[#534AB7]/20 min-h-[320px] md:min-h-[360px] bg-[#534AB7]">
+              {/* Full-width Background Image - Large screens only */}
               <img
-                src="https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage1.webp"
+                src="https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage5.webp"
                 alt="Upload syllabus illustration"
-                className="absolute inset-y-0 left-0 w-full lg:w-[68%] h-full object-cover object-center pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover hidden lg:block"
               />
-              {/* Dark overlay only on the left portion so text stays readable over the image */}
-              <div className="absolute inset-y-0 left-0 w-full lg:w-[68%] bg-gradient-to-r from-[#3F3795]/85 via-[#3F3795]/55 to-[#3F3795]/0" />
 
-              {/* Decorative sparkles */}
-              <Sparkles className="absolute top-6 right-12 w-4 h-4 text-white/30 z-10" />
-              <Sparkles className="absolute bottom-10 left-1/3 w-3 h-3 text-white/20 z-10" />
-
-              {/* Foreground content */}
-              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] items-center gap-6 p-6 md:p-9 min-h-[320px] md:min-h-[360px]">
-                {/* LEFT — copy + CTA overlaid on the image */}
+              {/* Purple Gradient Overlay - Visible on lg and above */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#6357e2] via-[#534AB7]/90 to-[#534AB7] lg:hidden" />
+              {/* Foreground Content */}
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[77%_23%] items-start gap-6 p-6 md:p-9 min-h-[320px] md:min-h-[360px]">
+                {/* LEFT — 77% */}
                 <div className="max-w-lg">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white backdrop-blur text-[#534AB7] text-[12px] font-bold px-3 py-1.5 mb-3">
                     <Sparkles className="w-3 h-3" /> Let&apos;s get you started
                   </span>
+
                   <h2 className="text-2xl md:text-[30px] font-extrabold text-white mb-2 leading-tight drop-shadow">
                     Upload your first syllabus
                   </h2>
-                  <p className="text-[13px] text-white/90 leading-relaxed max-w-md mb-5">
+
+                  <p className="text-[14px] text-white leading-relaxed max-w-md mb-5">
                     Atlas will parse your lectures, deadlines, and grading
                     weights automatically — then build a ranked study plan
                     around your goals.
                   </p>
+
                   <div className="flex flex-wrap items-center gap-3 mb-4">
                     <Link
                       href="/upload"
@@ -501,6 +502,7 @@ export default function HomePage() {
                     >
                       <Upload className="w-4 h-4" /> Upload syllabus
                     </Link>
+
                     {!onboardingDone && (
                       <Link
                         href="/onboarding"
@@ -510,15 +512,15 @@ export default function HomePage() {
                       </Link>
                     )}
                   </div>
-                  <p className="flex items-center gap-1.5 text-[12px] text-white/80">
+
+                  {/* ── 3 action cards with illustrations ──────────────── */}
+                  <p className="flex items-center gap-1.5 text-[14px] text-white">
                     <Shield className="w-3.5 h-3.5" /> Your data is private and
                     secure
                   </p>
                 </div>
-
-                {/* RIGHT — "Why upload?" card on the clean purple area */}
-                <div className="bg-white rounded-2xl p-5 shadow-2xl">
-                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-3">
+                <div className="bg-white/95 backdrop-blur rounded-2xl p-5 shadow-2xl lg:mt-8 hidden xl:block">
+                  <p className="text-lg font-extrabold text-[#1A1A2E] mb-1">
                     Why upload?
                   </p>
                   <ul className="space-y-2.5">
@@ -530,7 +532,7 @@ export default function HomePage() {
                     ].map((b) => (
                       <li
                         key={b}
-                        className="flex items-center gap-2.5 text-[13px] text-[#3A3A52] font-medium"
+                        className="flex items-center gap-2.5 text-[14px] text-[#3A3A52] font-medium"
                       >
                         <span className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                           <Check
@@ -546,11 +548,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* ── 3 action cards with illustrations ──────────────── */}
-            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
-              Or get started another way
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {[
                 {
                   icon: Upload,
@@ -580,7 +578,7 @@ export default function HomePage() {
                 <Link
                   key={c.title}
                   href={c.href}
-                  className="group relative overflow-hidden bg-white border border-[#ECE9FF] rounded-2xl shadow-sm hover:shadow-lg hover:border-[#534AB7]/40 transition-all"
+                  className="group relative overflow-hidden bg-white border border-[#ECE9FF] rounded-xl shadow-sm hover:shadow-lg hover:border-[#534AB7]/40 transition-all"
                 >
                   <div className="flex items-stretch">
                     {/* Left — text */}
@@ -590,27 +588,95 @@ export default function HomePage() {
                       >
                         <c.icon className="w-5 h-5 text-white" />
                       </div>
-                      <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">
+                      <p className="text-base font-extrabold text-[#1A1A2E] mb-1">
                         {c.title}
                       </p>
-                      <p className="text-[12px] text-[#6B6A8A] leading-relaxed mb-3">
+                      <p className="text-[15px] text-[#6B6A8A] leading-relaxed mb-3">
                         {c.desc}
                       </p>
-                      <span className="text-[12px] font-bold text-[#534AB7] inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                      <span className="text-[14px] font-bold text-[#534AB7] inline-flex items-center gap-1 group-hover:gap-2 transition-all">
                         Get started <ArrowRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
                     {/* Right — illustration */}
-                    <div className="hidden sm:flex w-[110px] flex-shrink-0 items-center justify-center pr-2">
+                    <div className="hidden lg:flex w-[110px] flex-shrink-0 items-center justify-center pr-2">
                       <img
                         src={c.img}
                         alt={c.title}
-                        className="w-full h-auto max-h-[110px] object-contain"
+                        className="w-full h-auto max-h-[110px] object-contain rounded-lg"
                       />
                     </div>
                   </div>
                 </Link>
               ))}
+            </div>
+            {/* New Banner with Dividers */}
+            <div className="mt-4 bg-white border border-[#ECE9FF] rounded-xl p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+                {/* Secure & Private */}
+                <div className="flex flex-col items-center md:border-r border-[#ECE9FF] last:border-none">
+                  <div className="w-12 h-12 bg-[#F0EFFF] rounded-2xl flex items-center justify-center mb-3">
+                    <Shield className="w-7 h-7 text-[#534AB7]" />
+                  </div>
+                  <p className="font-bold text-[#1A1A2E] text-base mb-1">
+                    Secure &amp; private
+                  </p>
+                  <p className="text-xs text-[#6B6A8A] leading-snug text-center">
+                    Your data is encrypted and
+                    <br />
+                    never shared.
+                  </p>
+                </div>
+
+                {/* Built for students */}
+                <div className="flex flex-col items-center md:border-r border-[#ECE9FF] last:border-none">
+                  <div className="w-12 h-12 bg-[#F0F9F4] rounded-2xl flex items-center justify-center mb-3">
+                    <Lightbulb className="w-7 h-7 text-emerald-600" />
+                  </div>
+                  <p className="font-bold text-[#1A1A2E] text-base mb-1">
+                    Built for students
+                  </p>
+                  <p className="text-xs text-[#6B6A8A] leading-snug text-center">
+                    Atlas understands your courses
+                    <br />
+                    and helps you stay ahead.
+                  </p>
+                </div>
+
+                {/* Saves you time */}
+                <div className="flex flex-col items-center md:border-r border-[#ECE9FF] last:border-none">
+                  <div className="w-12 h-12 bg-[#FEF4E9] rounded-2xl flex items-center justify-center mb-3">
+                    <Clock className="w-7 h-7 text-orange-600" />
+                  </div>
+                  <p className="font-bold text-[#1A1A2E] text-base mb-1">
+                    Saves you time
+                  </p>
+                  <p className="text-xs text-[#6B6A8A] leading-snug text-center">
+                    Automated planning so you
+                    <br />
+                    can focus on learning.
+                  </p>
+                </div>
+
+                {/* Loved by students */}
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-[#F0F0FF] rounded-2xl flex items-center justify-center mb-3">
+                    <ThumbsUp className="w-7 h-7 text-[#534AB7]" />
+                  </div>
+                  <p className="font-bold text-[#1A1A2E] text-base mb-1">
+                    Loved by students
+                  </p>
+                  <div className="flex items-center gap-1 justify-center">
+                    <div className="flex text-yellow-400 text-lg">★★★★★</div>
+                    <span className="text-sm font-semibold text-[#1A1A2E]">
+                      4.9/5
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#6B6A8A] mt-0.5">
+                    from 2,500+ students
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
