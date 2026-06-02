@@ -6,6 +6,8 @@ import {
   Check, X, ArrowRight, Sparkles, BookOpen, GraduationCap, Bot,
   ChevronDown, ChevronUp,
 } from "lucide-react";
+import SiteNav from "@/components/SiteNav";
+
 
 /* ─────────────────────────────────────────────────────────────
  * Plans data
@@ -243,31 +245,7 @@ export default function PricingPage() {
   return (
     <main className="bg-[#F7F6FF] min-h-screen">
 
-      {/* ── Top nav ───────────────────────────────────────────── */}
-      <nav className="bg-white border-b border-[#ECE9FF]">
-        <div className="max-w-[1180px] mx-auto px-5 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md shadow-[#534AB7]/30">
-              <span className="text-white font-extrabold">A</span>
-            </div>
-            <span className="font-extrabold text-[#14142B]">Atlas</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-7 text-sm font-semibold text-[#6B6A8A]">
-            <Link href="/#features"   className="hover:text-[#534AB7]">Features</Link>
-            <Link href="/#how"        className="hover:text-[#534AB7]">How it works</Link>
-            <span className="text-[#534AB7]">Pricing</span>
-            <Link href="/#about"      className="hover:text-[#534AB7]">About</Link>
-            <Link href="/#resources"  className="hover:text-[#534AB7]">Resources</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-semibold text-[#6B6A8A] hover:text-[#534AB7]">Log in</Link>
-            <Link href="/signup"
-              className="bg-[#534AB7] hover:bg-[#3C3489] text-white text-sm font-extrabold px-4 py-2 rounded-xl shadow-md shadow-[#534AB7]/25">
-              Get started free
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section className="max-w-[1180px] mx-auto px-5 pt-14 pb-10 text-center">
