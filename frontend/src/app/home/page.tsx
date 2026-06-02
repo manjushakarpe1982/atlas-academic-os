@@ -28,6 +28,7 @@ import {
   BookOpen,
   Shield,
   Check,
+  Star,
 } from "lucide-react";
 
 /* ─── Data ───────────────────────────────────────────────────── */
@@ -234,113 +235,181 @@ export default function HomePage() {
     return (
       <AppLayout>
         <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-6">
-          <div className="max-w-[1000px] mx-auto">
+          <div className="max-w-[1100px] mx-auto">
             {/* Greeting */}
-            <div className="mb-6">
-              <p className="text-sm text-[#6B6A8A] mb-1">{greeting},</p>
-              <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight">
+            <div className="mb-4">
+              <p className="text-[15px] text-[#6B6A8A] ">{greeting},</p>
+              <h1 className="text-3xl md:text-[36px] font-extrabold text-[#14142B] leading-tight">
                 Welcome back, {userName} 👋
               </h1>
-              <p className="text-sm text-[#6B6A8A] mt-1.5 max-w-xl">
+              <p className="text-[15px] text-[#6B6A8A] mt-1.5 max-w-xl leading-relaxed">
                 You&apos;re almost there. Finish a quick setup so Atlas can
                 personalise your study plan, grades, and recommendations.
               </p>
             </div>
 
-            {/* Hero — finish setup */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#6B5FE8] rounded-3xl p-7 md:p-9 mb-6 shadow-xl shadow-[#534AB7]/20">
-              <Sparkles className="absolute top-6 right-12 w-5 h-5 text-white/30" />
-              <Sparkles className="absolute bottom-8 right-1/3 w-3 h-3 text-white/30" />
+            {/* ── Hero — Let's personalise Atlas ───────────────── */}
+            <div className="relative overflow-hidden rounded-xl mb-6 shadow-xl shadow-[#534AB7]/20 min-h-[280px] md:min-h-[300px]">
+              {/* Full-width background image */}
+              <img
+                src="https://res.cloudinary.com/mview/image/upload/atlas/onboardingpage6.webp"
+                alt="Personalise Atlas illustration"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
 
-              <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-6">
-                <div>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
-                    <Sparkles className="w-3 h-3" /> 5 quick steps · 2 min
-                  </span>
-                  <h2 className="text-2xl md:text-[26px] font-extrabold text-white mb-2 leading-tight">
-                    Let&apos;s personalise Atlas for you
-                  </h2>
-                  <p className="text-sm text-white/85 leading-relaxed max-w-md mb-5">
-                    Tell us your role, goals, and study preferences so Atlas can
-                    build a plan that actually fits your day.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3 mb-4">
-        <Link
-          href="/upload"
-          className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95"
-        >
-          <Upload className="w-4 h-4" /> Upload syllabus
-        </Link>
+              {/* Decorative sparkles */}
+              <Sparkles className="absolute top-8 right-12 w-4 h-4 text-white/40 z-10" />
+              <Sparkles className="absolute bottom-10 left-1/2 w-3 h-3 text-white/30 z-10" />
+              <Sparkles className="absolute top-14 left-1/3 w-3 h-3 text-white/25 z-10" />
 
-      
-          <Link
-            href="/onboarding"
-            className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95"
-          >
-            <Sparkles className="w-4 h-4" /> Start setup
-          </Link>
-      
-      </div>
-                </div>
-
-                <div className="hidden md:flex items-center justify-center w-[160px] h-[160px] rounded-3xl bg-white/10 backdrop-blur border border-white/20">
-                  <Target
-                    className="w-16 h-16 text-white/90"
-                    strokeWidth={1.5}
-                  />
+              {/* Foreground content overlapping the image */}
+              <div className="relative z-10 p-7 md:p-9 max-w-xl min-h-[240px] md:min-h-[250px] flex flex-col justify-center">
+                <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/20 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
+                  <Sparkles className="w-3 h-3" /> 5 quick steps · 2 min
+                </span>
+                <h2 className="text-2xl md:text-[30px] font-extrabold text-white mb-2 leading-tight drop-shadow">
+                  Let&apos;s personalise Atlas for you
+                </h2>
+                <p className="text-[13px] text-white/90 leading-relaxed max-w-md mb-5">
+                  Tell us your role, goals, and study preferences so Atlas can
+                  build a plan that actually fits your day.
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/upload"
+                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95"
+                  >
+                    <Upload className="w-4 h-4" /> Upload syllabus
+                  </Link>
+                  <Link
+                    href="/onboarding"
+                    className="inline-flex items-center gap-2  hover:bg-white/25 backdrop-blur border border-white text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95"
+                  >
+                    <Sparkles className="w-4 h-4" /> Start setup{" "}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
                 </div>
               </div>
             </div>
 
-            {/* What you'll set up */}
-            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+            {/* ── What you'll set up — 3 cards with illustrations ─ */}
+            <p className="text-[15px] font-extrabold text-black uppercase tracking-widest mb-3">
               What you&apos;ll set up
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
+            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2  xl:grid-cols-3 gap-4 mb-6">
               {[
                 {
                   icon: BookOpen,
                   color: "bg-[#534AB7]",
                   title: "Your academic profile",
-                  desc: "Institution, field of study, and year level.",
+                  desc: "Add your institution, field of study, and year level.",
+                  img: "https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage7.webp",
                 },
                 {
                   icon: Target,
                   color: "bg-emerald-500",
                   title: "Your goals",
                   desc: "Pick what matters — grades, exams, or skills.",
+                  img: "https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage8.webp",
                 },
                 {
                   icon: Calendar,
                   color: "bg-orange-500",
                   title: "Your study preferences",
-                  desc: "When you study best and how long sessions run.",
+                  desc: "Tell us when you study best and how long sessions run.",
+                  img: "https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage9.webp",
                 },
               ].map((c) => (
-                <div
+                <Link
                   key={c.title}
-                  className="bg-white border border-[#ECE9FF] rounded-2xl p-5"
+                  href="/onboarding"
+                  className="group relative overflow-hidden bg-white border border-[#ECE9FF] rounded-2xl shadow-sm hover:shadow-lg hover:border-[#534AB7]/40 transition-all"
                 >
-                  <div
-                    className={`w-11 h-11 rounded-xl ${c.color} flex items-center justify-center mb-3 shadow-md`}
-                  >
-                    <c.icon className="w-5 h-5 text-white" />
+                  <div className="flex items-stretch">
+                    {/* Left — text */}
+                    <div className="flex-1 p-5">
+                      <div className="flex flex-row md:flex-col gap-2">
+                        {" "}
+                        {/* Icon + Text in row */}
+                        {/* Icon */}
+                        <div
+                          className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center flex-shrink-0 shadow-md mt-1`}
+                        >
+                          <c.icon className="w-5 h-5 text-white" />
+                        </div>
+                        {/* Text Content */}
+                        <div className="flex-1 flex flex-col">
+  <p className="text-base font-extrabold text-[#1A1A2E] mb-1 leading-tight">
+    {c.title}
+  </p>
+  
+  <p className="text-[14px] text-[#6B6A8A] leading-relaxed mb-2 flex-1">
+    {c.desc}
+  </p>
+
+  {/* Arrow - Pushed to the End (Right) */}
+  <div className="flex justify-end md:justify-start">
+    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#F4F2FF] text-[#534AB7] group-hover:bg-[#534AB7] group-hover:text-white transition-colors">
+      <ArrowRight className="w-3.5 h-3.5" />
+    </span>
+  </div>
+</div>
+                      </div>
+                    </div>
+                    {/* Right — illustration */}
+                    <div className="hidden sm:flex w-[110px] flex-shrink-0 items-end justify-center  pb-3">
+                      <img
+                        src={c.img}
+                        alt={c.title}
+                        className="w-full h-auto max-h-[120px] object-contain"
+                      />
+                    </div>
                   </div>
-                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">
-                    {c.title}
-                  </p>
-                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed">
-                    {c.desc}
-                  </p>
-                </div>
+                </Link>
               ))}
             </div>
 
-            {/* Reassurance row */}
-            <div className="flex items-center justify-center gap-2 text-xs text-[#9B9AB5]">
-              <Sparkles className="w-3.5 h-3.5 text-[#534AB7]" />
-              Takes about 2 minutes. You can update any answer later in
-              Settings.
+            {/* ── Reassurance band 1 — full-width image + overlay ─ */}
+            <div className="relative overflow-hidden border border-[#ccc5f8] rounded-2xl mb-3 min-h-[88px]">
+              {/* Full-width background image */}
+              <img
+                src="https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage10.webp"
+                alt="Quick setup illustration"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* Lavender gradient overlay so text stays readable on the left */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#F4F2FF]/95 via-[#F4F2FF]/80 to-[#F4F2FF]/0" />
+
+              {/* Foreground content */}
+              <div className="relative z-10 flex items-center gap-3.5 px-5 py-4 min-h-[88px]">
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-5 h-5 text-[#534AB7]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[16px] font-extrabold text-[#14142B]">
+                    Takes about 2 minutes.
+                  </p>
+                  <p className="text-[14px] text-[#6B6A8A]">
+                    You can update any answer later in Settings.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Reassurance band 2 ─────────────────────────────── */}
+            <div className="relative overflow-hidden bg-white border border-[#ECE9FF] rounded-2xl px-5 py-4 flex items-center gap-3.5 shadow-sm">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md shadow-[#534AB7]/30">
+                <Star className="w-5 h-5 text-white fill-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[16px] font-extrabold text-[#534AB7]">
+                  You&apos;re on your way!
+                </p>
+                <p className="text-[14px] text-[#6B6A8A]">
+                  A few quick steps now = a smarter study plan that saves you
+                  hours later.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -395,88 +464,93 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* ── Hero upload card — full-width image with overlay ─ */}
-           <div className="relative overflow-hidden rounded-3xl mb-6 shadow-xl shadow-[#534AB7]/20 min-h-[320px] md:min-h-[360px] bg-[#534AB7]">
-
-  {/* Full-width Background Image - Large screens only */}
-  <img
-    src="https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage5.webp"
-    alt="Upload syllabus illustration"
-    className="absolute inset-0 w-full h-full object-cover hidden lg:block"
-  />
-
-  {/* Purple Gradient Overlay - Visible on lg and above */}
-<div className="absolute inset-0 bg-gradient-to-r from-[#6357e2] via-[#534AB7]/90 to-[#534AB7] lg:hidden" />
-  {/* Foreground Content */}
-  <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[77%_23%] items-start gap-6 p-6 md:p-9 min-h-[320px] md:min-h-[360px]">
-    
-    {/* LEFT — 77% */}
-    <div className="max-w-lg">
-      <span className="inline-flex items-center gap-2 rounded-full bg-white backdrop-blur text-[#534AB7] text-[12px] font-bold px-3 py-1.5 mb-3">
-        <Sparkles className="w-3 h-3" /> Let&apos;s get you started
-      </span>
-
-      <h2 className="text-2xl md:text-[30px] font-extrabold text-white mb-2 leading-tight drop-shadow">
-        Upload your first syllabus
-      </h2>
-
-      <p className="text-[14px] text-white leading-relaxed max-w-md mb-5">
-        Atlas will parse your lectures, deadlines, and grading
-        weights automatically — then build a ranked study plan
-        around your goals.
-      </p>
-
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <Link
-          href="/upload"
-          className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95"
-        >
-          <Upload className="w-4 h-4" /> Upload syllabus
-        </Link>
-
-   
-        
-      </div>
-
-      <p className="flex items-center gap-1.5 text-[14px] text-white">
-        <Shield className="w-3.5 h-3.5" /> Your data is private and secure
-      </p>
-    </div>
-
-    {/* RIGHT — Why upload? */}
-    <div className="bg-white/95 backdrop-blur rounded-2xl p-5 shadow-2xl lg:mt-8 hidden xl:block">
-      <p className="text-lg font-extrabold text-[#1A1A2E] mb-1">
-        Why upload?
-      </p>
-      <ul className="space-y-2.5">
-        {[
-          "Get a personalised study plan",
-          "Track important dates",
-          "Receive smart recommendations",
-          "Improve your grades",
-        ].map((b) => (
-          <li
-            key={b}
-            className="flex items-center gap-2.5 text-[14px] text-[#3A3A52] font-medium"
-          >
-            <span className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-              <Check
-                className="w-3 h-3 text-emerald-600"
-                strokeWidth={3.5}
+            {/* ── Hero upload card — image left + Why-upload right ── */}
+            <div className="relative overflow-hidden rounded-3xl mb-6 shadow-xl shadow-[#534AB7]/20 bg-gradient-to-br from-[#3F3795] via-[#534AB7] to-[#7B6FE8] min-h-[320px] md:min-h-[360px]">
+              {/* Background image — covers only the LEFT side, image visible there */}
+              <img
+                src="https://res.cloudinary.com/mview/image/upload/atlas/dashboardpage1.webp"
+                alt="Upload syllabus illustration"
+                className="absolute inset-y-0 left-0 w-full lg:w-[68%] h-full object-cover object-center pointer-events-none"
               />
-            </span>
-            {b}
-          </li>
-        ))}
-      </ul>
-    </div>
-  </div>
-</div>
+              {/* Dark overlay only on the left portion so text stays readable over the image */}
+              <div className="absolute inset-y-0 left-0 w-full lg:w-[68%] bg-gradient-to-r from-[#3F3795]/85 via-[#3F3795]/55 to-[#3F3795]/0" />
+
+              {/* Decorative sparkles */}
+              <Sparkles className="absolute top-6 right-12 w-4 h-4 text-white/30 z-10" />
+              <Sparkles className="absolute bottom-10 left-1/3 w-3 h-3 text-white/20 z-10" />
+
+              {/* Foreground content */}
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] items-center gap-6 p-6 md:p-9 min-h-[320px] md:min-h-[360px]">
+                {/* LEFT — copy + CTA overlaid on the image */}
+                <div className="max-w-lg">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
+                    <Sparkles className="w-3 h-3" /> Let&apos;s get you started
+                  </span>
+                  <h2 className="text-2xl md:text-[30px] font-extrabold text-white mb-2 leading-tight drop-shadow">
+                    Upload your first syllabus
+                  </h2>
+                  <p className="text-[13px] text-white/90 leading-relaxed max-w-md mb-5">
+                    Atlas will parse your lectures, deadlines, and grading
+                    weights automatically — then build a ranked study plan
+                    around your goals.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <Link
+                      href="/upload"
+                      className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95"
+                    >
+                      <Upload className="w-4 h-4" /> Upload syllabus
+                    </Link>
+                    {!onboardingDone && (
+                      <Link
+                        href="/onboarding"
+                        className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95"
+                      >
+                        <Sparkles className="w-4 h-4" /> Start setup
+                      </Link>
+                    )}
+                  </div>
+                  <p className="flex items-center gap-1.5 text-[12px] text-white/80">
+                    <Shield className="w-3.5 h-3.5" /> Your data is private and
+                    secure
+                  </p>
+                </div>
+
+                {/* RIGHT — "Why upload?" card on the clean purple area */}
+                <div className="bg-white rounded-2xl p-5 shadow-2xl">
+                  <p className="text-sm font-extrabold text-[#1A1A2E] mb-3">
+                    Why upload?
+                  </p>
+                  <ul className="space-y-2.5">
+                    {[
+                      "Get a personalised study plan",
+                      "Track important dates",
+                      "Receive smart recommendations",
+                      "Improve your grades",
+                    ].map((b) => (
+                      <li
+                        key={b}
+                        className="flex items-center gap-2.5 text-[13px] text-[#3A3A52] font-medium"
+                      >
+                        <span className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                          <Check
+                            className="w-3 h-3 text-emerald-600"
+                            strokeWidth={3.5}
+                          />
+                        </span>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             {/* ── 3 action cards with illustrations ──────────────── */}
-            <p className="text-base font-extrabold text-black uppercase tracking-widest mb-3">
+            <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
               Or get started another way
             </p>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
                 {
                   icon: Upload,
@@ -511,34 +585,27 @@ export default function HomePage() {
                   <div className="flex items-stretch">
                     {/* Left — text */}
                     <div className="flex-1 p-5">
-                      <div className="flex items-start gap-3 mb-3">
-                        {/* Icon */}
-                        <div
-                          className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md flex-shrink-0`}
-                        >
-                          <c.icon className="w-5 h-5 text-white" />
-                        </div>
-
-                        {/* Title + Description + Button */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-base font-extrabold text-[#1A1A2E] mb-1">
-                            {c.title}
-                          </p>
-                          <p className="text-[14px] text-[#6B6A8A] leading-relaxed mb-3">
-                            {c.desc}
-                          </p>
-                          <span className="text-[13px] font-bold text-[#534AB7] inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-                            Get started <ArrowRight className="w-3.5 h-3.5" />
-                          </span>
-                        </div>
+                      <div
+                        className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center mb-2.5 shadow-md`}
+                      >
+                        <c.icon className="w-5 h-5 text-white" />
                       </div>
+                      <p className="text-sm font-extrabold text-[#1A1A2E] mb-1">
+                        {c.title}
+                      </p>
+                      <p className="text-[12px] text-[#6B6A8A] leading-relaxed mb-3">
+                        {c.desc}
+                      </p>
+                      <span className="text-[12px] font-bold text-[#534AB7] inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                        Get started <ArrowRight className="w-3.5 h-3.5" />
+                      </span>
                     </div>
                     {/* Right — illustration */}
-                    <div className="hidden sm:flex w-[110px]  flex-shrink-0 items-center justify-center pr-2">
+                    <div className="hidden sm:flex w-[110px] flex-shrink-0 items-center justify-center pr-2">
                       <img
                         src={c.img}
                         alt={c.title}
-                        className="w-full h-auto max-h-[110px] object-contain rounded-lg bg-white/80 p-1.5 shadow-md"
+                        className="w-full h-auto max-h-[110px] object-contain"
                       />
                     </div>
                   </div>
