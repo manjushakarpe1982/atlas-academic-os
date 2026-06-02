@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field
 from app.utils.supabase_client import supabase
+from app.config import settings
 
 router = APIRouter()
 
@@ -189,3 +190,106 @@ async def login(body: LoginRequest):
         full_name=full_name,
         onboarding_completed=onboarding_completed,
     )
+
+
+# ── Password reset ─────────────────────────────────────────────────────────
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    access_token: str          # recovery JWT from the email link
+    new_password: str          # the new password the user typed
+
+
+class SimpleMessage(BaseModel):
+    message: str
+
+
+@router.post(
+    "/forgot-password",
+    response_model=SimpleMessage,
+    summary="Send a password-reset email to the given address",
+)
+async def forgot_password(body: ForgotPasswordRequest):
+    """
+    Asks Supabase Auth to email a recovery link. We call Supabase's auth
+    REST API directly (instead of the SDK) because the SDK's
+    reset_password_for_email is unreliable when the client is initialised
+    with the service key — Supabase silently returns success without
+    queueing the email. Calling the /auth/v1/recover endpoint directly works.
+
+    We always return a success-shaped message even if the email isn't
+    registered, to avoid leaking which addresses have accounts.
+    """
+    import httpx
+
+    url = f"{settings.supabase_url}/auth/v1/recover"
+    headers = {
+        "apikey": settings.supabase_service_key,
+        "Authorization": f"Bearer {settings.supabase_service_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "email": body.email,
+        # Where Supabase redirects the user after they click the email link.
+        "redirect_to": f"{settings.frontend_url}/reset-password",
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            res = await client.post(url, headers=headers, json=payload)
+        if res.status_code >= 400:
+            # Log the exact reason so it shows up in our server logs.
+            print(f"[forgot-password] supabase {res.status_code}: {res.text}")
+    except Exception as e:
+        print(f"[forgot-password] network error for {body.email}: {e}")
+
+    return SimpleMessage(
+        message="If an account exists for that email, a reset link has been sent."
+    )
+
+
+@router.post(
+    "/reset-password",
+    response_model=SimpleMessage,
+    summary="Set a new password using the recovery token from the email link",
+)
+async def reset_password(body: ResetPasswordRequest):
+    """
+    The user clicked the link in the recovery email, which delivered a
+    recovery access token. We use it to authenticate the update_user call
+    that sets the new password.
+    """
+    if len(body.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters.",
+        )
+
+    try:
+        # Validate the recovery token belongs to a real user.
+        user_res = supabase.auth.get_user(body.access_token)
+        user = getattr(user_res, "user", None)
+        if not user or not getattr(user, "id", None):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="This reset link is invalid or has expired. Please request a new one.",
+            )
+
+        # Update the user's password via the admin API (service key).
+        supabase.auth.admin.update_user_by_id(
+            user.id,
+            {"password": body.new_password},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[reset-password] error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not reset password. The link may have expired — please request a new one.",
+        )
+
+    return SimpleMessage(message="Password updated. You can now log in with your new password.")

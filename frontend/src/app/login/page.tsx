@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { ArrowRight, Eye, EyeOff, AlertCircle, CalendarCheck, Bell, ShieldCheck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowRight, Eye, EyeOff, AlertCircle, CalendarCheck, Bell, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -16,6 +16,19 @@ export default function LoginPage() {
   const [error,         setError]         = useState("");
   const [loading,       setLoading]       = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetSuccess,  setResetSuccess]  = useState(false);
+
+  // After a successful password reset, the reset-password page stashes the
+  // user's email in localStorage so we can pre-fill it here. Saves the user
+  // from typing it again — they only need to enter the new password.
+  useEffect(() => {
+    const prefill = localStorage.getItem("atlas_prefill_email");
+    if (prefill) {
+      setEmail(prefill);
+      setResetSuccess(true);
+      localStorage.removeItem("atlas_prefill_email"); // one-time use
+    }
+  }, []);
 
   /* ── Google sign-in ─────────────────────────────────────────── */
   const handleGoogle = async () => {
@@ -247,6 +260,18 @@ export default function LoginPage() {
           </div>
         )}
 
+        {resetSuccess && (
+          <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-3 mb-4">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[13px] font-bold text-emerald-700">Password updated!</p>
+              <p className="text-[12.5px] text-emerald-700/85">
+                Log in with your new password to continue.
+              </p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
             <label className="block text-[13px] font-bold text-gray-500 mb-2 uppercase tracking-wide">
@@ -274,6 +299,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 autoComplete="current-password"
+                autoFocus={resetSuccess}
                 className={hasPassError ? inpErr + " pr-11" : inp + " pr-11"}
               />
 
@@ -307,12 +333,12 @@ export default function LoginPage() {
           </div>
 
           <div className="flex justify-end -mt-1">
-            <a
-              href="#"
+            <Link
+              href="/forgot-password"
               className="text-[12px] font-semibold text-[#85859b] hover:text-[#534AB7] transition-colors"
             >
               Forgot password?
-            </a>
+            </Link>
           </div>
 
           <button

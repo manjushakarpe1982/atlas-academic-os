@@ -931,6 +931,19 @@ function Footer() {
    PAGE
 ══════════════════════════════════════════════════════════════ */
 export default function LandingPage() {
+  // If Supabase's password-recovery link lands here (because Supabase fell
+  // back to the Site URL instead of honouring redirect_to), automatically
+  // forward to /reset-password preserving the URL hash that contains the
+  // recovery token. Without this the user lands on the marketing page and
+  // can't continue the reset flow.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash || "";
+    if (hash.includes("type=recovery") && hash.includes("access_token=")) {
+      window.location.replace(`/reset-password${hash}`);
+    }
+  }, []);
+
   return (
     <main>
       <Navbar />
