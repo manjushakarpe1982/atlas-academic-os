@@ -7,6 +7,7 @@ import {
   ChevronDown, ChevronUp,
 } from "lucide-react";
 import SiteNav from "@/components/SiteNav";
+import Image from "next/image";
 
 
 /* ─────────────────────────────────────────────────────────────
@@ -127,9 +128,9 @@ function PlanCard({ plan, yearly }: { plan: Plan; yearly: boolean }) {
   const originalPrice = yearly ? plan.monthly : null;
 
   return (
-    <div className={`relative bg-white rounded-3xl border-2 shadow-sm p-7 flex flex-col ${
+    <div className={`relative bg-white rounded-xl border-2 shadow-sm px-7 py-3 flex flex-col ${
       plan.popular
-        ? "border-[#534AB7] shadow-xl shadow-[#534AB7]/15 bg-gradient-to-b from-[#F7F5FF] to-white"
+        ? "border-[#534AB7] shadow-lg shadow-[#534AB7]/15 bg-gradient-to-b from-[#F7F5FF] to-white"
         : "border-[#ECE9FF]"
     }`}>
       {/* Most popular ribbon */}
@@ -140,9 +141,9 @@ function PlanCard({ plan, yearly }: { plan: Plan; yearly: boolean }) {
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-5">
+      <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="text-xl font-extrabold text-[#14142B] mb-1">{plan.name}</h3>
+          <h3 className="text-2xl font-extrabold text-[#14142B] mb-1">{plan.name}</h3>
           <p className="text-[12.5px] text-[#6B6A8A]">{plan.forWho}</p>
         </div>
         <div className={`w-10 h-10 rounded-xl ${plan.iconBg} flex items-center justify-center flex-shrink-0`}>
@@ -191,7 +192,7 @@ function PlanCard({ plan, yearly }: { plan: Plan; yearly: boolean }) {
       {/* CTA */}
       <Link
         href={plan.ctaHref}
-        className={`w-full text-center font-extrabold text-sm py-3 rounded-xl transition-all flex items-center justify-center gap-2 ${
+        className={`w-full text-center font-extrabold text-base py-2 rounded-xl transition-all flex items-center justify-center gap-2 ${
           plan.ctaStyle === "primary"
             ? "bg-[#534AB7] hover:bg-[#3C3489] text-white shadow-lg shadow-[#534AB7]/25"
             : "bg-white border-2 border-[#E8E5FD] text-[#534AB7] hover:bg-[#F4F2FF]"
@@ -210,7 +211,7 @@ function PlanCard({ plan, yearly }: { plan: Plan; yearly: boolean }) {
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white border border-[#ECE9FF] rounded-2xl overflow-hidden">
+    <div className="bg-white border border-[#ECE9FF] rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center justify-between text-left px-5 py-4 hover:bg-[#FAFAFE] transition-colors"
@@ -219,7 +220,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
           <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#534AB7] text-white text-[11px] font-extrabold flex items-center justify-center mt-0.5">
             ?
           </span>
-          <span className="text-sm font-bold text-[#14142B]">{q}</span>
+          <span className="text-[15px] font-bold text-[#14142B]">{q}</span>
         </div>
         {open ? (
           <ChevronUp className="w-4 h-4 text-[#6B6A8A] flex-shrink-0" />
@@ -228,7 +229,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         )}
       </button>
       {open && (
-        <div className="px-5 pb-4 pt-1 pl-14 text-[13px] text-[#6B6A8A] leading-relaxed">
+        <div className="px-5 pb-4 pt-1 pl-14 text-[15px] text-[#6B6A8A] leading-relaxed">
           {a}
         </div>
       )}
@@ -248,20 +249,20 @@ export default function PricingPage() {
       <SiteNav />
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="max-w-[1180px] mx-auto px-5 pt-14 pb-10 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#E8E5FD] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-5">
+      <section className="max-w-[1180px] mx-auto px-5 pt-6 pb-10 text-center">
+        <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#cac3f7] text-[#534AB7] text-[15px] font-bold px-3.5 py-1 mb-2">
           <Sparkles className="w-3.5 h-3.5" /> Pricing
         </span>
-        <h1 className="text-4xl md:text-[44px] font-extrabold text-[#14142B] mb-3 leading-tight">
+        <h1 className="text-4xl md:text-[44px] font-extrabold text-[#14142B] mb-1 leading-tight">
           Simple, student-first pricing
         </h1>
-        <p className="text-[15px] text-[#6B6A8A] max-w-xl mx-auto mb-7 leading-relaxed">
+        <p className="text-[15px] text-[#6B6A8A] max-w-2xl mx-auto mb-5 leading-relaxed">
           Pick the plan that works for you. Upgrade or downgrade anytime — no hidden fees.
         </p>
 
         {/* Billing toggle */}
-        <div className="inline-flex items-center gap-3 bg-white border border-[#ECE9FF] rounded-full pl-5 pr-2 py-2 shadow-sm">
-          <span className={`text-[13px] font-bold transition-colors ${
+        <div className="inline-flex items-center gap-3 bg-white border border-[#cdc7f5] rounded-full pl-5 pr-2 py-2 shadow-sm">
+          <span className={`text-[14px] font-bold transition-colors ${
             !yearly ? "text-[#14142B]" : "text-[#9B9AB5]"
           }`}>
             Monthly
@@ -284,7 +285,7 @@ export default function PricingPage() {
             />
           </button>
 
-          <span className={`text-[13px] font-bold transition-colors ${
+          <span className={`text-[14px] font-bold transition-colors ${
             yearly ? "text-[#14142B]" : "text-[#9B9AB5]"
           }`}>
             Yearly
@@ -297,27 +298,27 @@ export default function PricingPage() {
       </section>
 
       {/* ── Plan cards ──────────────────────────────────────── */}
-      <section className="max-w-[1180px] mx-auto px-5 pb-7">
+      <section className="max-w-[1180px] mx-auto px-5 pb-1">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {PLANS.map((p) => (
             <PlanCard key={p.name} plan={p} yearly={yearly} />
           ))}
         </div>
-        <p className="text-center text-[12px] text-[#9B9AB5] mt-6">
+        <p className="text-center text-[13px] text-[#9492bd] mt-6">
           All plans include GDPR-compliant security. Cancel anytime.
         </p>
       </section>
 
       {/* ── Compare plans table ─────────────────────────────── */}
-      <section className="max-w-[1180px] mx-auto px-5 py-12">
-        <div className="bg-white rounded-3xl border border-[#ECE9FF] shadow-sm overflow-hidden">
+      <section className="max-w-[1180px] mx-auto px-5 py-6">
+        <div className="bg-white rounded-xl border border-[#cfc9f8] shadow-sm overflow-hidden">
           <div className="px-7 py-5 border-b border-[#ECE9FF] flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#534AB7]" />
-            <h2 className="text-lg font-extrabold text-[#14142B]">Compare plans</h2>
+            <Sparkles className="w-5 h-5 text-[#534AB7]" />
+            <h2 className="text-xl font-extrabold text-[#14142B]">Compare plans</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[#FAFAFE] text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest">
+              <thead className="bg-[#FAFAFE] text-[13px] font-extrabold text-[#908fbb] uppercase tracking-widest">
                 <tr>
                   <th className="text-left px-7 py-3.5">Features</th>
                   <th className="px-4 py-3.5 text-center">Free</th>
@@ -327,11 +328,11 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {COMPARE_ROWS.map((row, i) => (
-                  <tr key={row.feature} className={i % 2 === 0 ? "bg-white" : "bg-[#FAFAFE]/50"}>
-                    <td className="px-7 py-3.5 text-[13px] font-semibold text-[#3A3A52]">{row.feature}</td>
-                    <td className="px-4 py-3.5 text-center text-[13px] text-[#3A3A52]">{row.free}</td>
-                    <td className="px-4 py-3.5 text-center text-[13px] text-[#3A3A52]">{row.pro}</td>
-                    <td className="px-4 py-3.5 text-center text-[13px] text-[#3A3A52]">{row.exams}</td>
+                  <tr key={row.feature} className={i % 2 === 0 ? "bg-white" : "bg-[#f2f2f8]"}>
+                    <td className="px-7 py-3.5 text-[15px] font-semibold text-[#3A3A52]">{row.feature}</td>
+                    <td className="px-4 py-3.5 text-center text-[14px] text-[#3A3A52]">{row.free}</td>
+                    <td className="px-4 py-3.5 text-center text-[14px] text-[#3A3A52]">{row.pro}</td>
+                    <td className="px-4 py-3.5 text-center text-[14px] text-[#3A3A52]">{row.exams}</td>
                   </tr>
                 ))}
               </tbody>
@@ -341,9 +342,9 @@ export default function PricingPage() {
       </section>
 
       {/* ── FAQ ─────────────────────────────────────────────── */}
-      <section className="max-w-[760px] mx-auto px-5 pb-14">
-        <h2 className="text-center text-2xl md:text-[28px] font-extrabold text-[#14142B] mb-7 inline-flex items-center justify-center gap-2 w-full">
-          Frequently asked questions <Sparkles className="w-5 h-5 text-[#534AB7]" />
+      <section className="max-w-[760px] mx-auto px-5 pt-3 pb-8">
+        <h2 className="text-center text-2xl md:text-[28px] font-extrabold text-[#14142B] mb-4 inline-flex items-center justify-center gap-2 w-full">
+          Frequently asked questions <Sparkles className="w-6 h-6 text-[#534AB7]" />
         </h2>
         <div className="space-y-3">
           {FAQ.map((item) => (
@@ -354,21 +355,22 @@ export default function PricingPage() {
 
       {/* ── Bottom CTA banner ───────────────────────────────── */}
       <section className="max-w-[1180px] mx-auto px-5 pb-16">
-        <div className="relative overflow-hidden bg-gradient-to-r from-[#534AB7] via-[#5B4FBC] to-[#7B6FE8] rounded-3xl p-7 md:p-9 shadow-xl shadow-[#534AB7]/20">
-          <Sparkles className="absolute top-6 right-8 w-4 h-4 text-white/30" />
-          <Sparkles className="absolute bottom-8 right-1/3 w-3 h-3 text-white/20" />
+        <div className="relative overflow-hidden bg-gradient-to-r from-[#534AB7] via-[#5B4FBC] to-[#7B6FE8] rounded-xl p-7 md:p-9 shadow-xl shadow-[#534AB7]/20">
+          <Sparkles className="absolute top-6 right-8 w-4 h-4 text-white/50" />
+          <Sparkles className="absolute bottom-8 right-1/3 w-3 h-3 text-white/50" />
+           <Sparkles className="absolute bottom-12 right-1/4 w-4 h-4 text-white/50" />
 
           <div className="relative grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-6">
             {/* Robot mascot */}
-            <div className="hidden md:flex items-center justify-center w-[100px] h-[100px] rounded-3xl bg-white/15 backdrop-blur border border-white/20">
-              <Bot className="w-14 h-14 text-white" strokeWidth={1.5} />
+            <div className="hidden md:flex items-center justify-center w-[100px] h-[80px] rounded-3xl bg-white/15 backdrop-blur border border-white/20">
+              <Image src="https://res.cloudinary.com/mview/image/upload/atlas/landingpage-4.webp" width={100} height={80} alt="Robot mascot" className="rounded-xl" />
             </div>
 
             <div>
-              <h3 className="text-xl md:text-[24px] font-extrabold text-white mb-1.5">
+              <h3 className="text-xl md:text-[26px] font-extrabold text-white mb-1.5">
                 Ready to supercharge your studies?
               </h3>
-              <p className="text-[13px] text-white/85 leading-relaxed">
+              <p className="text-[15px] text-white/85 leading-relaxed">
                 Join thousands of students who are already achieving more with Atlas.
               </p>
             </div>
@@ -382,7 +384,7 @@ export default function PricingPage() {
               </Link>
               <Link
                 href="/#features"
-                className="bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95"
+                className="bg-white/20 hover:bg-white/25 backdrop-blur border border-white text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95"
               >
                 View all features
               </Link>
