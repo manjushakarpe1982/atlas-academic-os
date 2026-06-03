@@ -88,7 +88,7 @@ export default function LoginPage() {
       // Returning users who already finished onboarding go straight to the app.
       router.push(data.onboarding_completed ? "/home" : "/onboarding");
     } catch {
-      setError("Cannot connect to the server. Make sure the backend is running on port 8000.");
+      setError(`Cannot connect to the server. Make sure the backend is running on port ${process.env.PORT}.`);
     } finally {
       setLoading(false);
     }
