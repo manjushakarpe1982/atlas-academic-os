@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import {
   Clock, AlertTriangle, ChevronRight, ChevronLeft,
   CheckCircle2, XCircle, Flag, RotateCcw,
   BookOpen, Trophy, Brain, Eye, EyeOff,
+  Upload, Lock, Timer, ShieldCheck, Target, Sparkles,
 } from 'lucide-react';
 
 /* ─── Types ──────────────────────────────────────────────────── */
@@ -725,6 +727,14 @@ export default function ExamModePage() {
   const [selTopics,    setSelTopics]    = useState<string[]>([]);
   const [selType,      setSelType]      = useState('mcq');
 
+  // Exam Mode is generated from uploaded materials. Without them, no exam.
+  const [hasExam, setHasExam] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('atlas_has_exam') === 'true') {
+      setHasExam(true);
+    }
+  }, []);
+
   const handleFinish = (a:(number|null)[], f:boolean[], t:number, w?:string[]) => {
     setAnswers(a); setFlagged(f); setTimeTaken(t); if(w) setWrittenAnss(w); setScreen('results');
   };
@@ -732,6 +742,195 @@ export default function ExamModePage() {
   const handleStart = (topics:string[], type:string) => {
     setSelTopics(topics); setSelType(type); setScreen('exam');
   };
+
+  /* ─────────────────────────────────────────────────────────────
+   * EMPTY STATE — no materials → no exam can be generated yet.
+   * Tone: serious, exam-day-feel (not playful like the other pages).
+   * ───────────────────────────────────────────────────────────── */
+  if (!hasExam) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
+          <div className="max-w-[960px] mx-auto">
+
+            {/* ── Dark exam-scoreboard hero (different mood from other pages) ── */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#1E1B3E] via-[#2A2553] to-[#3F3795] rounded-3xl mb-6 shadow-xl shadow-[#1E1B3E]/30 p-6 md:p-7">
+              {/* Subtle grid pattern */}
+              <div
+                className="absolute inset-0 opacity-[0.04] pointer-events-none"
+                style={{
+                  backgroundImage: 'repeating-linear-gradient(0deg, #fff 0, #fff 1px, transparent 1px, transparent 24px), repeating-linear-gradient(90deg, #fff 0, #fff 1px, transparent 1px, transparent 24px)',
+                }}
+              />
+              <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-5">
+                <div>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur text-white/80 text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 mb-3 border border-white/15">
+                    <Trophy className="w-3 h-3" /> Practice Exam
+                  </span>
+                  <h1 className="text-[26px] md:text-[30px] font-extrabold text-white leading-tight mb-2">
+                    Train like it&apos;s the real exam
+                  </h1>
+                  <p className="text-[13px] text-white/70 leading-relaxed max-w-md">
+                    Atlas generates a timed, exam-style test from your own course
+                    materials. Same format, same pressure, same topics your
+                    professor will test you on.
+                  </p>
+                </div>
+
+                <Link
+                  href="/upload"
+                  className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#1E1B3E] px-5 py-3 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95 flex-shrink-0"
+                >
+                  <Upload className="w-4 h-4" /> Upload to start
+                </Link>
+              </div>
+
+              {/* Scoreboard-style stat strip */}
+              <div className="relative grid grid-cols-3 gap-3 mt-6 pt-5 border-t border-white/10">
+                {[
+                  { label:'Exams taken',    value:'0',   color:'text-white' },
+                  { label:'Best score',     value:'—',   color:'text-emerald-400' },
+                  { label:'Avg time / Q',   value:'—',   color:'text-amber-400' },
+                ].map((s) => (
+                  <div key={s.label} className="text-center">
+                    <p className={`text-2xl font-extrabold tabular-nums ${s.color}`}>{s.value}</p>
+                    <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-0.5">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── "Configure your exam" preview — dashed/locked ─────── */}
+            <div className="bg-white border-2 border-dashed border-[#D8D3FF] rounded-3xl shadow-sm overflow-hidden mb-6">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-[#ECE9FF] bg-[#F4F2FF]">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#534AB7]" />
+                  <h3 className="text-sm font-extrabold text-[#14142B]">Once unlocked, you&apos;ll configure</h3>
+                </div>
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider bg-white text-[#534AB7] px-2 py-1 rounded-full border border-[#D8D3FF]">
+                  <Lock className="w-3 h-3" /> Read-only preview
+                </span>
+              </div>
+
+              <div className="p-5 opacity-[0.65] pointer-events-none select-none">
+                {/* Topics row */}
+                <p className="text-[11px] font-bold text-[#9B9AB5] uppercase tracking-widest mb-2">Topics</p>
+                <div className="flex flex-wrap gap-2 mb-5">
+                  {['Mitosis','Enzyme Kinetics','Cellular Respiration','DNA Replication','+ All topics'].map((t,i) => (
+                    <span
+                      key={t}
+                      className={`text-[11.5px] font-bold px-2.5 py-1 rounded-lg border ${
+                        i < 4
+                          ? 'bg-[#F4F2FF] text-[#534AB7] border-[#E8E5FD]'
+                          : 'bg-white text-[#9B9AB5] border-[#ECE9FF] border-dashed'
+                      }`}
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Exam type radios */}
+                <p className="text-[11px] font-bold text-[#9B9AB5] uppercase tracking-widest mb-2">Exam format</p>
+                <div className="grid grid-cols-3 gap-2 mb-5">
+                  {[
+                    { label:'Multiple choice', selected:true },
+                    { label:'Short answer',    selected:false },
+                    { label:'Mixed',           selected:false },
+                  ].map((opt) => (
+                    <div
+                      key={opt.label}
+                      className={`flex items-center gap-2 border rounded-xl px-3 py-2.5 ${
+                        opt.selected
+                          ? 'bg-[#F4F2FF] border-[#534AB7]'
+                          : 'bg-white border-[#ECE9FF]'
+                      }`}
+                    >
+                      <div className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 ${
+                        opt.selected ? 'border-[#534AB7] bg-[#534AB7]' : 'border-[#9B9AB5]'
+                      }`}>
+                        {opt.selected && <div className="w-full h-full rounded-full border-2 border-white" />}
+                      </div>
+                      <span className="text-[12.5px] font-semibold text-[#3A3A52]">{opt.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Timer + Q count summary */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-[#FAFAFE] border border-[#ECE9FF] rounded-xl px-3.5 py-3 flex items-center gap-2.5">
+                    <Timer className="w-4 h-4 text-[#534AB7] flex-shrink-0" />
+                    <div>
+                      <p className="text-[11px] font-bold text-[#9B9AB5] uppercase tracking-wider">Duration</p>
+                      <p className="text-[14px] font-extrabold text-[#1A1A2E]">20 minutes</p>
+                    </div>
+                  </div>
+                  <div className="bg-[#FAFAFE] border border-[#ECE9FF] rounded-xl px-3.5 py-3 flex items-center gap-2.5">
+                    <Brain className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-[11px] font-bold text-[#9B9AB5] uppercase tracking-wider">Questions</p>
+                      <p className="text-[14px] font-extrabold text-[#1A1A2E]">10</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-[#ECE9FF] bg-gradient-to-r from-[#F4F2FF] via-white to-[#F4F2FF] px-5 py-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md shadow-[#534AB7]/30 flex-shrink-0">
+                    <Lock className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-extrabold text-[#14142B]">Exam setup will appear here</p>
+                    <p className="text-[11.5px] text-[#6B6A8A]">Once you upload materials, Atlas builds a tailored exam.</p>
+                  </div>
+                </div>
+                <Link
+                  href="/upload"
+                  className="inline-flex items-center gap-1.5 bg-[#534AB7] hover:bg-[#3F3795] text-white text-[12.5px] font-extrabold px-4 py-2 rounded-lg shadow-md shadow-[#534AB7]/25 transition-all active:scale-95 flex-shrink-0"
+                >
+                  <Upload className="w-3.5 h-3.5" /> Upload
+                </Link>
+              </div>
+            </div>
+
+            {/* ── 4 horizontal feature strips — exam-specific ─────── */}
+            <div className="space-y-2.5 mb-6">
+              {[
+                { icon:Timer,       color:'bg-amber-500',     title:'Timed pressure', desc:'A live countdown teaches you to manage exam time — no more running out at question 7.' },
+                { icon:Flag,        color:'bg-rose-500',      title:'Flag &amp; revisit', desc:'Mark hard questions, finish the easy ones first, come back. Just like the real exam.' },
+                { icon:ShieldCheck, color:'bg-emerald-500',   title:'Focus-mode lockdown', desc:'A clean, distraction-free interface — no nav, no chat. Just you and the exam.' },
+                { icon:Target,      color:'bg-[#534AB7]',     title:'Detailed post-exam review', desc:'See every question with the right answer, your answer, and an explanation citing the source.' },
+              ].map((s) => (
+                <div key={s.title} className="bg-white border border-[#ECE9FF] rounded-2xl px-5 py-4 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className={`w-11 h-11 rounded-xl ${s.color} flex items-center justify-center shadow-md flex-shrink-0`}>
+                    <s.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-extrabold text-[#1A1A2E] mb-0.5" dangerouslySetInnerHTML={{ __html: s.title }} />
+                    <p className="text-[12.5px] text-[#6B6A8A] leading-relaxed">{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer reminder */}
+            <div className="flex items-center justify-between gap-3 text-[12px] text-[#9B9AB5] px-2">
+              <p className="flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                Take exams early in the week — your weak spots become Monday&apos;s study plan.
+              </p>
+              <Link href="/quiz" className="font-bold text-[#534AB7] hover:underline whitespace-nowrap">
+                Try a casual quiz first →
+              </Link>
+            </div>
+
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

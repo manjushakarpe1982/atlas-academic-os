@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
-import EmptyState from '@/components/EmptyState';
 import {
   Upload, FileText, Mic, BookOpen, Target,
   BarChart2, CheckCircle2, XCircle, RefreshCw,
@@ -136,20 +135,23 @@ interface AtlasFile {
 }
 
 /* ─── Data ───────────────────────────────────────────────────── */
-const INITIAL_FILES: AtlasFile[] = [
-  { id:1,  name:'BIO101_Syllabus.pdf',          category:'syllabus',       class:'Biology 101',    status:'ready',    size:'180 KB', uploadedAt:'Nov 10', pipelineStep:4, extracted:'14 deadlines · 4 grade categories · Prof: Dr. Smith' },
-  { id:2,  name:'Lecture 10 — Krebs Cycle.mp3', category:'lecture_audio',  class:'Biology 101',    status:'ready',    size:'48 min', uploadedAt:'Nov 12', pipelineStep:4, extracted:'8,400 word transcript · 6 emphasis signals detected' },
-  { id:3,  name:'Exam 2 Review Sheet.pdf',       category:'review_sheet',   class:'Biology 101',    status:'ready',    size:'320 KB', uploadedAt:'Nov 14', pipelineStep:4, extracted:'8 topics · 24 key terms' },
-  { id:4,  name:'Quiz 3 — Graded.pdf',           category:'graded_work',    class:'Biology 101',    status:'ready',    size:'85 KB',  uploadedAt:'Oct 28', pipelineStep:4, extracted:'Score: 82% · Weak area: enzyme kinetics' },
-  { id:5,  name:'Lecture 11 Slides.pptx',        category:'lecture_slides', class:'Biology 101',    status:'ready',    size:'2.1 MB', uploadedAt:'Nov 13', pipelineStep:4, extracted:'32 slides · Topics: mitosis, cell division' },
-  { id:6,  name:'Lab Report 2.docx',             category:'assignment',     class:'Biology 101',    status:'parsing',  size:'220 KB', uploadedAt:'Nov 15', pipelineStep:2 },
-  { id:7,  name:'STAT201_Syllabus.pdf',           category:'syllabus',       class:'Statistics 201', status:'ready',    size:'145 KB', uploadedAt:'Sep 2',  pipelineStep:4, extracted:'11 deadlines · 3 grade categories' },
-  { id:8,  name:'Problem Set 3 — Solutions.pdf', category:'graded_work',    class:'Statistics 201', status:'ready',    size:'560 KB', uploadedAt:'Nov 5',  pipelineStep:4, extracted:'Score: 92% · All problems correct' },
-  { id:9,  name:'Lecture Recording Nov 12.mp4',  category:'lecture_audio',  class:'English 110',    status:'indexing', size:'62 min', uploadedAt:'Nov 12', pipelineStep:3 },
-  { id:10, name:'Essay 1 Feedback.pdf',           category:'graded_work',    class:'English 110',    status:'ready',    size:'95 KB',  uploadedAt:'Oct 20', pipelineStep:4, extracted:'Grade: B+ · 5 feedback notes' },
-  { id:11, name:'Midterm Notes.docx',             category:'notes',          class:'History 105',    status:'ready',    size:'340 KB', uploadedAt:'Oct 15', pipelineStep:4, extracted:'18 topics · 12 pages' },
-  { id:12, name:'Chem Lab Manual.pdf',            category:'notes',          class:'Chemistry 201',  status:'error',    size:'4.2 MB', uploadedAt:'Nov 8',  pipelineStep:1, errorMsg:'File too large — max 5 MB. Try compressing it.' },
-];
+const INITIAL_FILES: AtlasFile[] = [];
+
+// Sample / demo data — uncomment to preview the full file-manager UI.
+// const INITIAL_FILES: AtlasFile[] = [
+//   { id:1,  name:'BIO101_Syllabus.pdf',          category:'syllabus',       class:'Biology 101',    status:'ready',    size:'180 KB', uploadedAt:'Nov 10', pipelineStep:4, extracted:'14 deadlines · 4 grade categories · Prof: Dr. Smith' },
+//   { id:2,  name:'Lecture 10 — Krebs Cycle.mp3', category:'lecture_audio',  class:'Biology 101',    status:'ready',    size:'48 min', uploadedAt:'Nov 12', pipelineStep:4, extracted:'8,400 word transcript · 6 emphasis signals detected' },
+//   { id:3,  name:'Exam 2 Review Sheet.pdf',       category:'review_sheet',   class:'Biology 101',    status:'ready',    size:'320 KB', uploadedAt:'Nov 14', pipelineStep:4, extracted:'8 topics · 24 key terms' },
+//   { id:4,  name:'Quiz 3 — Graded.pdf',           category:'graded_work',    class:'Biology 101',    status:'ready',    size:'85 KB',  uploadedAt:'Oct 28', pipelineStep:4, extracted:'Score: 82% · Weak area: enzyme kinetics' },
+//   { id:5,  name:'Lecture 11 Slides.pptx',        category:'lecture_slides', class:'Biology 101',    status:'ready',    size:'2.1 MB', uploadedAt:'Nov 13', pipelineStep:4, extracted:'32 slides · Topics: mitosis, cell division' },
+//   { id:6,  name:'Lab Report 2.docx',             category:'assignment',     class:'Biology 101',    status:'parsing',  size:'220 KB', uploadedAt:'Nov 15', pipelineStep:2 },
+//   { id:7,  name:'STAT201_Syllabus.pdf',           category:'syllabus',       class:'Statistics 201', status:'ready',    size:'145 KB', uploadedAt:'Sep 2',  pipelineStep:4, extracted:'11 deadlines · 3 grade categories' },
+//   { id:8,  name:'Problem Set 3 — Solutions.pdf', category:'graded_work',    class:'Statistics 201', status:'ready',    size:'560 KB', uploadedAt:'Nov 5',  pipelineStep:4, extracted:'Score: 92% · All problems correct' },
+//   { id:9,  name:'Lecture Recording Nov 12.mp4',  category:'lecture_audio',  class:'English 110',    status:'indexing', size:'62 min', uploadedAt:'Nov 12', pipelineStep:3 },
+//   { id:10, name:'Essay 1 Feedback.pdf',           category:'graded_work',    class:'English 110',    status:'ready',    size:'95 KB',  uploadedAt:'Oct 20', pipelineStep:4, extracted:'Grade: B+ · 5 feedback notes' },
+//   { id:11, name:'Midterm Notes.docx',             category:'notes',          class:'History 105',    status:'ready',    size:'340 KB', uploadedAt:'Oct 15', pipelineStep:4, extracted:'18 topics · 12 pages' },
+//   { id:12, name:'Chem Lab Manual.pdf',            category:'notes',          class:'Chemistry 201',  status:'error',    size:'4.2 MB', uploadedAt:'Nov 8',  pipelineStep:1, errorMsg:'File too large — max 5 MB. Try compressing it.' },
+// ];
 
 const PIPELINE_STEPS = ['Uploading','Classifying','Parsing','Indexing','Ready'];
 
@@ -302,12 +304,25 @@ function DropZone({ onUpload }: { onUpload: (name:string) => void }) {
         <Upload className="w-6 h-6 text-indigo-600" />
       </div>
       <p className="text-sm font-bold text-gray-800 mb-1">Drop files here or click to browse</p>
-      <p className="text-xs text-gray-400 mb-3">
+      <p className="text-xs text-gray-400 mb-4">
         Atlas auto-detects the file type and matches it to the right class
       </p>
       <div className="flex justify-center gap-2 flex-wrap">
-        {['PDF','DOCX','PPTX','MP3','MP4','TXT'].map((t) => (
-          <span key={t} className="text-[10px] font-bold bg-white border border-gray-200 text-gray-500 px-2 py-0.5 rounded-md">{t}</span>
+        {[
+          { ext: 'PDF',  color: 'text-red-500',     bg: 'bg-red-50',     border: 'border-red-100' },
+          { ext: 'DOCX', color: 'text-blue-500',    bg: 'bg-blue-50',    border: 'border-blue-100' },
+          { ext: 'PPTX', color: 'text-orange-500',  bg: 'bg-orange-50',  border: 'border-orange-100' },
+          { ext: 'MP3',  color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+          { ext: 'MP4',  color: 'text-violet-500',  bg: 'bg-violet-50',  border: 'border-violet-100' },
+          { ext: 'TXT',  color: 'text-gray-500',    bg: 'bg-gray-50',    border: 'border-gray-200' },
+        ].map((t) => (
+          <span
+            key={t.ext}
+            className={`inline-flex items-center gap-1.5 ${t.bg} border ${t.border} rounded-lg px-2.5 py-1`}
+          >
+            <FileText className={`w-3 h-3 ${t.color}`} />
+            <span className={`text-[11px] font-extrabold ${t.color}`}>{t.ext}</span>
+          </span>
         ))}
       </div>
     </div>
@@ -368,6 +383,109 @@ export default function UploadPage() {
   return (
     <AppLayout>
       {previewFile && <PreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />}
+
+      {/* ── EMPTY STATE — first-time student, no files uploaded ───── */}
+      {files.length === 0 ? (
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
+          <div className="max-w-[920px] mx-auto">
+
+            {/* Header */}
+            <div className="text-center mb-7">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#E8E5FD] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-4">
+                <Zap className="w-3.5 h-3.5" /> Step 1 — Add your materials
+              </span>
+              <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight mb-2">
+                Upload your course materials
+              </h1>
+              <p className="text-sm text-[#6B6A8A] max-w-xl mx-auto leading-relaxed">
+                Atlas will read your syllabus, slides, lectures, and notes — then build
+                your personalised study plan based on what your professor actually emphasises.
+              </p>
+            </div>
+
+            {/* Drop zone — the main focal point */}
+            <DropZone onUpload={handleUpload} />
+
+            {/* What to upload — guidance cards */}
+            <div className="mt-9">
+              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+                What you can upload
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {[
+                  { icon: FileText,  color: 'bg-[#534AB7]',     label: 'Syllabus',           desc: 'The most important file — topics, dates, grading weights.', tag: 'Start here' },
+                  { icon: BookOpen,  color: 'bg-blue-500',      label: 'Lecture slides',     desc: 'PPT, PDF — Atlas extracts key topics and emphasis.' },
+                  { icon: Mic,       color: 'bg-rose-500',      label: 'Lecture recordings', desc: 'MP3, MP4, M4A — auto-transcribed with timestamps.' },
+                  { icon: FolderOpen,color: 'bg-emerald-500',   label: 'Course notes',       desc: 'Your own notes or shared notes from classmates.' },
+                  { icon: Target,    color: 'bg-orange-500',    label: 'Past quizzes/exams', desc: 'Helps Atlas predict likely future questions.' },
+                  { icon: BarChart2, color: 'bg-amber-500',     label: 'Grade reports',      desc: 'See where you stand and project your final grade.' },
+                ].map((c) => (
+                  <div key={c.label} className="relative bg-white border border-[#ECE9FF] rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#534AB7]/30 transition-all">
+                    {/* "Start here" badge — positioned top-right, doesn't overlap content */}
+                    {c.tag && (
+                      <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 uppercase tracking-wider">
+                        {c.tag}
+                      </span>
+                    )}
+
+                    {/* Icon + title in a clean row at the top */}
+                    <div className="flex items-center gap-3 mb-2.5">
+                      <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md flex-shrink-0`}>
+                        <c.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <p className="text-[14px] font-extrabold text-[#1A1A2E] leading-tight">
+                        {c.label}
+                      </p>
+                    </div>
+
+                    {/* Description — full width, clean block below */}
+                    <p className="text-[12.5px] text-[#6B6A8A] leading-relaxed">
+                      {c.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Supported formats line */}
+            <p className="text-center text-[12px] text-[#9B9AB5] mt-6">
+              Supports PDF, DOCX, PPT, TXT, MP3, MP4, M4A, JPG, PNG · Up to 50 MB per file
+            </p>
+
+            {/* Reassurance band */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-7">
+              <div className="bg-white border border-[#ECE9FF] rounded-2xl px-4 py-3.5 flex items-start gap-3">
+                <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-[12.5px] font-extrabold text-[#1A1A2E]">Your files are private</p>
+                  <p className="text-[11.5px] text-[#6B6A8A] leading-relaxed">Encrypted, never shared, never used to train AI.</p>
+                </div>
+              </div>
+              <div className="bg-white border border-[#ECE9FF] rounded-2xl px-4 py-3.5 flex items-start gap-3">
+                <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-[12.5px] font-extrabold text-[#1A1A2E]">Fast processing</p>
+                  <p className="text-[11.5px] text-[#6B6A8A] leading-relaxed">Most files parse in under 60 seconds.</p>
+                </div>
+              </div>
+              <div className="bg-white border border-[#ECE9FF] rounded-2xl px-4 py-3.5 flex items-start gap-3">
+                <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-[12.5px] font-extrabold text-[#1A1A2E]">FERPA &amp; GDPR compliant</p>
+                  <p className="text-[11.5px] text-[#6B6A8A] leading-relaxed">Delete your data any time.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      ) : (
       <div className="p-4 md:p-6 max-w-[1100px] mx-auto">
 
         {/* Header */}
@@ -504,6 +622,7 @@ export default function UploadPage() {
           </div>
         </div>
       </div>
+      )}
     </AppLayout>
   );
 }

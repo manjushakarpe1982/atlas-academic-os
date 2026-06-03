@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import {
   RotateCcw, ChevronRight, ChevronLeft,
   CheckCircle2, AlertTriangle, Brain,
   Sparkles, BookOpen, Copy, Keyboard,
+  Upload, Lock, Target,
 } from 'lucide-react';
 
 type Rating = 'again' | 'hard' | 'good' | 'easy';
@@ -146,9 +148,27 @@ export default function FlashcardsPage() {
   const [correct, setCorrect] = useState(0);
   const [again,   setAgain]   = useState(0);
 
+  // Flashcards are generated from uploaded materials. Without materials there
+  // are no cards to study — show a friendly empty state instead.
+  const [hasCards, setHasCards] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('atlas_has_cards') === 'true') {
+      setHasCards(true);
+    }
+  }, []);
+
   const total   = cards.length;
   const current = cards[index];
   const pct     = Math.round((index / total) * 100);
+
+  const rate = (r: Rating) => {
+    setCards((p) => p.map((c, i) => i === index ? { ...c, seen:true, rating:r } : c));
+    if (r === 'again') setAgain((p) => p + 1);
+    else setCorrect((p) => p + 1);
+    if (index + 1 >= total) { setDone(true); return; }
+    setIndex((p) => p + 1);
+    setFlipped(false);
+  };
 
     useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -165,14 +185,151 @@ export default function FlashcardsPage() {
     return () => window.removeEventListener('keydown', handler);
   }, [flipped, done]);
 
-  const rate = (r: Rating) => {
-    setCards((p) => p.map((c, i) => i === index ? { ...c, seen:true, rating:r } : c));
-    if (r === 'again') setAgain((p) => p + 1);
-    else setCorrect((p) => p + 1);
-    if (index + 1 >= total) { setDone(true); return; }
-    setIndex((p) => p + 1);
-    setFlipped(false);
-  };
+  /* ─────────────────────────────────────────────────────────────
+   * EMPTY STATE — no materials uploaded → no cards to study.
+   * Layout: stacked-card hero (deliberately playful, different
+   * from /study-plan and /study-guide).
+   * ───────────────────────────────────────────────────────────── */
+  if (!hasCards) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
+          <div className="max-w-[960px] mx-auto">
+
+            {/* Minimal top bar */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#534AB7] flex items-center justify-center">
+                  <Copy className="w-4 h-4 text-white" />
+                </div>
+                <p className="text-sm font-extrabold text-[#14142B]">Flashcards</p>
+              </div>
+              <Link
+                href="/upload"
+                className="inline-flex items-center gap-1.5 bg-[#534AB7] hover:bg-[#3F3795] text-white text-[12.5px] font-extrabold px-3.5 py-2 rounded-lg shadow-md shadow-[#534AB7]/25 transition-all active:scale-95"
+              >
+                <Upload className="w-3.5 h-3.5" /> Upload to generate
+              </Link>
+            </div>
+
+            {/* ── Playful stacked-card hero ─────────────────────── */}
+            <div className="relative bg-gradient-to-br from-[#F4F2FF] via-white to-[#EDEAFF] border border-[#ECE9FF] rounded-3xl px-6 py-10 md:py-12 mb-7 overflow-hidden">
+              {/* Floating decorative card shapes (background) */}
+              <div className="absolute -top-6 -right-6 w-32 h-44 rounded-2xl bg-white/60 border border-white rotate-12 shadow-sm pointer-events-none" />
+              <div className="absolute -bottom-10 -left-6 w-28 h-40 rounded-2xl bg-[#E8E5FD]/50 border border-[#E8E5FD] -rotate-6 pointer-events-none" />
+              <Sparkles className="absolute top-8 right-1/3 w-3 h-3 text-[#534AB7]/30" />
+              <Sparkles className="absolute bottom-12 left-1/4 w-4 h-4 text-[#534AB7]/20" />
+
+              {/* The card stack — visually layered */}
+              <div className="relative flex justify-center mb-7">
+                <div className="relative w-full max-w-[420px] h-[180px]">
+                  {/* Bottom card (back layer, rotated) */}
+                  <div className="absolute inset-0 -rotate-6 translate-x-3 translate-y-3 bg-white border-2 border-[#E8E5FD] rounded-2xl shadow-md" />
+                  {/* Middle card */}
+                  <div className="absolute inset-0 rotate-3 -translate-x-2 translate-y-1 bg-white border-2 border-[#D8D3FF] rounded-2xl shadow-md" />
+                  {/* Front card — readable */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white to-[#FAFAFE] border-2 border-dashed border-[#D8D3FF] rounded-2xl shadow-lg flex flex-col">
+                    <div className="px-4 py-2 border-b border-[#ECE9FF] flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#534AB7]">Front · Sample</span>
+                      <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider bg-[#F4F2FF] text-[#534AB7] px-1.5 py-0.5 rounded-full">
+                        <Lock className="w-2.5 h-2.5" /> Preview
+                      </span>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center px-5">
+                      <p className="text-center text-[15px] font-extrabold text-[#1A1A2E] leading-snug">
+                        What are the 5 phases of mitosis in order?
+                      </p>
+                    </div>
+                    <div className="px-4 py-2 border-t border-[#ECE9FF] flex items-center justify-between">
+                      <span className="text-[10px] text-[#9B9AB5] flex items-center gap-1">
+                        <BookOpen className="w-2.5 h-2.5" /> Exam 2 Review · p.2
+                      </span>
+                      <span className="text-[10px] font-bold text-[#534AB7]">Tap to flip →</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Heading + intro */}
+              <div className="relative text-center max-w-xl mx-auto">
+                <h1 className="text-[26px] md:text-[30px] font-extrabold text-[#14142B] leading-tight mb-2">
+                  Flashcards that actually fit your class
+                </h1>
+                <p className="text-[13.5px] text-[#6B6A8A] leading-relaxed">
+                  Atlas writes the cards from <span className="font-bold text-[#1A1A2E]">your</span> lectures and review sheets — then schedules them with spaced repetition so you remember long after the exam.
+                </p>
+              </div>
+
+              {/* Rating bar — shows the 4 buttons inline */}
+              <div className="relative mt-6 flex items-center justify-center gap-2 opacity-70 pointer-events-none">
+                <span className="text-[10px] font-bold text-[#9B9AB5] uppercase tracking-wider mr-1">After flip:</span>
+                {[
+                  { label:'Again', cls:'bg-red-50 text-red-700 border-red-200' },
+                  { label:'Hard',  cls:'bg-orange-50 text-orange-700 border-orange-200' },
+                  { label:'Good',  cls:'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                  { label:'Easy',  cls:'bg-blue-50 text-blue-700 border-blue-200' },
+                ].map((r) => (
+                  <span key={r.label} className={`text-[10.5px] font-extrabold px-2 py-1 rounded-md border ${r.cls}`}>
+                    {r.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Inline numbered "how it works" — different shape ── */}
+            <div className="bg-white border border-[#ECE9FF] rounded-2xl p-5 mb-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest">How spaced repetition works</p>
+                <span className="text-[10px] font-bold text-[#534AB7] bg-[#F4F2FF] px-2 py-0.5 rounded-full">SM-2 algorithm</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                {[
+                  { n:'1', t:'See the question — answer in your head.' },
+                  { n:'2', t:'Flip to check your answer.' },
+                  { n:'3', t:'Rate how well you knew it (1–4).' },
+                  { n:'4', t:'Atlas schedules the next review for you.' },
+                ].map((s) => (
+                  <div key={s.n} className="flex items-start gap-2.5">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#534AB7] text-white text-[11px] font-extrabold flex items-center justify-center mt-0.5">
+                      {s.n}
+                    </span>
+                    <p className="text-[12.5px] text-[#3A3A52] leading-relaxed">{s.t}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── 3 "vs Quizlet" comparison tiles ────────────────── */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              {[
+                { kicker:'Quizlet',  vs:'Atlas',  q:'Manual card creation', a:'Auto from your lectures', icon:Sparkles, color:'text-[#534AB7]' },
+                { kicker:'Quizlet',  vs:'Atlas',  q:'Generic content',      a:'Your professor\u2019s emphasis', icon:Target, color:'text-emerald-600' },
+                { kicker:'Quizlet',  vs:'Atlas',  q:'No source links',      a:'Every card cited',           icon:BookOpen, color:'text-blue-600' },
+              ].map((t, i) => (
+                <div key={i} className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[10px] font-bold text-[#9B9AB5] line-through">{t.q}</span>
+                    <ChevronRight className="w-3 h-3 text-[#9B9AB5]" />
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <t.icon className={`w-5 h-5 ${t.color} flex-shrink-0 mt-0.5`} />
+                    <p className="text-[13.5px] font-extrabold text-[#1A1A2E] leading-snug">{t.a}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Tiny footer */}
+            <p className="text-center text-[12px] text-[#9B9AB5]">
+              <RotateCcw className="w-3 h-3 inline-block mr-1 -mt-0.5" />
+              Add lectures or review sheets and your first deck appears within seconds.
+            </p>
+
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const restart = () => {
     setCards(CARDS.map((c) => ({ ...c, seen:false, rating:undefined })));

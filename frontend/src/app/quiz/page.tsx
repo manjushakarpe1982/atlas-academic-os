@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import {
   CheckCircle2, XCircle, ChevronRight, ChevronLeft,
   RotateCcw, Trophy, BookOpen, AlertTriangle, Brain,
+  Upload, Lock, Sparkles, Zap, Target, HelpCircle,
 } from 'lucide-react';
 
 interface Question {
@@ -241,6 +243,189 @@ export default function QuizPage() {
   const [answered, setAnswered] = useState<AnswerState>('unanswered');
   const [answers,  setAnswers]  = useState<(number|null)[]>(Array(QUESTIONS.length).fill(null));
   const [done,     setDone]     = useState(false);
+
+  // Quiz is generated from uploaded materials. Without materials there are
+  // no questions to answer — show empty state.
+  const [hasQuiz, setHasQuiz] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('atlas_has_quiz') === 'true') {
+      setHasQuiz(true);
+    }
+  }, []);
+
+  /* ─────────────────────────────────────────────────────────────
+   * EMPTY STATE — no quiz to take yet.
+   * Compact, dashboard-feel composition (different from study-guide).
+   * ───────────────────────────────────────────────────────────── */
+  if (!hasQuiz) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
+          <div className="max-w-[960px] mx-auto">
+
+            {/* ── Compact stat-row hero (dashboard-style, not marketing-hero) ── */}
+            <div className="bg-white border border-[#ECE9FF] rounded-3xl shadow-sm overflow-hidden mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-5 p-5 md:p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#534AB7] to-[#7B6FE8] flex items-center justify-center shadow-lg shadow-[#534AB7]/30 flex-shrink-0">
+                    <HelpCircle className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-0.5">Quiz</p>
+                    <h1 className="text-xl md:text-2xl font-extrabold text-[#14142B] leading-tight">
+                      No questions ready yet
+                    </h1>
+                    <p className="text-[12.5px] text-[#6B6A8A] mt-1">
+                      Upload course materials and Atlas writes a quiz tailored to what your professor covers.
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/upload"
+                  className="inline-flex items-center gap-2 bg-[#534AB7] hover:bg-[#3F3795] text-white px-5 py-3 rounded-xl font-extrabold text-sm shadow-md shadow-[#534AB7]/25 transition-all active:scale-95 flex-shrink-0"
+                >
+                  <Upload className="w-4 h-4" /> Upload materials
+                </Link>
+              </div>
+
+              {/* Stat strip — 0/0/0 metrics */}
+              <div className="grid grid-cols-3 border-t border-[#ECE9FF] divide-x divide-[#ECE9FF] bg-[#FAFAFE]">
+                {[
+                  { label:'Questions', value:'0' },
+                  { label:'Avg score', value:'—' },
+                  { label:'Quizzes taken', value:'0' },
+                ].map((s) => (
+                  <div key={s.label} className="px-4 py-3 text-center">
+                    <p className="text-lg font-extrabold text-[#9B9AB5]">{s.value}</p>
+                    <p className="text-[10.5px] font-bold text-[#9B9AB5] uppercase tracking-wider mt-0.5">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Sample question — clearly marked as a non-functional preview ── */}
+            <div className="relative bg-white border-2 border-dashed border-[#D8D3FF] rounded-3xl shadow-sm overflow-hidden mb-6">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-[#ECE9FF] bg-[#F4F2FF]">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#534AB7]" />
+                  <h3 className="text-sm font-extrabold text-[#14142B]">A glimpse of what Atlas writes</h3>
+                </div>
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider bg-white text-[#534AB7] px-2 py-1 rounded-full border border-[#D8D3FF]">
+                  <Lock className="w-3 h-3" /> Read-only preview
+                </span>
+              </div>
+
+              {/* The question — obviously a preview */}
+              <div className="relative p-6 opacity-[0.6] pointer-events-none select-none">
+                <p className="text-[11px] font-bold text-[#534AB7] uppercase tracking-widest mb-2">Question 1 of 10</p>
+                <h4 className="text-base md:text-lg font-extrabold text-[#1A1A2E] leading-snug mb-5">
+                  During which phase of mitosis does the nuclear envelope fully break down?
+                </h4>
+                <div className="space-y-2">
+                  {[
+                    { letter: 'A', text: 'Prophase' },
+                    { letter: 'B', text: 'Prometaphase', highlight: true },
+                    { letter: 'C', text: 'Metaphase' },
+                    { letter: 'D', text: 'Anaphase' },
+                  ].map((opt) => (
+                    <div
+                      key={opt.letter}
+                      className={`flex items-center gap-3 border rounded-xl px-4 py-3 ${
+                        opt.highlight
+                          ? 'bg-emerald-50 border-emerald-200'
+                          : 'bg-white border-[#ECE9FF]'
+                      }`}
+                    >
+                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-extrabold flex-shrink-0 ${
+                        opt.highlight ? 'bg-emerald-500 text-white' : 'bg-[#F4F2FF] text-[#534AB7]'
+                      }`}>
+                        {opt.letter}
+                      </span>
+                      <span className={`text-[13.5px] font-semibold ${opt.highlight ? 'text-emerald-900' : 'text-[#3A3A52]'}`}>
+                        {opt.text}
+                      </span>
+                      {opt.highlight && <CheckCircle2 className="w-4 h-4 text-emerald-600 ml-auto" />}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[11.5px] text-[#9B9AB5] mt-4 flex items-center gap-1">
+                  <BookOpen className="w-3 h-3" /> From: Lecture 11 · 14:18
+                </p>
+              </div>
+
+              {/* Footer CTA bar — makes the locked state unmistakable + actionable */}
+              <div className="border-t border-[#ECE9FF] bg-gradient-to-r from-[#F4F2FF] via-white to-[#F4F2FF] px-5 py-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md shadow-[#534AB7]/30 flex-shrink-0">
+                    <Lock className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-extrabold text-[#14142B]">This is just a sample</p>
+                    <p className="text-[11.5px] text-[#6B6A8A]">Upload materials to get your real quiz.</p>
+                  </div>
+                </div>
+                <Link
+                  href="/upload"
+                  className="inline-flex items-center gap-1.5 bg-[#534AB7] hover:bg-[#3F3795] text-white text-[12.5px] font-extrabold px-4 py-2 rounded-lg shadow-md shadow-[#534AB7]/25 transition-all active:scale-95 flex-shrink-0"
+                >
+                  <Upload className="w-3.5 h-3.5" /> Upload
+                </Link>
+              </div>
+            </div>
+
+            {/* ── 3 horizontal feature strips (different layout than other pages) ── */}
+            <div className="space-y-2.5 mb-6">
+              {[
+                {
+                  icon: Sparkles, color: 'bg-[#534AB7]',
+                  title: 'Built from your lectures',
+                  desc: 'Atlas writes questions from your professor\'s emphasis, not a generic question bank.',
+                },
+                {
+                  icon: Target, color: 'bg-emerald-500',
+                  title: 'Focused on your weak spots',
+                  desc: 'Quizzes prioritise topics you missed last time — adaptive, not random.',
+                },
+                {
+                  icon: Brain, color: 'bg-blue-500',
+                  title: 'Wrong answers become flashcards',
+                  desc: 'Anything you miss is automatically queued for spaced-repetition review.',
+                },
+              ].map((s) => (
+                <div key={s.title} className="bg-white border border-[#ECE9FF] rounded-2xl px-5 py-4 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className={`w-11 h-11 rounded-xl ${s.color} flex items-center justify-center shadow-md flex-shrink-0`}>
+                    <s.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-extrabold text-[#1A1A2E] mb-0.5">{s.title}</p>
+                    <p className="text-[12.5px] text-[#6B6A8A] leading-relaxed">{s.desc}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#9B9AB5] flex-shrink-0 mt-1" />
+                </div>
+              ))}
+            </div>
+
+            {/* Footer — secondary action + privacy line */}
+            <div className="flex items-center justify-between gap-3 text-[12px] text-[#9B9AB5] px-2">
+              <p className="flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-[#534AB7]" />
+                Quizzes regenerate every time you upload new material.
+              </p>
+              <Link
+                href="/flashcards"
+                className="font-bold text-[#534AB7] hover:underline whitespace-nowrap"
+              >
+                See flashcards →
+              </Link>
+            </div>
+
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const q     = QUESTIONS[index];
   const total = QUESTIONS.length;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import { PageSkeleton } from '@/components/Skeleton';
 
@@ -8,6 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+
+import {
+  BarChart3, Upload, ChevronRight, Lock,
+  TrendingUp, Clock, Target, Sparkles, Brain, BookOpen, Zap,
+} from 'lucide-react';
 
 
 type Tab = 'overview' | 'subjects' | 'topics' | 'time';
@@ -58,8 +64,188 @@ const InfoI    = () => <span className="inline-flex items-center justify-center 
 export default function AnalyticsPage() {
   const [tab, setTab] = useState<Tab>('overview');
   const [loading, setLoading] = useState(true);
+
+  // Analytics only makes sense once the student has been using Atlas — at
+  // least one study session, grade, or completed task. Until then, show a
+  // hybrid empty state that teaches what analytics unlocks.
+  const [hasAnalytics, setHasAnalytics] = useState(false);
+
   useEffect(() => { const t = setTimeout(() => setLoading(false), 500); return () => clearTimeout(t); }, []);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('atlas_has_analytics') === 'true') {
+      setHasAnalytics(true);
+    }
+  }, []);
+
   if (loading) return <PageSkeleton />;
+
+  /* ─────────────────────────────────────────────────────────────
+   * EMPTY STATE — student hasn't used Atlas enough to generate
+   * meaningful analytics yet (no study sessions, no grades).
+   * ───────────────────────────────────────────────────────────── */
+  if (!hasAnalytics) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
+          <div className="max-w-[1000px] mx-auto">
+
+            {/* Header */}
+            <div className="text-center mb-7">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#E8E5FD] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-4">
+                <BarChart3 className="w-3.5 h-3.5" /> Step 5 — Track your progress
+              </span>
+              <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight mb-2">
+                Your analytics will appear here
+              </h1>
+              <p className="text-sm text-[#6B6A8A] max-w-xl mx-auto leading-relaxed">
+                Start studying with Atlas — once you log a few study sessions or
+                grades, you&apos;ll see deep insights into how you learn, what&apos;s
+                working, and where to focus.
+              </p>
+            </div>
+
+            {/* Two big action cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-7">
+              {/* Option 1 — Start studying (primary, purple) */}
+              <Link
+                href="/study-plan"
+                className="group relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#7B6FE8] rounded-3xl p-6 shadow-xl shadow-[#534AB7]/20 hover:shadow-2xl transition-all active:scale-[0.99]"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center border border-white/20">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/90 text-emerald-950 text-[10px] font-extrabold px-2 py-0.5 uppercase tracking-wider">
+                    Recommended
+                  </span>
+                </div>
+                <h3 className="text-xl font-extrabold text-white mb-1.5">
+                  Start a study session
+                </h3>
+                <p className="text-[13px] text-white/85 leading-relaxed mb-5">
+                  Open your daily study plan and start a focused session —
+                  Atlas tracks every minute and builds your analytics from it.
+                </p>
+                <div className="flex items-center gap-2 text-white font-extrabold text-sm">
+                  <span>Open study plan</span>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+
+              {/* Option 2 — Upload materials (secondary, white) */}
+              <Link
+                href="/upload"
+                className="group block text-left relative overflow-hidden bg-white border border-[#ECE9FF] rounded-3xl p-6 shadow-sm hover:shadow-lg hover:border-[#534AB7]/30 transition-all active:scale-[0.99]"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-[#F4F2FF] flex items-center justify-center mb-4">
+                  <Upload className="w-6 h-6 text-[#534AB7]" />
+                </div>
+                <h3 className="text-xl font-extrabold text-[#14142B] mb-1.5">
+                  Add your materials
+                </h3>
+                <p className="text-[13px] text-[#6B6A8A] leading-relaxed mb-5">
+                  Haven&apos;t uploaded a syllabus yet? Drop your course files
+                  first so Atlas knows what to track.
+                </p>
+                <div className="flex items-center gap-2 text-[#534AB7] font-extrabold text-sm">
+                  <span>Upload files</span>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+            </div>
+
+            {/* Locked KPI preview row — what analytics shows */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-7">
+              {[
+                { icon: Clock,      color: 'text-[#534AB7]',   bg: 'bg-[#EFECFF]',  label: 'Study time',     hint: '—' },
+                { icon: Target,     color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Avg score',      hint: '—' },
+                { icon: BookOpen,   color: 'text-blue-600',    bg: 'bg-blue-50',    label: 'Topics studied', hint: '—' },
+                { icon: TrendingUp, color: 'text-violet-600',  bg: 'bg-violet-50',  label: 'Streak',         hint: '—' },
+              ].map((k) => (
+                <div key={k.label} className="relative overflow-hidden bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm">
+                  <div className={`w-9 h-9 rounded-lg ${k.bg} flex items-center justify-center mb-2.5`}>
+                    <k.icon className={`w-4 h-4 ${k.color}`} />
+                  </div>
+                  <div className="text-2xl font-extrabold text-gray-300 leading-none tracking-tight">{k.hint}</div>
+                  <div className="text-xs text-[#9B9AB5] mt-2">{k.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Locked chart preview */}
+            <div className="relative bg-white border border-[#ECE9FF] rounded-2xl p-5 mb-7 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-[#534AB7]" />
+                  <h3 className="text-sm font-extrabold text-[#14142B]">Performance trends</h3>
+                </div>
+                <span className="text-[11px] text-[#9B9AB5] font-semibold">Locked</span>
+              </div>
+
+              <div className="relative h-[180px]">
+                {/* Faded bars */}
+                <svg viewBox="0 0 600 180" className="w-full h-full opacity-30 pointer-events-none">
+                  {[40, 80, 120].map((y) => (
+                    <line key={y} x1="0" y1={y} x2="600" y2={y} stroke="#E5E5F0" strokeDasharray="4 4" />
+                  ))}
+                  {[60, 110, 75, 130, 95, 145, 110, 160].map((h, i) => (
+                    <rect key={i} x={20 + i * 75} y={170 - h} width="40" height={h} rx="6" fill="#534AB7" opacity={0.4 + i * 0.05} />
+                  ))}
+                </svg>
+
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="w-11 h-11 rounded-2xl bg-[#534AB7] flex items-center justify-center shadow-lg shadow-[#534AB7]/30 mb-2">
+                    <Lock className="w-5 h-5 text-white" />
+                  </div>
+                  <p className="text-[13px] font-extrabold text-[#14142B]">Start studying to unlock</p>
+                  <p className="text-[11.5px] text-[#6B6A8A] mt-0.5">Complete a few study sessions to see your trends.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* What you'll see */}
+            <div className="mb-7">
+              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+                What you&apos;ll discover
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  { icon: Clock,      color: 'bg-[#534AB7]',   label: 'Time spent per topic', desc: 'Where your hours actually go — by class and topic.' },
+                  { icon: Target,     color: 'bg-emerald-500', label: 'Performance trends',   desc: 'Quiz, exam, and assignment scores over time.' },
+                  { icon: Brain,      color: 'bg-blue-500',    label: 'Mastery map',          desc: 'Which topics you understand and which need work.' },
+                  { icon: TrendingUp, color: 'bg-orange-500',  label: 'Study habits',         desc: 'Your most productive times of day and patterns.' },
+                ].map((c) => (
+                  <div key={c.label} className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md flex-shrink-0`}>
+                        <c.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <p className="text-[13px] font-extrabold text-[#1A1A2E] leading-tight">{c.label}</p>
+                    </div>
+                    <p className="text-[12px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Reassurance band */}
+            <div className="bg-[#F4F2FF] border border-[#E8E5FD] rounded-2xl px-5 py-4 flex items-start gap-3.5">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                <Zap className="w-4 h-4 text-[#534AB7]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-extrabold text-[#1A1A2E]">The more you study, the smarter Atlas gets</p>
+                <p className="text-[12px] text-[#6B6A8A] leading-relaxed">
+                  Analytics improve continuously — every session, quiz, and grade refines your insights.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const TABS: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },

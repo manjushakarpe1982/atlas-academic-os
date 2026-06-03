@@ -1402,9 +1402,19 @@ function AddClassModal({ onClose }: { onClose: () => void }) {
 export default function ClassesPage() {
   const [selected, setSelected] = useState<CLS | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // When the student hasn't added any classes yet, show a friendly empty
+  // state instead of the full classes grid. Toggled via a localStorage flag
+  // that the Add Class flow will flip to 'true' on successful add.
+  const [hasClasses, setHasClasses] = useState(false);
+
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 600);
     return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (localStorage.getItem("atlas_has_classes") === "true") setHasClasses(true);
   }, []);
 
   const [search, setSearch] = useState("");
@@ -1431,6 +1441,129 @@ export default function ClassesPage() {
   }
 
   if (loading) return <PageSkeleton />;
+
+  /* ─────────────────────────────────────────────────────────────
+   * EMPTY STATE — student hasn't added any classes yet.
+   * Shows guidance + two clear options: upload syllabus OR add manually.
+   * ───────────────────────────────────────────────────────────── */
+  if (!hasClasses) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
+          <div className="max-w-[920px] mx-auto">
+
+            {/* Header */}
+            <div className="text-center mb-7">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#E8E5FD] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-4">
+                <GraduationCap className="w-3.5 h-3.5" /> Step 2 — Add your classes
+              </span>
+              <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight mb-2">
+                Add the classes you&apos;re taking
+              </h1>
+              <p className="text-sm text-[#6B6A8A] max-w-xl mx-auto leading-relaxed">
+                Atlas builds a personalised study plan for every class. Add them by
+                uploading a syllabus, or enter them manually — your choice.
+              </p>
+            </div>
+
+            {/* Two big action cards — Upload OR Manual */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-7">
+              {/* Option 1 — Upload syllabus (primary, purple) */}
+              <Link
+                href="/upload"
+                className="group relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#7B6FE8] rounded-3xl p-6 shadow-xl shadow-[#534AB7]/20 hover:shadow-2xl transition-all active:scale-[0.99]"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center border border-white/20">
+                    <Upload className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/90 text-emerald-950 text-[10px] font-extrabold px-2 py-0.5 uppercase tracking-wider">
+                    Recommended
+                  </span>
+                </div>
+                <h3 className="text-xl font-extrabold text-white mb-1.5">
+                  Upload syllabus
+                </h3>
+                <p className="text-[13px] text-white/85 leading-relaxed mb-5">
+                  Atlas reads your syllabus and creates the class automatically —
+                  with topics, deadlines, and grading weights all set up.
+                </p>
+                <div className="flex items-center gap-2 text-white font-extrabold text-sm">
+                  <span>Upload a file</span>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+
+              {/* Option 2 — Add manually (secondary, white) */}
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="group text-left relative overflow-hidden bg-white border border-[#ECE9FF] rounded-3xl p-6 shadow-sm hover:shadow-lg hover:border-[#534AB7]/30 transition-all active:scale-[0.99]"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-[#F4F2FF] flex items-center justify-center mb-4">
+                  <Plus className="w-6 h-6 text-[#534AB7]" />
+                </div>
+                <h3 className="text-xl font-extrabold text-[#14142B] mb-1.5">
+                  Add manually
+                </h3>
+                <p className="text-[13px] text-[#6B6A8A] leading-relaxed mb-5">
+                  Don&apos;t have a syllabus handy? Enter class details one at a
+                  time — code, name, professor, schedule.
+                </p>
+                <div className="flex items-center gap-2 text-[#534AB7] font-extrabold text-sm">
+                  <span>Enter class details</span>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
+            </div>
+
+            {/* What Atlas tracks per class */}
+            <div className="mb-7">
+              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+                What Atlas tracks for each class
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  { icon: BookOpen,   color: 'bg-[#534AB7]',    label: 'Topics covered',  desc: 'Every concept from lectures, tagged by week and unit.' },
+                  { icon: Target,     color: 'bg-emerald-500',  label: 'Grading weights', desc: 'Exam, quiz, homework percentages — auto-extracted.' },
+                  { icon: BarChart2,  color: 'bg-blue-500',     label: 'Your grades',     desc: 'Live grade tracking with projected final score.' },
+                  { icon: Brain,      color: 'bg-orange-500',   label: 'Weak areas',      desc: 'Topics you missed, ranked for focused review.' },
+                ].map((c) => (
+                  <div key={c.label} className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md flex-shrink-0`}>
+                        <c.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <p className="text-[13px] font-extrabold text-[#1A1A2E] leading-tight">{c.label}</p>
+                    </div>
+                    <p className="text-[12px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Reassurance band */}
+            <div className="bg-[#F4F2FF] border border-[#E8E5FD] rounded-2xl px-5 py-4 flex items-start gap-3.5">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                <Zap className="w-4 h-4 text-[#534AB7]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-extrabold text-[#1A1A2E]">Add as many classes as you need</p>
+                <p className="text-[12px] text-[#6B6A8A] leading-relaxed">
+                  You can come back any time to add new classes, edit details, or remove old ones.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Reuse the existing "Add class" modal */}
+        {showAddModal && (
+          <AddClassModal onClose={() => setShowAddModal(false)} />
+        )}
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import Tooltip from '@/components/Tooltip';
 import {
@@ -8,6 +9,7 @@ import {
   Brain, AlertTriangle, Star, RefreshCw,
   ChevronDown, ChevronUp, Volume2,
   MessageSquare, X, Send, Sparkles, Printer,
+  Upload, Lock, Target, ArrowRight, Quote, Zap,
 } from 'lucide-react';
 
 type StudyMode = 'read' | 'listen' | 'quiz' | 'teach' | 'ask';
@@ -588,6 +590,228 @@ export default function StudyGuidePage() {
   const [activeId,   setActiveId]   = useState<string | null>('overview');
   const [selfRating, setSelfRating] = useState<number | null>(null);
   const [toast,      setToast]      = useState<{ msg:string; color:string } | null>(null);
+
+  // Study Guide is built entirely from uploaded materials. Until the student
+  // has uploaded a syllabus + lecture content, there's nothing to read.
+  const [hasGuide, setHasGuide] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('atlas_has_guide') === 'true') {
+      setHasGuide(true);
+    }
+  }, []);
+
+  /* ─────────────────────────────────────────────────────────────
+   * EMPTY STATE — no source material to generate a guide from yet.
+   * ───────────────────────────────────────────────────────────── */
+  if (!hasGuide) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
+          <div className="max-w-[1000px] mx-auto">
+
+            {/* Header */}
+            <div className="text-center mb-7">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#E8E5FD] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-4">
+                <BookOpen className="w-3.5 h-3.5" /> Your study guide
+              </span>
+              <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight mb-2">
+                A study guide built from <span className="italic">your</span> class
+              </h1>
+              <p className="text-sm text-[#6B6A8A] max-w-xl mx-auto leading-relaxed">
+                Atlas writes you a study guide using your actual lectures, slides,
+                and syllabus — with every claim cited to where your professor
+                said it. No generic Wikipedia summaries.
+              </p>
+            </div>
+
+            {/* Hero — primary CTA */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#7B6FE8] rounded-3xl mb-7 shadow-xl shadow-[#534AB7]/20 p-7 md:p-8">
+              <Sparkles className="absolute top-6 right-12 w-4 h-4 text-white/30" />
+              <Sparkles className="absolute bottom-10 right-1/3 w-3 h-3 text-white/30" />
+              <Sparkles className="absolute top-1/2 left-12 w-3 h-3 text-white/20" />
+
+              <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-6">
+                <div>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
+                    <Zap className="w-3 h-3" /> Auto-generated from your files
+                  </span>
+                  <h2 className="text-2xl md:text-[28px] font-extrabold text-white mb-2 leading-tight">
+                    Drop your materials to get started
+                  </h2>
+                  <p className="text-[13px] text-white/85 leading-relaxed max-w-md mb-5">
+                    Upload your syllabus, lecture slides, or audio recordings.
+                    Atlas turns them into a clean, citable study guide tailored
+                    to your class.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Link href="/upload"
+                      className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95">
+                      <Upload className="w-4 h-4" /> Upload materials <ArrowRight className="w-4 h-4" />
+                    </Link>
+                    <Link href="/classes"
+                      className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95">
+                      <BookOpen className="w-4 h-4" /> Browse classes
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="hidden md:flex items-center justify-center w-[150px] h-[150px] rounded-3xl bg-white/10 backdrop-blur border border-white/20">
+                  <BookOpen className="w-16 h-16 text-white/90" strokeWidth={1.5} />
+                </div>
+              </div>
+            </div>
+
+            {/* Locked sample guide preview */}
+            <div className="relative bg-white border border-[#ECE9FF] rounded-2xl mb-7 shadow-sm overflow-hidden">
+
+              {/* Header bar */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-[#ECE9FF] bg-[#FAFAFE]">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-[#534AB7]" />
+                  <h3 className="text-sm font-extrabold text-[#14142B]">Sample study guide</h3>
+                </div>
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider bg-[#F4F2FF] text-[#534AB7] px-2 py-1 rounded-full">
+                  <Lock className="w-3 h-3" /> Preview
+                </span>
+              </div>
+
+              {/* Sample content — faded but readable, no overlay on top */}
+              <div className="relative p-5 opacity-[0.55] pointer-events-none">
+                {/* Top fade gradient hint */}
+                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-transparent to-white pointer-events-none" />
+
+                {/* Section header */}
+                <div className="flex items-center gap-2.5 pb-3 mb-3 border-b border-[#ECE9FF]">
+                  <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-extrabold text-[#1A1A2E]">Cell Division &amp; Mitosis</p>
+                    <p className="text-[11px] text-[#9B9AB5]">Biology 101 · Unit 2 · 4 citations</p>
+                  </div>
+                </div>
+
+                {/* Paragraph with citation markers */}
+                <p className="text-[13px] text-[#3A3A52] leading-relaxed mb-3">
+                  Mitosis is the process by which a single cell divides into two
+                  genetically identical daughter cells.
+                  <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#534AB7] text-white text-[9px] font-extrabold ml-1 align-super">1</span>
+                  {' '}Professor Smith emphasized that the four phases — prophase,
+                  metaphase, anaphase, and telophase — make up only ~10% of the
+                  cell cycle.
+                  <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#534AB7] text-white text-[9px] font-extrabold ml-1 align-super">2</span>
+                </p>
+
+                {/* Citation card */}
+                <div className="flex items-start gap-2 bg-[#FAFAFE] border border-[#ECE9FF] rounded-lg p-2.5">
+                  <Quote className="w-3 h-3 text-[#534AB7] flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-bold text-[#534AB7]">Cited from: Lecture 8 — slide 14</p>
+                    <p className="text-[11.5px] text-[#6B6A8A] mt-0.5 italic">
+                      &ldquo;Remember, mitosis is M-phase — quick, but everything else builds toward it…&rdquo;
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom CTA bar — clearly separated, doesn't overlap content */}
+              <div className="border-t border-[#ECE9FF] bg-gradient-to-r from-[#F4F2FF] via-white to-[#F4F2FF] px-5 py-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md shadow-[#534AB7]/30 flex-shrink-0">
+                    <Lock className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-extrabold text-[#14142B]">Your guide will look like this</p>
+                    <p className="text-[11.5px] text-[#6B6A8A]">Every claim cited from your own materials.</p>
+                  </div>
+                </div>
+                <Link
+                  href="/upload"
+                  className="inline-flex items-center gap-1.5 bg-[#534AB7] hover:bg-[#3F3795] text-white text-[12.5px] font-extrabold px-4 py-2 rounded-lg shadow-md shadow-[#534AB7]/25 transition-all active:scale-95 flex-shrink-0"
+                >
+                  <Upload className="w-3.5 h-3.5" /> Upload
+                </Link>
+              </div>
+            </div>
+
+            {/* 5 modes — what you can do with a study guide */}
+            <div className="mb-7">
+              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+                Five ways to study every guide
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {[
+                  { icon: BookOpen,      color: 'bg-[#534AB7]',   label: 'Read',       desc: 'Clean prose, organised by topic' },
+                  { icon: Volume2,       color: 'bg-blue-500',    label: 'Listen',     desc: 'Hear it read aloud' },
+                  { icon: Brain,         color: 'bg-emerald-500', label: 'Quiz me',    desc: 'Auto-generated quiz' },
+                  { icon: MessageSquare, color: 'bg-orange-500',  label: 'Teach back', desc: 'Explain in your words' },
+                  { icon: Sparkles,      color: 'bg-rose-500',    label: 'Ask',        desc: 'Chat about anything' },
+                ].map((c) => (
+                  <div key={c.label} className="bg-white border border-[#ECE9FF] rounded-2xl p-3.5 shadow-sm hover:shadow-md transition-shadow text-center">
+                    <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md mx-auto mb-2`}>
+                      <c.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-[13px] font-extrabold text-[#1A1A2E] mb-0.5">{c.label}</p>
+                    <p className="text-[11px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Why this beats generic guides */}
+            <div className="mb-7">
+              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+                Why Atlas beats generic guides
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md">
+                      <Quote className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-[13px] font-extrabold text-[#1A1A2E]">Every claim cited</p>
+                  </div>
+                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed">Tap any sentence to see exactly which lecture or slide it came from.</p>
+                </div>
+                <div className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md">
+                      <Target className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-[13px] font-extrabold text-[#1A1A2E]">Your professor&apos;s emphasis</p>
+                  </div>
+                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed">Highlights topics your prof mentioned repeatedly — not just textbook basics.</p>
+                </div>
+                <div className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center shadow-md">
+                      <AlertTriangle className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-[13px] font-extrabold text-[#1A1A2E]">Honest about gaps</p>
+                  </div>
+                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed">If your materials don&apos;t cover something, Atlas says so. Never bluffs.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Reassurance band */}
+            <div className="bg-[#F4F2FF] border border-[#E8E5FD] rounded-2xl px-5 py-4 flex items-start gap-3.5">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                <RefreshCw className="w-4 h-4 text-[#534AB7]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-extrabold text-[#1A1A2E]">Always up to date</p>
+                <p className="text-[12px] text-[#6B6A8A] leading-relaxed">
+                  Upload a new lecture mid-semester? Your study guide regenerates automatically.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const showToast = (msg: string, color: string) => {
     setToast({ msg, color });

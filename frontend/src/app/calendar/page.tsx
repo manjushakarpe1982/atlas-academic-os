@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,6 +9,7 @@ import {
   MapPin,
   Clock,
   Calendar,
+  Bell,
 } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 
@@ -334,6 +335,13 @@ export default function CalendarPage() {
   const [selectedDay, setSelectedDay] = useState(19);
   const [showModal, setShowModal] = useState(false);
 
+  // When the student hasn't added classes or events yet, show a friendly
+  // empty state with clear calls to action instead of an empty calendar.
+  const [hasEvents, setHasEvents] = useState(false);
+  useEffect(() => {
+    if (localStorage.getItem("atlas_has_events") === "true") setHasEvents(true);
+  }, []);
+
   // May 2026 starts on Friday (index 5)
   const year = 2026;
   const month = 4 + monthOff; // 0-indexed
@@ -343,33 +351,38 @@ export default function CalendarPage() {
   const daysInMonth = new Date(actualYear, actualMonth + 1, 0).getDate();
   const daysInPrev = new Date(actualYear, actualMonth, 0).getDate();
 
-  const todayEvs = EVENTS.filter((e) => e.date === selectedDay);
-  const comingUp = [
-    {
-      title: "Bio Exam 2",
-      date: "May 26",
-      dot: "bg-red-500",
-      text: "text-red-500",
-    },
-    {
-      title: "Stats Quiz 3",
-      date: "May 27",
-      dot: "bg-red-500",
-      text: "text-red-500",
-    },
-    {
-      title: "English Essay Due",
-      date: "May 25",
-      dot: "bg-orange-500",
-      text: "text-orange-500",
-    },
-    {
-      title: "Biology Lab Report",
-      date: "May 30",
-      dot: "bg-orange-500",
-      text: "text-orange-500",
-    },
-  ];
+  // Static mock data is only used when the student has actually added events.
+  // First-time users see empty calendar cells + friendly empty-state messages.
+  const events = hasEvents ? EVENTS : [];
+  const todayEvs = events.filter((e) => e.date === selectedDay);
+  const comingUp = hasEvents
+    ? [
+        {
+          title: "Bio Exam 2",
+          date: "May 26",
+          dot: "bg-red-500",
+          text: "text-red-500",
+        },
+        {
+          title: "Stats Quiz 3",
+          date: "May 27",
+          dot: "bg-red-500",
+          text: "text-red-500",
+        },
+        {
+          title: "English Essay Due",
+          date: "May 25",
+          dot: "bg-orange-500",
+          text: "text-orange-500",
+        },
+        {
+          title: "Biology Lab Report",
+          date: "May 30",
+          dot: "bg-orange-500",
+          text: "text-orange-500",
+        },
+      ]
+    : [];
 
   // Build 6-week grid
   const cells: { day: number; curr: boolean }[] = [];
@@ -489,7 +502,7 @@ export default function CalendarPage() {
                   <div className="grid grid-cols-7 divide-x divide-y divide-gray-50">
                     {cells.map((cell, idx) => {
                       const evs = cell.curr
-                        ? EVENTS.filter((e) => e.date === cell.day)
+                        ? events.filter((e) => e.date === cell.day)
                         : [];
                       const isToday =
                         cell.curr && cell.day === 19 && monthOff === 0;
@@ -565,7 +578,7 @@ export default function CalendarPage() {
                       "Sun 24",
                     ].map((d, i) => {
                       const dayNum = 18 + i;
-                      const evs = EVENTS.filter((e) => e.date === dayNum);
+                      const evs = events.filter((e) => e.date === dayNum);
                       const isToday = dayNum === 19;
                       return (
                         <div
@@ -636,7 +649,7 @@ export default function CalendarPage() {
                           {selectedDay}, 2026
                         </p>
                         <p className="text-xs text-gray-400">
-                          {EVENTS.filter((e) => e.date === selectedDay).length}{" "}
+                          {events.filter((e) => e.date === selectedDay).length}{" "}
                           events
                         </p>
                       </div>
@@ -666,7 +679,7 @@ export default function CalendarPage() {
                           : hr === 12
                             ? "12:00 PM"
                             : `${hr - 12}:00 PM`;
-                      const dayEvs = EVENTS.filter(
+                      const dayEvs = events.filter(
                         (e) =>
                           e.date === selectedDay &&
                           e.time?.startsWith(
@@ -718,7 +731,7 @@ export default function CalendarPage() {
                         </div>
                       );
                     })}
-                    {EVENTS.filter((e) => e.date === selectedDay).length ===
+                    {events.filter((e) => e.date === selectedDay).length ===
                       0 && (
                       <div className="text-center py-12 text-gray-400">
                         <Calendar className="w-8 h-8 mx-auto mb-2 opacity-30" />
@@ -766,10 +779,10 @@ export default function CalendarPage() {
                 />
 
                 <div>
-                  <p className="text-sm text-gray-400 font-medium">May 19</p>
+                  <p className="text-sm text-gray-400 font-medium">May {selectedDay}</p>
 
                   <h3 className="text-xl font-bold text-gray-900 leading-tight ">
-                    4 events
+                    {todayEvs.length} {todayEvs.length === 1 ? "event" : "events"}
                   </h3>
 
                   <p className="text-xs text-gray-400 mt-1">Today’s schedule</p>
@@ -849,7 +862,16 @@ export default function CalendarPage() {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  {comingUp.map((cu) => (
+                  {comingUp.length === 0 ? (
+                    <div className="text-center py-4">
+                      <div className="w-9 h-9 rounded-xl bg-[#F4F2FF] flex items-center justify-center mx-auto mb-2">
+                        <Bell className="w-4 h-4 text-[#534AB7]" />
+                      </div>
+                      <p className="text-xs font-semibold text-gray-700">No upcoming deadlines</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">Add events to track exam &amp; due dates</p>
+                    </div>
+                  ) : (
+                    comingUp.map((cu) => (
                     <div
                       key={cu.title}
                       className="flex items-center justify-between gap-2"
@@ -868,7 +890,8 @@ export default function CalendarPage() {
                         {cu.date}
                       </span>
                     </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 
@@ -8,6 +9,7 @@ import AskAIWidget, { AskAIInline } from '@/components/AskAIWidget';
 import {
   Play, ChevronRight, Brain, Clock, AlertTriangle,
   Zap, Sparkles, BookOpen, SkipForward, ChevronDown,
+  Upload, Lock, Target, ArrowRight,
 } from 'lucide-react';
 import Tooltip from '@/components/Tooltip';
 
@@ -179,6 +181,182 @@ export default function StudyPlanPage() {
   const router = useRouter();
   const totalMins = TASKS.reduce((s, t) => s + t.duration, 0);
   const highCount = TASKS.filter((t) => t.priority === 'High').length;
+
+  // The study plan is fully generated from uploaded materials. Until the
+  // student has any, show a strong empty state that previews what a real
+  // plan looks like and gives one clear next action.
+  const [hasPlan, setHasPlan] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('atlas_has_plan') === 'true') {
+      setHasPlan(true);
+    }
+  }, []);
+
+  /* ─────────────────────────────────────────────────────────────
+   * EMPTY STATE — no materials uploaded, no plan to generate yet.
+   * ───────────────────────────────────────────────────────────── */
+  if (!hasPlan) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
+          <div className="max-w-[1000px] mx-auto">
+
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
+              <span className="hover:text-indigo-600 cursor-pointer" onClick={() => router.push('/home')}>Home</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="text-indigo-600 font-semibold">Study Plan</span>
+            </div>
+
+            {/* Header */}
+            <div className="text-center mb-7">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#E8E5FD] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-4">
+                <Sparkles className="w-3.5 h-3.5" /> Your daily plan
+              </span>
+              <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight mb-2">
+                One ranked plan, every day
+              </h1>
+              <p className="text-sm text-[#6B6A8A] max-w-xl mx-auto leading-relaxed">
+                Upload your course materials and Atlas builds a daily study plan
+                ranked by what actually moves your grade. Every task comes with
+                a clear reason — no guesswork.
+              </p>
+            </div>
+
+            {/* Hero — primary CTA */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#7B6FE8] rounded-3xl mb-7 shadow-xl shadow-[#534AB7]/20 p-7 md:p-8">
+              <Sparkles className="absolute top-6 right-12 w-4 h-4 text-white/30" />
+              <Sparkles className="absolute bottom-10 right-1/3 w-3 h-3 text-white/30" />
+              <Sparkles className="absolute top-1/2 left-12 w-3 h-3 text-white/20" />
+
+              <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-6">
+                <div>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
+                    <Zap className="w-3 h-3" /> Takes 30 seconds
+                  </span>
+                  <h2 className="text-2xl md:text-[28px] font-extrabold text-white mb-2 leading-tight">
+                    Drop your syllabus to start
+                  </h2>
+                  <p className="text-[13px] text-white/85 leading-relaxed max-w-md mb-5">
+                    Atlas reads your syllabus, lecture slides, and grades — then
+                    ranks every topic by grade impact, deadline, and how well
+                    you already know it.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Link href="/upload"
+                      className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95">
+                      <Upload className="w-4 h-4" /> Upload materials <ArrowRight className="w-4 h-4" />
+                    </Link>
+                    <Link href="/classes"
+                      className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95">
+                      <BookOpen className="w-4 h-4" /> Add a class first
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="hidden md:flex items-center justify-center w-[150px] h-[150px] rounded-3xl bg-white/10 backdrop-blur border border-white/20">
+                  <Brain className="w-16 h-16 text-white/90" strokeWidth={1.5} />
+                </div>
+              </div>
+            </div>
+
+            {/* Locked sample plan preview — the killer motivation */}
+            <div className="relative bg-white border border-[#ECE9FF] rounded-2xl p-5 mb-7 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-[#534AB7]" />
+                  <h3 className="text-sm font-extrabold text-[#14142B]">Sample study plan</h3>
+                </div>
+                <span className="text-[11px] text-[#9B9AB5] font-semibold">Preview</span>
+              </div>
+
+              <div className="relative space-y-2.5">
+                {[
+                  { rank: 1, topic: 'Cell Division',     subject: 'Biology 101',    duration: '45 min', priority: 'High',   pColor: 'bg-red-100 text-red-700',         bar: 'bg-indigo-500', sbg: 'bg-indigo-50',   stext: 'text-indigo-700' },
+                  { rank: 2, topic: 'Hypothesis Testing', subject: 'Statistics 201', duration: '30 min', priority: 'High',   pColor: 'bg-red-100 text-red-700',         bar: 'bg-purple-500', sbg: 'bg-purple-50',  stext: 'text-purple-700' },
+                  { rank: 3, topic: 'Essay Structure',    subject: 'English 110',    duration: '25 min', priority: 'Medium', pColor: 'bg-amber-100 text-amber-700',     bar: 'bg-rose-500',   sbg: 'bg-rose-50',     stext: 'text-rose-700' },
+                ].map((t) => (
+                  <div key={t.rank} className="relative flex items-stretch bg-[#FAFAFE] border border-[#ECE9FF] rounded-xl overflow-hidden opacity-60">
+                    {/* Colored accent bar */}
+                    <div className={`w-1 ${t.bar} flex-shrink-0`} />
+                    <div className="flex-1 p-3.5 flex items-center gap-3">
+                      {/* Rank circle */}
+                      <div className="w-8 h-8 rounded-full bg-[#F4F2FF] flex items-center justify-center text-[#534AB7] font-extrabold text-sm flex-shrink-0">
+                        {t.rank}
+                      </div>
+                      {/* Topic + class */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-extrabold text-[#1A1A2E] truncate">{t.topic}</p>
+                        <span className={`inline-block text-[10px] font-bold px-1.5 py-0.5 rounded ${t.sbg} ${t.stext} mt-1`}>
+                          {t.subject}
+                        </span>
+                      </div>
+                      {/* Duration */}
+                      <div className="flex items-center gap-1 text-[11px] text-[#6B6A8A] flex-shrink-0">
+                        <Clock className="w-3 h-3" /> {t.duration}
+                      </div>
+                      {/* Priority badge */}
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full flex-shrink-0 ${t.pColor}`}>
+                        {t.priority}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Centered lock overlay */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="w-11 h-11 rounded-2xl bg-[#534AB7] flex items-center justify-center shadow-lg shadow-[#534AB7]/30 mb-2">
+                    <Lock className="w-5 h-5 text-white" />
+                  </div>
+                  <p className="text-[13px] font-extrabold text-[#14142B]">Your plan will look like this</p>
+                  <p className="text-[11.5px] text-[#6B6A8A] mt-0.5">Upload a syllabus to generate yours.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* How Atlas builds your plan */}
+            <div className="mb-7">
+              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+                How Atlas builds your plan
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  { icon: Target,        color: 'bg-[#534AB7]',   label: 'Ranked by grade impact', desc: 'Tasks that move your final grade most go first.' },
+                  { icon: AlertTriangle, color: 'bg-red-500',     label: 'Deadline-aware',         desc: 'Approaching exams and due dates bubble up.' },
+                  { icon: Brain,         color: 'bg-blue-500',    label: 'Mastery-driven',         desc: 'More time on weak topics, less on what you know.' },
+                  { icon: Clock,         color: 'bg-emerald-500', label: 'Fits your schedule',     desc: 'Tasks sized to the time you actually have today.' },
+                ].map((c) => (
+                  <div key={c.label} className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md flex-shrink-0`}>
+                        <c.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <p className="text-[13px] font-extrabold text-[#1A1A2E] leading-tight">{c.label}</p>
+                    </div>
+                    <p className="text-[12px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Reassurance band */}
+            <div className="bg-[#F4F2FF] border border-[#E8E5FD] rounded-2xl px-5 py-4 flex items-start gap-3.5">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                <Sparkles className="w-4 h-4 text-[#534AB7]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-extrabold text-[#1A1A2E]">Every task has a reason</p>
+                <p className="text-[12px] text-[#6B6A8A] leading-relaxed">
+                  Atlas tells you WHY each task is ranked where it is — syllabus weight, professor mentions, your past performance. No black boxes.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
