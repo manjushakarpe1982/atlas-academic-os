@@ -488,7 +488,7 @@ export default function CalendarPage() {
             <div className="flex-1 min-w-0">
               {/* ══ MONTH VIEW ══ */}
               {view === "month" && (
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                   <div className="grid grid-cols-7 border-b border-gray-100">
                     {DAYS.map((d) => (
                       <div
@@ -499,7 +499,7 @@ export default function CalendarPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="grid grid-cols-7 divide-x divide-y divide-gray-50">
+                  <div className="grid grid-cols-7 divide-x divide-y divide-gray-100">
                     {cells.map((cell, idx) => {
                       const evs = cell.curr
                         ? events.filter((e) => e.date === cell.day)
@@ -558,7 +558,7 @@ export default function CalendarPage() {
 
               {/* ══ WEEK VIEW ══ */}
               {view === "week" && (
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                   <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                     <p className="text-sm font-extrabold text-gray-900">
                       Week of May 18–24, 2026
@@ -631,7 +631,7 @@ export default function CalendarPage() {
 
               {/* ══ DAY VIEW ══ */}
               {view === "day" && (
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                   {/* Day nav header */}
                   <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -671,7 +671,7 @@ export default function CalendarPage() {
                   </div>
 
                   {/* Hour timeline */}
-                  <div className="divide-y divide-gray-50">
+                  <div className="divide-y divide-gray-100">
                     {Array.from({ length: 15 }, (_, i) => i + 7).map((hr) => {
                       const label =
                         hr < 12
