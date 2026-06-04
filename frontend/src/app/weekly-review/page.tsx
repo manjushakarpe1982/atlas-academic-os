@@ -94,7 +94,7 @@ export default function WeeklyReviewPage() {
               <Sparkles className="absolute top-1/2 left-12 w-3 h-3 text-white/20 z-10 pointer-events-none" />
 
               {/* Foreground content — left-aligned, max width so it doesn't overlap illustration */}
-              <div className="relative z-10 p-7 md:p-9 max-w-[60%]">
+              <div className="relative z-10 p-7 md:p-9 md:max-w-[60%]">
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[12px] font-bold px-3 py-1.5 mb-3 border border-white/15">
                   <Clock className="w-3 h-3" /> Generated every Sunday
                 </span>
@@ -187,13 +187,13 @@ export default function WeeklyReviewPage() {
             </div>
 
             {/* Reassurance / motivation band */}
-            <div className="bg-[#F4F2FF] border border-[#E8E5FD] rounded-2xl px-5 py-4 flex items-start gap-3.5">
+            <div className="bg-[#F4F2FF] border border-[#cdc7f1] rounded-2xl px-5 py-4 flex items-start gap-3.5">
               <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
                 <Star className="w-4 h-4 text-[#534AB7]" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-extrabold text-[#1A1A2E]">Small steps every day &gt; big efforts once</p>
-                <p className="text-[12px] text-[#6B6A8A] leading-relaxed">
+                <p className="text-[15px] font-extrabold text-[#1A1A2E]">Small steps every day &gt; big efforts once</p>
+                <p className="text-[14px] text-[#6B6A8A] leading-relaxed">
                   Even 20 minutes a day adds up to a meaningful weekly review. Consistency beats intensity.
                 </p>
               </div>
