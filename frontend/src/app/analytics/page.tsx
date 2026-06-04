@@ -274,7 +274,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Two big action cards — with Cloudinary bg images and text overlap */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-7">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-7">
               {/* Option 1 — Start a study session (purple gradient + analyticspage1 illustration) */}
               <Link
                 href="/study-plan"
