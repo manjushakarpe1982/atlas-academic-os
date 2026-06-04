@@ -10,7 +10,7 @@ import {
   CheckCircle2, XCircle, Flame, Target,
   ChevronRight, ArrowRight, Star, BarChart2,
   Sparkles, AlertTriangle, Calendar,
-  Award, Lock, Upload,
+  Lock, Upload,
 } from 'lucide-react';
 
 const WEEK_STATS = [
@@ -61,70 +61,66 @@ export default function WeeklyReviewPage() {
   if (!hasReview) {
     return (
       <AppLayout>
-        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-4">
           <div className="max-w-[920px] mx-auto">
 
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
-              <span className="hover:text-indigo-600 cursor-pointer" onClick={() => router.push('/home')}>Home</span>
-              <ChevronRight className="w-3 h-3" />
-              <span className="text-indigo-600 font-semibold">Weekly Review</span>
-            </div>
-
             {/* Header */}
-            <div className="text-center mb-7">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#E8E5FD] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-4">
-                <Calendar className="w-3.5 h-3.5" /> Your weekly summary
-              </span>
+            <div className="text-center mb-4">
+              
               <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight mb-2">
                 See you on Sunday
               </h1>
-              <p className="text-sm text-[#6B6A8A] max-w-xl mx-auto leading-relaxed">
+              <p className="text-sm text-[#6B6A8A] max-w-3xl mx-auto leading-relaxed">
                 Every Sunday evening, Atlas wraps up your week — hours studied,
                 topics mastered, what slipped, and what to focus on next. Come
                 back after a few days of study and your first review will appear.
               </p>
             </div>
 
-            {/* Hero — calm illustration card */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#7B6FE8] rounded-3xl mb-7 shadow-xl shadow-[#534AB7]/20 p-7 md:p-9">
-              <Sparkles className="absolute top-6 right-12 w-4 h-4 text-white/30" />
-              <Sparkles className="absolute bottom-12 right-1/3 w-3 h-3 text-white/30" />
-              <Sparkles className="absolute top-1/2 left-12 w-3 h-3 text-white/20" />
+            {/* Hero — with weeklyreviewpage1.webp as full-width bg image */}
+            <div className="relative overflow-hidden  rounded-xl mb-7 shadow-xl shadow-[#534AB7]/20 min-h-[260px]">
+              {/* Full-width background illustration */}
+              <img
+                src="https://res.cloudinary.com/mview/image/upload/atlas/weeklyreviewpage1.webp"
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+              />
+              {/* Purple-to-transparent overlay so left-side text stays crisp */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#6e64e0] via-[#534AB7]/90 via-45% to-transparent pointer-events-none" />
 
-              <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-6">
-                <div>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
-                    <Clock className="w-3 h-3" /> Generated every Sunday
-                  </span>
-                  <h2 className="text-2xl md:text-[28px] font-extrabold text-white mb-2 leading-tight">
-                    Build your first week of progress
-                  </h2>
-                  <p className="text-[13px] text-white/85 leading-relaxed max-w-md mb-5">
-                    Study a few sessions this week — even short ones count.
-                    Your first weekly review will be richer the more you put in.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Link href="/study-plan"
-                      className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95">
-                      <Sparkles className="w-4 h-4" /> Open study plan
-                    </Link>
-                    <Link href="/upload"
-                      className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95">
-                      <Upload className="w-4 h-4" /> Add materials
-                    </Link>
-                  </div>
-                </div>
+              {/* Decorative sparkles */}
+              <Sparkles className="absolute top-6 right-1/3 w-4 h-4 text-white/30 z-10 pointer-events-none" />
+              <Sparkles className="absolute bottom-12 right-1/2 w-3 h-3 text-white/30 z-10 pointer-events-none" />
+              <Sparkles className="absolute top-1/2 left-12 w-3 h-3 text-white/20 z-10 pointer-events-none" />
 
-                <div className="hidden md:flex items-center justify-center w-[150px] h-[150px] rounded-3xl bg-white/10 backdrop-blur border border-white/20">
-                  <Award className="w-16 h-16 text-white/90" strokeWidth={1.5} />
+              {/* Foreground content — left-aligned, max width so it doesn't overlap illustration */}
+              <div className="relative z-10 p-7 md:p-9 max-w-[60%]">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[12px] font-bold px-3 py-1.5 mb-3 border border-white/15">
+                  <Clock className="w-3 h-3" /> Generated every Sunday
+                </span>
+                <h2 className="text-2xl md:text-[28px] font-extrabold text-white mb-2 leading-tight">
+                  Build your first week of progress
+                </h2>
+                <p className="text-[15px] text-white/85 leading-relaxed mb-5">
+                  Study a few sessions this week — even short ones count.
+                  Your first weekly review will be richer the more you put in.
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link href="/study-plan"
+                    className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95">
+                    <Sparkles className="w-4 h-4" /> Open study plan
+                  </Link>
+                  <Link href="/upload"
+                    className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95">
+                    <Upload className="w-4 h-4" /> Add materials
+                  </Link>
                 </div>
               </div>
             </div>
 
             {/* "What you'll see" — preview of the weekly review */}
-            <div className="mb-7">
-              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+            <div className="mb-5">
+              <p className="text-[13px] font-extrabold text-[#9292a1] uppercase tracking-widest mb-3">
                 What every weekly review includes
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -134,51 +130,58 @@ export default function WeeklyReviewPage() {
                   { icon: Flame,        color: 'bg-orange-500',  label: 'Study streak',      desc: 'Days in a row you stayed consistent.' },
                   { icon: AlertTriangle,color: 'bg-amber-500',   label: 'What you skipped',  desc: 'Topics deferred this week, now overdue.' },
                 ].map((c) => (
-                  <div key={c.label} className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div key={c.label} className="bg-white border border-[#ECE9FF] rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md flex-shrink-0`}>
                         <c.icon className="w-5 h-5 text-white" />
                       </div>
-                      <p className="text-[13px] font-extrabold text-[#1A1A2E] leading-tight">{c.label}</p>
+                      <p className="text-[15px] font-extrabold text-[#1A1A2E] leading-tight">{c.label}</p>
                     </div>
-                    <p className="text-[12px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
+                    <p className="text-[14px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Sample preview row — locked */}
-            <div className="relative bg-white border border-[#ECE9FF] rounded-2xl p-5 mb-7 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between mb-4">
+            {/* Sample preview row — locked, matches screenshot reference */}
+            <div className="relative bg-white border border-[#ECE9FF] rounded-xl p-5 mb-7 shadow-sm overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <BarChart2 className="w-4 h-4 text-[#534AB7]" />
-                  <h3 className="text-sm font-extrabold text-[#14142B]">Sample weekly summary</h3>
+                  <h3 className="text-lg font-extrabold text-[#14142B]">Sample weekly summary</h3>
                 </div>
-                <span className="text-[11px] text-[#9B9AB5] font-semibold">Preview</span>
+                <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-[#534AB7] bg-[#F4F2FF] px-2.5 py-1 rounded-full">
+                  Preview
+                </span>
               </div>
 
-              {/* Faded sample stat row */}
-              <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { value: '14.5h', label: 'Hours studied', color: 'text-[#534AB7]', icon: Clock },
-                  { value: '8',     label: 'Sessions',      color: 'text-emerald-600', icon: CheckCircle2 },
-                  { value: '+12%',  label: 'Mastery gain',  color: 'text-blue-600', icon: TrendingUp },
-                  { value: '5 days',label: 'Streak',        color: 'text-orange-600', icon: Flame },
-                ].map((s) => (
-                  <div key={s.label} className="bg-[#FAFAFE] border border-[#ECE9FF] rounded-xl p-3 opacity-50">
-                    <s.icon className={`w-4 h-4 ${s.color} mb-2`} />
-                    <p className={`text-lg font-extrabold ${s.color}`}>{s.value}</p>
-                    <p className="text-[11px] text-[#9B9AB5] mt-0.5">{s.label}</p>
-                  </div>
-                ))}
+              {/* Faded 4-stat row with centered lock overlay */}
+              <div className="relative">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 opacity-60">
+                  {[
+                    { value: '14.5h',  label: 'Hours studied', color: 'text-[#534AB7]',   bg: 'bg-[#F4F2FF]',    icon: Clock },
+                    { value: '8',      label: 'Sessions',      color: 'text-emerald-600', bg: 'bg-emerald-50',   icon: CheckCircle2 },
+                    { value: '+12%',   label: 'Mastery gain',  color: 'text-blue-600',    bg: 'bg-blue-50',      icon: TrendingUp },
+                    { value: '5 days', label: 'Streak',        color: 'text-orange-600',  bg: 'bg-orange-50',    icon: Flame },
+                  ].map((s) => (
+                    <div key={s.label} className="bg-white border border-[#ECE9FF] rounded-xl p-3.5">
+                      <div className={`w-7 h-7 rounded-lg ${s.bg} flex items-center justify-center mb-2.5`}>
+                        <s.icon className={`w-3.5 h-3.5 ${s.color}`} />
+                      </div>
+                      <p className={`text-2xl font-extrabold ${s.color} leading-none mb-1.5`}>{s.value}</p>
+                      <p className="text-[11px] text-[#9B9AB5] font-semibold">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
 
-                {/* Centered lock overlay */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="w-10 h-10 rounded-2xl bg-[#534AB7] flex items-center justify-center shadow-lg shadow-[#534AB7]/30 mb-2">
-                    <Lock className="w-4 h-4 text-white" />
+                {/* Centered lock overlay with small white halo behind text for legibility */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <div className="w-11 h-11 rounded-full bg-[#534AB7] flex items-center justify-center shadow-lg shadow-[#534AB7]/30 mb-5">
+                    <Lock className="w-5 h-5 text-white" />
                   </div>
-                  <p className="text-[12.5px] font-extrabold text-[#14142B]">Your data will appear here</p>
-                  <p className="text-[11px] text-[#6B6A8A] mt-0.5">First review unlocks after a few days of study.</p>
+                  <p className="text-[16px] font-extrabold bg-inherit text-[#14142B]  px-2 py-0.5">Your data will appear here</p>
+                  <p className="text-[13px] text-[#6B6A8A]  px-2 py-0.5 mt-0.5">First review unlocks after a few days of study.</p>
                 </div>
               </div>
             </div>
