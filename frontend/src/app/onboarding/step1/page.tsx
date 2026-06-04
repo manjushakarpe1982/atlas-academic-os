@@ -10,24 +10,24 @@ import { useOnboarding } from '../_components/OnboardingContext';
 
 const ROLES = [
   {
-    id: 'student'      as Role, label: 'Student',      icon: GraduationCap,
+    id: 'high_school'  as Role, label: 'High School',  icon: GraduationCap,
     bg: 'bg-[#534AB7]', lightBg: 'bg-violet-50', border: 'border-violet-400',
-    desc: 'I want to improve my academic performance and study smarter.',
+    desc: "I'm in high school and want to study smarter and improve my grades.",
   },
   {
-    id: 'teacher'      as Role, label: 'Teacher',      icon: BookOpen,
+    id: 'college'      as Role, label: 'College',      icon: BookOpen,
     bg: 'bg-emerald-500', lightBg: 'bg-emerald-50', border: 'border-emerald-400',
-    desc: 'I want to streamline my teaching and support my students.',
+    desc: "I'm in college or university and want to ace my courses.",
   },
   {
-    id: 'researcher'   as Role, label: 'Researcher',   icon: FlaskConical,
+    id: 'graduate'     as Role, label: 'Graduate',     icon: FlaskConical,
     bg: 'bg-blue-500', lightBg: 'bg-blue-50', border: 'border-blue-400',
-    desc: 'I want to accelerate my research and discover insights.',
+    desc: "I'm a graduate student working on advanced studies or research.",
   },
   {
-    id: 'professional' as Role, label: 'Professional', icon: Briefcase,
+    id: 'self_learner' as Role, label: 'Self-learner', icon: Briefcase,
     bg: 'bg-orange-500', lightBg: 'bg-orange-50', border: 'border-orange-400',
-    desc: 'I want to upskill and advance my career.',
+    desc: "I'm learning on my own and want a structured study path.",
   },
 ];
 

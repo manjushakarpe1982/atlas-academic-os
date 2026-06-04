@@ -4,7 +4,7 @@ import {
   Check, GraduationCap, BookOpen, Target, Sliders, User,
 } from 'lucide-react';
 
-export type Role = 'student' | 'teacher' | 'researcher' | 'professional' | null;
+export type Role = 'high_school' | 'college' | 'graduate' | 'self_learner' | null;
 
 export const STEPS = [
   { n: 1, label: 'Welcome',           sub: "Let's get to know you",        icon: User,          href: '/onboarding/step1' },

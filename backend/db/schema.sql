@@ -28,7 +28,7 @@ create table if not exists public.onboarding (
     user_id        uuid primary key references public.users (id) on delete cascade,
 
     -- Step 1 — Welcome / role
-    role           text,                       -- student | teacher | researcher | professional
+    role           text,                       -- high_school | college | graduate | self_learner
 
     -- Step 2 — Academic profile
     institution    text,
