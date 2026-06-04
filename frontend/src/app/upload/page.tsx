@@ -293,7 +293,7 @@ function DropZone({ onUpload }: { onUpload: (name:string) => void }) {
       className={`border-2 border-dashed rounded-2xl p-6 md:p-8 text-center cursor-pointer transition-all ${
         dragging
           ? 'border-indigo-400 bg-indigo-50'
-          : 'border-gray-200 bg-gray-50/60 hover:border-indigo-300 hover:bg-indigo-50/30'
+          : 'border-gray-400 bg-gray-100 hover:border-indigo-300 hover:bg-indigo-50/30'
       }`}
     >
       <input ref={inputRef} type="file" multiple className="hidden"
@@ -303,8 +303,8 @@ function DropZone({ onUpload }: { onUpload: (name:string) => void }) {
       <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
         <Upload className="w-6 h-6 text-indigo-600" />
       </div>
-      <p className="text-sm font-bold text-gray-800 mb-1">Drop files here or click to browse</p>
-      <p className="text-xs text-gray-400 mb-4">
+      <p className="text-base font-bold text-gray-800 mb-1">Drop files here or click to browse</p>
+      <p className="text-sm text-gray-400 mb-4">
         Atlas auto-detects the file type and matches it to the right class
       </p>
       <div className="flex justify-center gap-2 flex-wrap">
@@ -321,7 +321,7 @@ function DropZone({ onUpload }: { onUpload: (name:string) => void }) {
             className={`inline-flex items-center gap-1.5 ${t.bg} border ${t.border} rounded-lg px-2.5 py-1`}
           >
             <FileText className={`w-3 h-3 ${t.color}`} />
-            <span className={`text-[11px] font-extrabold ${t.color}`}>{t.ext}</span>
+            <span className={`text-[13px] font-extrabold ${t.color}`}>{t.ext}</span>
           </span>
         ))}
       </div>
@@ -391,9 +391,7 @@ export default function UploadPage() {
 
             {/* Header */}
             <div className="text-center mb-7">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#E8E5FD] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-4">
-                <Zap className="w-3.5 h-3.5" /> Step 1 — Add your materials
-              </span>
+             
               <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight mb-2">
                 Upload your course materials
               </h1>
@@ -408,7 +406,7 @@ export default function UploadPage() {
 
             {/* What to upload — guidance cards */}
             <div className="mt-9">
-              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+              <p className="text-[16px] font-extrabold text-[#737281] uppercase tracking-widest mb-3">
                 What you can upload
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -420,7 +418,7 @@ export default function UploadPage() {
                   { icon: Target,    color: 'bg-orange-500',    label: 'Past quizzes/exams', desc: 'Helps Atlas predict likely future questions.' },
                   { icon: BarChart2, color: 'bg-amber-500',     label: 'Grade reports',      desc: 'See where you stand and project your final grade.' },
                 ].map((c) => (
-                  <div key={c.label} className="relative bg-white border border-[#ECE9FF] rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#534AB7]/30 transition-all">
+                  <div key={c.label} className="relative bg-white border border-[#ECE9FF] rounded-xl p-5 shadow-sm hover:shadow-md hover:border-[#534AB7]/30 transition-all">
                     {/* "Start here" badge — positioned top-right, doesn't overlap content */}
                     {c.tag && (
                       <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 uppercase tracking-wider">
@@ -433,13 +431,13 @@ export default function UploadPage() {
                       <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md flex-shrink-0`}>
                         <c.icon className="w-5 h-5 text-white" />
                       </div>
-                      <p className="text-[14px] font-extrabold text-[#1A1A2E] leading-tight">
+                      <p className="text-[16px] font-extrabold text-[#1A1A2E] leading-tight">
                         {c.label}
                       </p>
                     </div>
 
                     {/* Description — full width, clean block below */}
-                    <p className="text-[12.5px] text-[#6B6A8A] leading-relaxed">
+                    <p className="text-[13px] text-[#6B6A8A] leading-relaxed">
                       {c.desc}
                     </p>
                   </div>
@@ -448,37 +446,37 @@ export default function UploadPage() {
             </div>
 
             {/* Supported formats line */}
-            <p className="text-center text-[12px] text-[#9B9AB5] mt-6">
+            <p className="text-center text-[13px] text-[#747485] mt-6">
               Supports PDF, DOCX, PPT, TXT, MP3, MP4, M4A, JPG, PNG · Up to 50 MB per file
             </p>
 
             {/* Reassurance band */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-7">
-              <div className="bg-white border border-[#ECE9FF] rounded-2xl px-4 py-3.5 flex items-start gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-7">
+              <div className="bg-white border border-[#ECE9FF] rounded-xl px-4 py-3.5 flex items-start gap-3">
                 <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-[12.5px] font-extrabold text-[#1A1A2E]">Your files are private</p>
-                  <p className="text-[11.5px] text-[#6B6A8A] leading-relaxed">Encrypted, never shared, never used to train AI.</p>
+                  <p className="text-[14px] font-extrabold text-[#1A1A2E] mb-1">Your files are private</p>
+                  <p className="text-[13px] text-[#6B6A8A] leading-relaxed">Encrypted, never shared, never used to train AI.</p>
                 </div>
               </div>
-              <div className="bg-white border border-[#ECE9FF] rounded-2xl px-4 py-3.5 flex items-start gap-3">
+              <div className="bg-white border border-[#ECE9FF] rounded-xl px-4 py-3.5 flex items-start gap-3">
                 <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
                   <Zap className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-[12.5px] font-extrabold text-[#1A1A2E]">Fast processing</p>
-                  <p className="text-[11.5px] text-[#6B6A8A] leading-relaxed">Most files parse in under 60 seconds.</p>
+                  <p className="text-[14px] font-extrabold text-[#1A1A2E] mb-1">Fast processing</p>
+                  <p className="text-[13px] text-[#6B6A8A] leading-relaxed">Most files parse in under 60 seconds.</p>
                 </div>
               </div>
-              <div className="bg-white border border-[#ECE9FF] rounded-2xl px-4 py-3.5 flex items-start gap-3">
+              <div className="bg-white border border-[#ECE9FF] rounded-xl px-4 py-3.5 flex items-start gap-3">
                 <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center">
                   <FileText className="w-4 h-4 text-violet-600" />
                 </div>
                 <div>
-                  <p className="text-[12.5px] font-extrabold text-[#1A1A2E]">FERPA &amp; GDPR compliant</p>
-                  <p className="text-[11.5px] text-[#6B6A8A] leading-relaxed">Delete your data any time.</p>
+                  <p className="text-[14px] font-extrabold text-[#1A1A2E] mb-1">FERPA &amp; GDPR compliant</p>
+                  <p className="text-[13px] text-[#6B6A8A] leading-relaxed">Delete your data any time.</p>
                 </div>
               </div>
             </div>
