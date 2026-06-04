@@ -421,14 +421,12 @@ export default function GradesPage() {
   if (!hasGrades) {
     return (
       <AppLayout>
-        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-4">
           <div className="max-w-[1000px] mx-auto">
 
             {/* Header */}
-            <div className="text-center mb-7">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#E8E5FD] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-4">
-                <GraduationCap className="w-3.5 h-3.5" /> Step 4 — Track your grades
-              </span>
+            <div className="text-center mb-4">
+             
               <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight mb-2">
                 See where your grades are heading
               </h1>
@@ -438,104 +436,142 @@ export default function GradesPage() {
               </p>
             </div>
 
-            {/* Two big action cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-7">
-              {/* Option 1 — Upload */}
+            {/* Two big action cards — with Cloudinary bg images and text overlap */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-7">
+              {/* Option 1 — Upload grade report (purple gradient + gradespage2 illustration) */}
               <Link
                 href="/upload"
-                className="group relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#7B6FE8] rounded-3xl p-6 shadow-xl shadow-[#534AB7]/20 hover:shadow-2xl transition-all active:scale-[0.99]"
+                className="group relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#7B6FE8] rounded-xl shadow-xl shadow-[#534AB7]/20 hover:shadow-2xl transition-all active:scale-[0.99] min-h-[230px]"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center border border-white/20">
-                    <Upload className="w-6 h-6 text-white" />
+                {/* Full-width background illustration */}
+                <img
+                  src="https://res.cloudinary.com/mview/image/upload/atlas/gradespage2.webp"
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+                />
+               
+
+                {/* Foreground content */}
+                <div className="relative z-10 p-6 ">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center border border-white/20">
+                      <Upload className="w-5 h-5 text-white" />
+                    </div>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/90 text-emerald-950 text-[10px] font-extrabold px-2 py-0.5 uppercase tracking-wider">
+                  {/* Recommended badge */}
+                  <span className="absolute top-5 right-5 inline-flex items-center gap-1 rounded-full bg-emerald-400 text-emerald-950 text-[10px] font-extrabold px-2 py-1 uppercase tracking-wider z-20">
                     Recommended
                   </span>
-                </div>
-                <h3 className="text-xl font-extrabold text-white mb-1.5">
-                  Upload grade report
-                </h3>
-                <p className="text-[13px] text-white/85 leading-relaxed mb-5">
-                  Drop a transcript, gradebook export, or graded assignment —
-                  Atlas extracts every score automatically.
-                </p>
-                <div className="flex items-center gap-2 text-white font-extrabold text-sm">
-                  <span>Upload a file</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <h3 className="text-xl font-extrabold text-white mb-1.5">
+                    Upload grade report
+                  </h3>
+                  <p className="text-[14px] text-white/85 leading-relaxed mb-5 max-w-[65%]">
+                    Drop a transcript, gradebook export, or graded assignment —
+                    Atlas extracts every score automatically.
+                  </p>
+                  <div className="inline-flex items-center gap-2 bg-white text-[#534AB7] font-extrabold text-sm px-4 py-2.5 rounded-xl shadow-md">
+                    <Upload className="w-4 h-4" /> Upload a file
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </Link>
 
-              {/* Option 2 — Manual */}
+              {/* Option 2 — Add grade manually (white + gradespage1 illustration) */}
               <button
                 onClick={() => setShowAddModal(true)}
-                className="group text-left relative overflow-hidden bg-white border border-[#ECE9FF] rounded-3xl p-6 shadow-sm hover:shadow-lg hover:border-[#534AB7]/30 transition-all active:scale-[0.99]"
+                className="group text-left relative overflow-hidden bg-white border border-[#bcb4f1] rounded-xl shadow-sm hover:shadow-lg hover:border-[#534AB7]/30 transition-all active:scale-[0.99] min-h-[230px]"
               >
-                <div className="w-12 h-12 rounded-2xl bg-[#F4F2FF] flex items-center justify-center mb-4">
-                  <Plus className="w-6 h-6 text-[#534AB7]" />
-                </div>
-                <h3 className="text-xl font-extrabold text-[#14142B] mb-1.5">
-                  Add grade manually
-                </h3>
-                <p className="text-[13px] text-[#6B6A8A] leading-relaxed mb-5">
-                  Enter a single score for any class — quiz, exam, paper —
-                  and Atlas updates your projection.
-                </p>
-                <div className="flex items-center gap-2 text-[#534AB7] font-extrabold text-sm">
-                  <span>Log a grade</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                {/* Full-width background illustration */}
+                <img
+                  src="https://res.cloudinary.com/mview/image/upload/atlas/gradespage1.webp"
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+                />
+                {/* White-to-transparent overlay so text on the left stays crisp */}
+                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 via-45% to-transparent pointer-events-none" />
+
+                {/* Foreground content */}
+                <div className="relative z-10 p-6 max-w-[65%]">
+                  <div className="w-11 h-11 rounded-xl bg-[#F4F2FF] flex items-center justify-center mb-2">
+                    <Plus className="w-5 h-5 text-[#534AB7]" />
+                  </div>
+                  <h3 className="text-xl font-extrabold text-[#14142B] mb-1.5">
+                    Add grade manually
+                  </h3>
+                  <p className="text-[14px] text-[#6B6A8A] leading-relaxed mb-5">
+                    Enter a single score for any class — quiz, exam, paper —
+                    and Atlas updates your projection.
+                  </p>
+                  <div className="inline-flex items-center gap-2 bg-white border-2 border-[#E8E5FD] text-[#534AB7] font-extrabold text-sm px-4 py-2.5 rounded-xl">
+                    Log a grade
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </button>
             </div>
 
-            {/* Locked GPA chart preview */}
-            <div className="relative bg-white border border-[#ECE9FF] rounded-2xl p-5 mb-7 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between mb-3">
+            {/* Locked GPA chart preview — matches screenshot reference */}
+            <div className="relative bg-[#F4F2FF] border border-[#E8E5FD] rounded-xl p-5 mb-7 shadow-sm overflow-hidden">
+              <div className="flex  md:flex-row flex-col items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-[#534AB7]" />
-                  <h3 className="text-sm font-extrabold text-[#14142B]">GPA trend</h3>
+                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                    <TrendingUp className="w-6 h-6 text-[#534AB7]" />
+                  </div>
+                  <h3 className="text-lg font-extrabold text-[#14142B]">GPA trend</h3>
                 </div>
-                <span className="text-[11px] text-[#9B9AB5] font-semibold">
-                  Locked
+                <span className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#6B6A8A]">
+                  <Lock className="w-4 h-4" /> Locked until first score
                 </span>
               </div>
 
-              {/* Faded preview chart with lock overlay */}
-              <div className="relative h-[160px]">
-                <svg viewBox="0 0 600 160" className="w-full h-full opacity-30 pointer-events-none">
-                  {/* Grid lines */}
-                  {[40, 80, 120].map((y) => (
-                    <line key={y} x1="0" y1={y} x2="600" y2={y} stroke="#E5E5F0" strokeDasharray="4 4" />
+              {/* Smooth curve chart with centered lock overlay */}
+              <div className="relative h-[180px]">
+                <svg viewBox="0 0 700 180" className="w-full h-full opacity-50 pointer-events-none" preserveAspectRatio="none">
+                  {/* Dashed grid lines */}
+                  {[45, 90, 135].map((y) => (
+                    <line key={y} x1="0" y1={y} x2="700" y2={y} stroke="#D8D3FF" strokeDasharray="3 5" />
                   ))}
-                  {/* Faded area + line */}
-                  <path d="M0,120 L80,110 L160,100 L240,105 L320,85 L400,70 L480,55 L600,40 L600,160 L0,160 Z" fill="url(#fadeGrad)" />
-                  <path d="M0,120 L80,110 L160,100 L240,105 L320,85 L400,70 L480,55 L600,40" stroke="#534AB7" strokeWidth="2.5" fill="none" />
-                  {/* Dots */}
-                  {[[0,120],[80,110],[160,100],[240,105],[320,85],[400,70],[480,55],[600,40]].map(([x,y],i) => (
-                    <circle key={i} cx={x} cy={y} r="4" fill="#534AB7" />
+                  {/* Natural sloped curve - rises with visible peaks and dips */}
+                  <path
+                    d="M 20 155 C 60 145, 100 135, 130 125 S 200 105, 240 130 S 330 85, 380 95 S 470 50, 520 80 S 620 30, 680 25"
+                    stroke="#534AB7"
+                    strokeWidth="2.5"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  {/* Dots positioned along the natural curve */}
+                  {[
+                    [20, 155],   // start, low
+                    [130, 125],  // climb
+                    [240, 130],  // small dip
+                    [320, 100],  // rise
+                    [380, 95],   // peak then dip
+                    [450, 70],   // rise
+                    [520, 80],   // small dip
+                    [600, 40],   // strong rise
+                    [680, 25],   // top right
+                  ].map(([x, y], i) => (
+                    <g key={i}>
+                      <circle cx={x} cy={y} r="5" fill="#534AB7" />
+                      <circle cx={x} cy={y} r="2" fill="white" />
+                    </g>
                   ))}
-                  <defs>
-                    <linearGradient id="fadeGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#534AB7" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="#534AB7" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
                 </svg>
 
                 {/* Centered lock message */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="w-11 h-11 rounded-2xl bg-[#534AB7] flex items-center justify-center shadow-lg shadow-[#534AB7]/30 mb-2">
-                    <Lock className="w-5 h-5 text-white" />
+                  <div className="w-12 h-12 rounded-full bg-[#534AB7] flex items-center justify-center shadow-lg shadow-[#534AB7]/30 mb-2">
+                    <Lock className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-[13px] font-extrabold text-[#14142B]">Add a grade to unlock</p>
-                  <p className="text-[11.5px] text-[#6B6A8A] mt-0.5">Your GPA trend appears once you log your first score.</p>
+                  <p className="text-lg font-extrabold text-[#14142B]">Add a grade to unlock</p>
+                  <p className="text-[14px] text-[#4a494e] mt-0.5">Your GPA trend appears once you log your first score.</p>
                 </div>
               </div>
             </div>
 
             {/* What Atlas tracks */}
             <div className="mb-7">
-              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+              <p className="text-base font-extrabold text-[#4d4d50] uppercase tracking-widest mb-3">
                 What you&apos;ll see here
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -545,28 +581,28 @@ export default function GradesPage() {
                   { icon: AlertTriangle, color: 'bg-orange-500',  label: 'Weak spots flagged',     desc: 'See which class needs attention first.' },
                   { icon: Brain,         color: 'bg-blue-500',    label: 'Grade impact ranking',   desc: 'Which task moves your GPA the most.' },
                 ].map((c) => (
-                  <div key={c.label} className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div key={c.label} className="bg-white border border-[#ECE9FF] rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md flex-shrink-0`}>
                         <c.icon className="w-5 h-5 text-white" />
                       </div>
-                      <p className="text-[13px] font-extrabold text-[#1A1A2E] leading-tight">{c.label}</p>
+                      <p className="text-[15px] font-bold text-[#1A1A2E] leading-tight">{c.label}</p>
                     </div>
-                    <p className="text-[12px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
+                    <p className="text-[15px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Reassurance band */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               <div className="bg-white border border-[#ECE9FF] rounded-2xl px-4 py-3.5 flex items-start gap-3">
                 <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center">
                   <Zap className="w-4 h-4 text-violet-600" />
                 </div>
                 <div>
-                  <p className="text-[12.5px] font-extrabold text-[#1A1A2E]">Real grading weights</p>
-                  <p className="text-[11.5px] text-[#6B6A8A] leading-relaxed">Atlas uses your syllabus, not generic formulas.</p>
+                  <p className="text-[15px] font-extrabold text-[#1A1A2E] mb-0.5">Real grading weights</p>
+                  <p className="text-[13px] text-[#6B6A8A] leading-relaxed">Atlas uses your syllabus, not generic formulas.</p>
                 </div>
               </div>
               <div className="bg-white border border-[#ECE9FF] rounded-2xl px-4 py-3.5 flex items-start gap-3">
@@ -574,8 +610,8 @@ export default function GradesPage() {
                   <BarChart2 className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-[12.5px] font-extrabold text-[#1A1A2E]">More data, better predictions</p>
-                  <p className="text-[11.5px] text-[#6B6A8A] leading-relaxed">Accuracy improves with every grade added.</p>
+                  <p className="text-[15px] font-extrabold text-[#1A1A2E] mb-0.5">More data, better predictions</p>
+                  <p className="text-[13px] text-[#6B6A8A] leading-relaxed">Accuracy improves with every grade added.</p>
                 </div>
               </div>
               <div className="bg-white border border-[#ECE9FF] rounded-2xl px-4 py-3.5 flex items-start gap-3">
@@ -583,8 +619,8 @@ export default function GradesPage() {
                   <Shield className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-[12.5px] font-extrabold text-[#1A1A2E]">Private &amp; secure</p>
-                  <p className="text-[11.5px] text-[#6B6A8A] leading-relaxed">Your grades are never shared, ever.</p>
+                  <p className="text-[15px] font-extrabold text-[#1A1A2E] mb-0.5">Private &amp; secure</p>
+                  <p className="text-[13px] text-[#6B6A8A] leading-relaxed">Your grades are never shared, ever.</p>
                 </div>
               </div>
             </div>
