@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AppLayout from "@/components/layout/AppLayout";
 import { PageSkeleton } from "@/components/Skeleton";
 import EmptyState from "@/components/EmptyState";
@@ -1400,6 +1401,7 @@ function AddClassModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function ClassesPage() {
+  const router = useRouter();
   const [selected, setSelected] = useState<CLS | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -1839,7 +1841,7 @@ export default function ClassesPage() {
               <ClassCard
                 key={cls.id}
                 cls={cls}
-                onClick={() => setSelected(cls)}
+                onClick={() => router.push(`/classes/${cls.id}`)}
               />
             ))}
           </div>
