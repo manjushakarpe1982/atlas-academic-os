@@ -296,7 +296,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="relative">
               <button onClick={() => setShowNotifs((p) => !p)}
                 className="relative p-2 rounded-xl hover:bg-gray-50 transition-all">
-                <Bell className="w-4 h-4 text-gray-500" />
+                <Bell className="w-6 h-6 text-gray-500" />
                 {unreadCount > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center text-[9px] font-extrabold text-white">
                     {unreadCount}
@@ -308,11 +308,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {showNotifs && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowNotifs(false)} />
-                  <div className="absolute right-0 top-10 w-80 bg-white border border-gray-100 rounded-2xl shadow-2xl shadow-black/10 z-50 overflow-hidden">
+                  <div className="absolute right-0 top-10 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl shadow-black/10 z-50 overflow-hidden">
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-extrabold text-gray-900">Notifications</p>
+                        <p className="text-base font-extrabold text-gray-900">Notifications</p>
                         {unreadCount > 0 && (
                           <span className="text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">{unreadCount} new</span>
                         )}
@@ -320,7 +320,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       <div className="flex items-center gap-2">
                         {unreadCount > 0 && (
                           <button onClick={markAllRead}
-                            className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                            className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
                             Mark all read
                           </button>
                         )}
@@ -332,7 +332,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </div>
 
                     {/* Notification list */}
-                    <div className="max-h-96 overflow-y-auto divide-y divide-gray-50">
+                    <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
                       {notifs.map((n) => (
                         <div key={n.id} onClick={() => markRead(n.id)}
                           className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-all hover:bg-gray-50 ${!n.read ? 'bg-indigo-50/30' : ''}`}>
@@ -341,9 +341,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             <p className={`text-xs font-semibold leading-snug ${!n.read ? 'text-gray-900' : 'text-gray-500'}`}>
                               {n.title}
                             </p>
-                            <p className="text-[10px] text-gray-400 mt-0.5">{n.sub}</p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">{n.sub}</p>
                           </div>
-                          <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{n.time}</span>
+                          <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">{n.time}</span>
                         </div>
                       ))}
                     </div>
@@ -351,7 +351,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     {/* Footer */}
                     <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50">
                       <Link href="/settings/notifications" onClick={() => setShowNotifs(false)}
-                        className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                        className="text-[13px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
                         Manage notification settings →
                       </Link>
                     </div>
