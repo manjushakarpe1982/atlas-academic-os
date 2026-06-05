@@ -11,6 +11,7 @@ import {
   StickyNote, ClipboardCheck, PenSquare, Filter, Upload as UploadIcon,
   Star, Sparkles, BarChart2, Brain, BookOpen, Award, GraduationCap, Mail,
 } from 'lucide-react';
+import FilePreviewDrawer, { PreviewFile } from '@/components/FilePreviewDrawer';
 
 /* ─────────────────────────────────────────────────────────────
  *  Class Workspace
@@ -197,6 +198,7 @@ export default function ClassWorkspacePage() {
   const [cls,     setCls]       = useState<ClassData | null>(null);
   const [filter,  setFilter]    = useState<string>('all');
   const [hasData, setHasData]   = useState(false);
+  const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
 
   useEffect(() => {
     // Simulate fetch
@@ -537,8 +539,9 @@ export default function ClassWorkspacePage() {
                     const Icon = FILE_ICONS[m.type] ?? FileText;
                     const colorCls = FILE_COLORS[m.type] ?? 'bg-gray-50 text-gray-600';
                     return (
-                      <div key={m.id}
-                        className="flex items-start gap-3 px-5 py-3 hover:bg-[#FAFAFE] transition-colors cursor-pointer">
+                      <button key={m.id}
+                        onClick={() => setPreviewFile(m as PreviewFile)}
+                        className="w-full text-left flex items-start gap-3 px-5 py-3 hover:bg-[#FAFAFE] transition-colors cursor-pointer">
                         <div className={`w-8 h-8 rounded-lg ${colorCls} flex items-center justify-center flex-shrink-0`}>
                           <Icon className="w-4 h-4" />
                         </div>
@@ -549,7 +552,7 @@ export default function ClassWorkspacePage() {
                             {m.status === 'parsing' && <span className="ml-1 text-amber-600 font-bold">· parsing</span>}
                           </p>
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -624,6 +627,9 @@ export default function ClassWorkspacePage() {
 
         </div>
       </div>
+
+      {/* File preview drawer (opens when a material is clicked) */}
+      <FilePreviewDrawer file={previewFile} onClose={() => setPreviewFile(null)} />
     </AppLayout>
   );
 }
