@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SettingsLayout from '@/components/layout/SettingsLayout';
 import {
   CheckCircle2, Plus, X, Info, Clock,
@@ -173,23 +173,47 @@ function SleepVisual({ bedtime, wakeup, sleepHours }: {
 
 /* ─── Main page ──────────────────────────────────────────────── */
 export default function ScheduleSettings() {
-  const [weekdayHrs,  setWeekdayHrs]  = useState(2.5);
-  const [weekendHrs,  setWeekendHrs]  = useState(4.0);
-  const [sessionLen,  setSessionLen]  = useState('45–60 min');
-  const [studyTime,   setStudyTime]   = useState('Evening');
-  const [targetGPA,   setTargetGPA]   = useState('3.70');
-  const [sleepStart,  setSleepStart]  = useState('11:00 PM');
-  const [sleepEnd,    setSleepEnd]    = useState('7:30 AM');
-  const [events, setEvents] = useState<FixedEvent[]>([
-    { id:1, label:'Gym',     days:['Mon','Thu'], time:'7:00 AM', emoji:'🏃' },
-    { id:2, label:'Commute', days:['Mon','Tue','Wed','Thu','Fri'], time:'8:30 AM', emoji:'🚗' },
-  ]);
+  // Defaults are EMPTY — first-time students see blank fields and fill them in.
+  // Values are loaded from the onboarding API (step 4) once the student has
+  // completed onboarding. Until then, fields stay empty / show placeholder text.
+  const [weekdayHrs,  setWeekdayHrs]  = useState(0);
+  const [weekendHrs,  setWeekendHrs]  = useState(0);
+  const [sessionLen,  setSessionLen]  = useState('');
+  const [studyTime,   setStudyTime]   = useState('');
+  const [targetGPA,   setTargetGPA]   = useState('');
+  const [sleepStart,  setSleepStart]  = useState('');
+  const [sleepEnd,    setSleepEnd]    = useState('');
+  const [events, setEvents] = useState<FixedEvent[]>([]);
   const [addLabel, setAddLabel] = useState('');
   const [addDays,  setAddDays]  = useState<string[]>([]);
   const [addTime,  setAddTime]  = useState('');
   const [addEmoji, setAddEmoji] = useState('📅');
   const [adding,   setAdding]   = useState(false);
   const [saved, setSaved]       = useState(false);
+
+  // Pre-fill from onboarding data if available
+  useEffect(() => {
+    (async () => {
+      try {
+        const { fetchOnboarding } = await import('@/lib/onboarding');
+        const data = await fetchOnboarding();
+        if (data) {
+          if (data.weekday_hours)     setWeekdayHrs(data.weekday_hours);
+          if (data.weekend_hours)     setWeekendHrs(data.weekend_hours);
+          if (data.session_length)    setSessionLen(data.session_length);
+          if (data.study_time)        setStudyTime(data.study_time);
+          if (data.target_gpa != null)setTargetGPA(String(data.target_gpa));
+          if (data.sleep_start)       setSleepStart(data.sleep_start);
+          if (data.sleep_end)         setSleepEnd(data.sleep_end);
+          if (data.fixed_events && Array.isArray(data.fixed_events) && data.fixed_events.length > 0) {
+            setEvents(data.fixed_events as FixedEvent[]);
+          }
+        }
+      } catch {
+        // Not logged in / no onboarding data — leave fields empty
+      }
+    })();
+  }, []);
 
   const totalWeekly = +(weekdayHrs * 5 + weekendHrs * 2).toFixed(1);
 

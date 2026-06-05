@@ -252,12 +252,13 @@ export default function PrivacySettings() {
           <SectionHeader icon={Database} label="Your Data" color="bg-blue-500"
             sub="See what Atlas stores and manage your data" />
 
-          {/* Data stats */}
+          {/* Data stats — empty by default for first-time students.
+              Counts will populate from the backend once files / guides / cards exist. */}
           <div className="grid  grid-cols-1 md:grid-cols-3 gap-3 mb-5">
             {[
-              { icon: FileText, label: 'Files',        value: '12',  sub: '2.4 GB',     bg: 'bg-indigo-50',  text: 'text-indigo-600' },
-              { icon: BookOpen, label: 'Study guides',  value: '8',   sub: 'Generated',  bg: 'bg-green-50',   text: 'text-green-600'  },
-              { icon: Brain,    label: 'Flashcards',    value: '64',  sub: '5 classes',  bg: 'bg-purple-50',  text: 'text-purple-600' },
+              { icon: FileText, label: 'Files',        value: '0', sub: '—', bg: 'bg-indigo-50',  text: 'text-indigo-600' },
+              { icon: BookOpen, label: 'Study guides', value: '0', sub: '—', bg: 'bg-green-50',   text: 'text-green-600'  },
+              { icon: Brain,    label: 'Flashcards',   value: '0', sub: '—', bg: 'bg-purple-50',  text: 'text-purple-600' },
             ].map((s) => (
               <div key={s.label} className={`${s.bg} rounded-2xl p-3.5 text-center border border-white`}>
                 <s.icon className={`w-4 h-4 ${s.text} mx-auto mb-1.5`} />

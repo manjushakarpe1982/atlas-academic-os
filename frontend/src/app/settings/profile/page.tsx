@@ -127,12 +127,15 @@ function AppearanceCard() {
 export default function ProfileSettings() {
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [firstName,   setFirstName]   = useState('Jordan');
-  const [lastName,    setLastName]    = useState('Patel');
-  const [email,       setEmail]       = useState('jordan@university.edu');
-  const [institution, setInstitution] = useState('State University');
-  const [fieldStudy,  setFieldStudy]  = useState('Biology / Pre-med');
-  const [yearLevel,   setYearLevel]   = useState('Sophomore (Year 2)');
+  // Defaults are EMPTY — first-time students see blank fields and can fill them in.
+  // Values are loaded from localStorage (name/email from signup) and from the
+  // onboarding API (institution / field of study / year) once available.
+  const [firstName,   setFirstName]   = useState('');
+  const [lastName,    setLastName]    = useState('');
+  const [email,       setEmail]       = useState('');
+  const [institution, setInstitution] = useState('');
+  const [fieldStudy,  setFieldStudy]  = useState('');
+  const [yearLevel,   setYearLevel]   = useState('');
   const [timezone,    setTimezone]    = useState('America/New_York');
   const [bio,         setBio]         = useState('');
   const [avatar,      setAvatar]      = useState<string | null>(null);
@@ -147,12 +150,28 @@ export default function ProfileSettings() {
   const [saved,       setSaved]       = useState(false);
 
   useEffect(() => {
+    // Name/email from signup
     const n = localStorage.getItem('atlas_full_name') || '';
     const parts = n.split(' ');
     if (parts[0]) setFirstName(parts[0]);
-    if (parts[1]) setLastName(parts[1]);
+    if (parts.slice(1).join(' ')) setLastName(parts.slice(1).join(' '));
     const e = localStorage.getItem('atlas_email') || '';
     if (e) setEmail(e);
+
+    // Academic profile from onboarding (only if user completed onboarding)
+    (async () => {
+      try {
+        const { fetchOnboarding } = await import('@/lib/onboarding');
+        const data = await fetchOnboarding();
+        if (data) {
+          if (data.institution)    setInstitution(data.institution);
+          if (data.field_of_study) setFieldStudy(data.field_of_study);
+          if (data.year_level)     setYearLevel(data.year_level);
+        }
+      } catch {
+        // Not logged in / no onboarding data — leave fields empty
+      }
+    })();
   }, []);
 
   /* ── Photo upload ────────────────────────────────────────── */
