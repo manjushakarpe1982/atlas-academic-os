@@ -437,8 +437,10 @@ export default function ClassWorkspacePage() {
                 <div className="divide-y divide-[#ECE9FF]">
                   {cls.topics.map((t, i) => {
                     const p = PRIORITY_COLORS[t.priority];
+                    const topicSlug = t.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
                     return (
-                      <div key={t.name} className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#FAFAFE] transition-colors cursor-pointer">
+                      <Link key={t.name} href={`/topics/${topicSlug}`}
+                        className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#FAFAFE] transition-colors cursor-pointer">
                         {/* Rank */}
                         <span className="text-[13px] font-extrabold text-[#9B9AB5] tabular-nums w-5 flex-shrink-0">
                           {i + 1}
@@ -471,7 +473,7 @@ export default function ClassWorkspacePage() {
                           {p.label}
                         </span>
                         <ChevronRight className="w-4 h-4 text-[#9B9AB5] flex-shrink-0" />
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
