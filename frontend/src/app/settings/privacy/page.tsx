@@ -50,7 +50,7 @@ function PrivacyToggleRow({ icon: Icon, iconBg, iconColor, label, desc, badge, e
         <Icon className={`w-4 h-4 ${enabled ? iconColor : 'text-gray-400'}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 mb-0.5">
           <p className={`text-[14px] font-semibold ${enabled ? 'text-gray-900' : 'text-gray-500'}`}>{label}</p>
           {badge && (
             <span className={`text-[12px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${badge.color}`}>
@@ -253,7 +253,7 @@ export default function PrivacySettings() {
             sub="See what Atlas stores and manage your data" />
 
           {/* Data stats */}
-          <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="grid  grid-cols-1 md:grid-cols-3 gap-3 mb-5">
             {[
               { icon: FileText, label: 'Files',        value: '12',  sub: '2.4 GB',     bg: 'bg-indigo-50',  text: 'text-indigo-600' },
               { icon: BookOpen, label: 'Study guides',  value: '8',   sub: 'Generated',  bg: 'bg-green-50',   text: 'text-green-600'  },
@@ -289,7 +289,7 @@ export default function PrivacySettings() {
 
         {/* ── Danger Zone ──────────────────────────────────── */}
         <div className="rounded-2xl border-2 border-red-100 overflow-hidden">
-          <div className="bg-red-50 px-5 py-3 flex items-center gap-2 border-b border-red-100">
+          <div className="bg-red-50 px-5 py-3 flex flex-col md:flex-row md:items-center gap-2 border-b border-red-100">
             <AlertTriangle className="w-4 h-4 text-red-500" />
             <p className="text-lg font-extrabold text-red-700">Danger Zone</p>
             <p className="text-[13px] text-red-400 font-light ml-1">These actions are permanent and cannot be undone</p>
@@ -297,7 +297,7 @@ export default function PrivacySettings() {
           <div className="p-5 space-y-4 bg-white">
 
             {/* Delete study data */}
-            <div className="flex items-start justify-between gap-4 p-4 bg-orange-50/50 rounded-2xl border border-orange-100">
+            <div className="flex flex-col md:flex-row items-start justify-between gap-4 p-4 bg-orange-50/50 rounded-2xl border border-orange-100">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
                   <Trash2 className="w-4 h-4 text-orange-600" />
@@ -316,7 +316,7 @@ export default function PrivacySettings() {
             </div>
 
             {/* Delete account */}
-            <div className="flex items-start justify-between gap-4 p-4 bg-red-50/50 rounded-2xl border border-red-100">
+            <div className="flex flex-col md:flex-row items-start justify-between gap-4 p-4 bg-red-50/50 rounded-2xl border border-red-100">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
                   <Trash2 className="w-4 h-4 text-red-600" />
@@ -358,10 +358,10 @@ export default function PrivacySettings() {
         </div>
 
         {/* ── Save ─────────────────────────────────────────── */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col md:flex-row md:items-center justify-between pt-2 ">
           <p className="text-xs text-gray-400">Privacy settings apply immediately after saving</p>
           <button onClick={save}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20 active:scale-95">
+            className="flex items-center gap-2 mt-3 md:mt-0 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20 active:scale-95">
             <CheckCircle2 className="w-4 h-4" /> Save privacy settings
           </button>
         </div>

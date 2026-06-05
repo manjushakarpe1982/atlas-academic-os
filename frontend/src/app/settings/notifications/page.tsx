@@ -29,16 +29,25 @@ function Toggle({ enabled, onChange, size = 'md' }: {
   const onLeft = size === 'sm' ? 15 : 19;
 
   return (
-    <button type="button" onClick={() => onChange(!enabled)}
-      className={`relative rounded-full transition-all duration-200 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-400 ${
-        enabled ? 'bg-indigo-500 shadow-sm shadow-indigo-500/30' : 'bg-gray-200'
-      }`}
-      style={{ height: h, width: w }}>
-      <span
-        className="absolute top-[2px] rounded-full bg-white shadow-sm transition-all duration-200"
-        style={{ width: ball, height: ball, left: enabled ? onLeft : 2 }}
-      />
-    </button>
+   <button
+  type="button"
+  onClick={() => onChange(!enabled)}
+  className={`relative rounded-full transition-all duration-200 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-400 ${
+    enabled
+      ? "bg-indigo-500 border border-white shadow-sm shadow-indigo-500/30"
+      : "bg-gray-200 border border-transparent"
+  }`}
+  style={{ height: h, width: w }}
+>
+  <span
+    className="absolute top-[3px] rounded-full bg-white shadow-sm transition-all duration-200"
+    style={{
+      width: ball,
+      height: ball,
+      left: enabled ? onLeft : 2,
+    }}
+  />
+</button>
   );
 }
 

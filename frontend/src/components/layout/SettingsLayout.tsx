@@ -27,7 +27,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
         {/* ── Mobile: tab bar (shown only below lg) ─────────── */}
         <div className="lg:hidden mb-4">
-          <div className="flex overflow-x-auto scrollbar-none gap-1.5 bg-white border border-gray-100 rounded-2xl p-1.5 shadow-sm">
+          <div className="flex overflow-x-auto custom-scroll scrollbar-none gap-1.5 bg-white border border-gray-100 rounded-2xl p-1.5 shadow-sm">
             {NAV.map((item) => {
               const active = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
