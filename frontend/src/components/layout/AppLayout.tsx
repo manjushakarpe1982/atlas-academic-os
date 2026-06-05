@@ -52,13 +52,13 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-base font-medium transition-all group ${
         active
           ? 'bg-indigo-50 text-indigo-700'
           : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
       }`}
     >
-      <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${
+      <Icon className={`w-5 h-5 flex-shrink-0 transition-colors ${
         active ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'
       }`} />
       <span className="flex-1">{label}</span>
@@ -156,7 +156,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
 
           {/* ── Section: Main ───────────────────────────────── */}
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 pb-1.5">Main</p>
+          <p className="text-[13px] font-bold text-gray-400 uppercase tracking-widest px-3 pb-1.5">Main</p>
           {MAIN_NAV.map((item) => (
             <NavLink
               key={item.href}
@@ -171,7 +171,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="pt-3">
             <button
               onClick={() => setStudyOpen((p) => !p)}
-              className={`w-full flex items-center justify-between px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest transition-colors ${
+              className={`w-full flex items-center justify-between px-3 pb-1.5 text-[13px] font-bold uppercase tracking-widest transition-colors ${
                 isStudyActive ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
@@ -207,12 +207,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           {/* User card */}
           <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-all mt-1 group">
-            <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-base font-bold flex-shrink-0">
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gray-800 truncate">{userName}</p>
-              <p className="text-[10px] text-gray-400">Student</p>
+              <p className="text-base font-semibold text-gray-800 truncate">{userName}</p>
+              <p className="text-[14px] text-gray-400">Student</p>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 group-hover:text-gray-600" />
           </div>
@@ -266,10 +266,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             <div className="px-5 py-4 border-t border-gray-50">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">{initials}</div>
+                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-base font-bold">{initials}</div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-800">{userName}</p>
-                  <p className="text-[11px] text-gray-400">Student</p>
+                  <p className="text-base font-semibold text-gray-800">{userName}</p>
+                  <p className="text-[13px] text-gray-400">Student</p>
                 </div>
               </div>
             </div>
