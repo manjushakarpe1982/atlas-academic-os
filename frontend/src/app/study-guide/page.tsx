@@ -9,7 +9,7 @@ import {
   Brain, AlertTriangle, Star, RefreshCw,
   ChevronDown, ChevronUp, Volume2,
   MessageSquare, X, Send, Sparkles, Printer,
-  Upload, Lock, Target, ArrowRight, Quote, Zap,
+  Upload, Lock, Target, Quote, Zap,
 } from 'lucide-react';
 
 type StudyMode = 'read' | 'listen' | 'quiz' | 'teach' | 'ask';
@@ -611,55 +611,122 @@ export default function StudyGuidePage() {
 
             {/* Header */}
             <div className="text-center mb-7">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F2FF] border border-[#E8E5FD] text-[#534AB7] text-[11px] font-bold px-3.5 py-1.5 mb-4">
-                <BookOpen className="w-3.5 h-3.5" /> Your study guide
-              </span>
+              
               <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight mb-2">
                 A study guide built from <span className="italic">your</span> class
               </h1>
-              <p className="text-sm text-[#6B6A8A] max-w-xl mx-auto leading-relaxed">
+              <p className="text-sm text-[#6B6A8A] max-w-2xl mx-auto leading-relaxed">
                 Atlas writes you a study guide using your actual lectures, slides,
                 and syllabus — with every claim cited to where your professor
                 said it. No generic Wikipedia summaries.
               </p>
             </div>
 
-            {/* Hero — primary CTA */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#534AB7] via-[#5B4FBC] to-[#7B6FE8] rounded-3xl mb-7 shadow-xl shadow-[#534AB7]/20 p-7 md:p-8">
-              <Sparkles className="absolute top-6 right-12 w-4 h-4 text-white/30" />
-              <Sparkles className="absolute bottom-10 right-1/3 w-3 h-3 text-white/30" />
-              <Sparkles className="absolute top-1/2 left-12 w-3 h-3 text-white/20" />
+            {/* Hero — lavender card with studyguidepage.webp as full-width bg */}
+           <div
+  className="relative overflow-hidden rounded-3xl mb-7 shadow-md border border-[#E8E5FD]
+             bg-gradient-to-br from-[#F4F2FF] via-[#EEEAFF] to-[#E8E5FF]
+             min-h-[300px]"
+>
+  {/* Desktop-only background illustration */}
+  <img
+    src="https://res.cloudinary.com/mview/image/upload/atlas/studyguidepage.webp"
+    alt=""
+    className="hidden lg:block absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+  />
 
-              <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-6">
-                <div>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 mb-3">
-                    <Zap className="w-3 h-3" /> Auto-generated from your files
-                  </span>
-                  <h2 className="text-2xl md:text-[28px] font-extrabold text-white mb-2 leading-tight">
-                    Drop your materials to get started
-                  </h2>
-                  <p className="text-[13px] text-white/85 leading-relaxed max-w-md mb-5">
-                    Upload your syllabus, lecture slides, or audio recordings.
-                    Atlas turns them into a clean, citable study guide tailored
-                    to your class.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Link href="/upload"
-                      className="inline-flex items-center gap-2 bg-white hover:bg-[#F4F2FF] text-[#534AB7] px-5 py-2.5 rounded-xl font-extrabold text-sm shadow-lg transition-all active:scale-95">
-                      <Upload className="w-4 h-4" /> Upload materials <ArrowRight className="w-4 h-4" />
-                    </Link>
-                    <Link href="/classes"
-                      className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 text-white px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all active:scale-95">
-                      <BookOpen className="w-4 h-4" /> Browse classes
-                    </Link>
-                  </div>
-                </div>
+  {/* Desktop decorative sparkles */}
+  <Sparkles className="hidden lg:block absolute top-8 right-1/3 w-3.5 h-3.5 text-[#534AB7]/40 z-10 pointer-events-none" />
+  <Sparkles className="hidden lg:block absolute bottom-12 right-1/4 w-3 h-3 text-[#534AB7]/30 z-10 pointer-events-none" />
 
-                <div className="hidden md:flex items-center justify-center w-[150px] h-[150px] rounded-3xl bg-white/10 backdrop-blur border border-white/20">
-                  <BookOpen className="w-16 h-16 text-white/90" strokeWidth={1.5} />
-                </div>
-              </div>
-            </div>
+  {/* Mobile decorative blobs */}
+  <div className="lg:hidden absolute -top-12 -right-12 w-40 h-40 rounded-full bg-[#534AB7]/10 blur-3xl" />
+  <div className="lg:hidden absolute -bottom-16 -left-10 w-36 h-36 rounded-full bg-[#7C72E8]/10 blur-3xl" />
+
+  {/* Content */}
+  <div className="relative z-10 p-3 md:p-4 lg:p-9 max-w-full lg:max-w-[58%]">
+    {/* Mobile glass card */}
+    <div className="lg:bg-transparent lg:p-0 bg-white/60 backdrop-blur-sm rounded-2xl p-5">
+      {/* Badge */}
+      <span
+        className="inline-flex items-center gap-2 rounded-full bg-white
+                   border border-[#E8E5FD] text-[#534AB7]
+                   text-[11px] font-extrabold px-3 py-1.5 mb-4 shadow-sm"
+      >
+        <Zap className="w-3 h-3" />
+        Auto-generated from your files
+      </span>
+
+      {/* Heading */}
+      <h2 className="text-[28px] lg:text-[32px] font-extrabold leading-[1.1] mb-4">
+        <span className="text-[#14142B]">
+          Drop your materials to{" "}
+        </span>
+        <span className="text-[#534AB7]">
+          get started
+        </span>
+      </h2>
+
+      {/* Description */}
+      <p className="text-[14px] md:text-[15px] text-[#535258] leading-relaxed mb-6">
+        Upload your syllabus, lecture slides, or audio recordings.
+        Atlas turns them into a clean, citable study guide tailored
+        to your class.
+      </p>
+
+      {/* CTA Buttons */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Link
+          href="/upload"
+          className="inline-flex justify-center items-center gap-2
+                     bg-[#534AB7] hover:bg-[#3F3795]
+                     text-white px-5 py-3 rounded-xl
+                     font-extrabold text-sm shadow-md
+                     shadow-[#534AB7]/25 transition-all active:scale-95"
+        >
+          <Upload className="w-4 h-4" />
+          Upload materials
+        </Link>
+
+        <Link
+          href="/classes"
+          className="inline-flex justify-center items-center gap-2
+                     bg-white border-2 border-[#E8E5FD]
+                     hover:border-[#534AB7]/30
+                     text-[#534AB7] px-5 py-3 rounded-xl
+                     font-extrabold text-sm transition-all active:scale-95"
+        >
+          <BookOpen className="w-4 h-4" />
+          Browse classes
+        </Link>
+      </div>
+
+      {/* Mobile Features */}
+      <div className="grid grid-cols-3 gap-3 mt-6 lg:hidden">
+        <div className="bg-white/70 rounded-xl p-3 border border-[#E8E5FD]">
+          <div className="text-[#534AB7] font-extrabold text-lg">AI</div>
+          <div className="text-[10px] text-[#666] font-semibold uppercase">
+            Generated
+          </div>
+        </div>
+
+        <div className="bg-white/70 rounded-xl p-3 border border-[#E8E5FD]">
+          <div className="text-[#534AB7] font-extrabold text-lg">PDF</div>
+          <div className="text-[10px] text-[#666] font-semibold uppercase">
+            Slides
+          </div>
+        </div>
+
+        <div className="bg-white/70 rounded-xl p-3 border border-[#E8E5FD]">
+          <div className="text-[#534AB7] font-extrabold text-lg">🎙</div>
+          <div className="text-[10px] text-[#666] font-semibold uppercase">
+            Audio
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
             {/* Locked sample guide preview */}
             <div className="relative bg-white border border-[#ECE9FF] rounded-2xl mb-7 shadow-sm overflow-hidden">
@@ -668,9 +735,9 @@ export default function StudyGuidePage() {
               <div className="flex items-center justify-between px-5 py-3 border-b border-[#ECE9FF] bg-[#FAFAFE]">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-[#534AB7]" />
-                  <h3 className="text-sm font-extrabold text-[#14142B]">Sample study guide</h3>
+                  <h3 className="text-lg font-extrabold text-[#14142B]">Sample study guide</h3>
                 </div>
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider bg-[#F4F2FF] text-[#534AB7] px-2 py-1 rounded-full">
+                <span className="inline-flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-wider bg-[#F4F2FF] text-[#534AB7] px-2 py-1 rounded-full">
                   <Lock className="w-3 h-3" /> Preview
                 </span>
               </div>
@@ -715,19 +782,19 @@ export default function StudyGuidePage() {
               </div>
 
               {/* Bottom CTA bar — clearly separated, doesn't overlap content */}
-              <div className="border-t border-[#ECE9FF] bg-gradient-to-r from-[#F4F2FF] via-white to-[#F4F2FF] px-5 py-4 flex items-center justify-between gap-4">
+              <div className="border-t border-[#ECE9FF] bg-gradient-to-r from-[#F4F2FF] via-white to-[#F4F2FF] px-5 py-4 flex lg:flex-row flex-col items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md shadow-[#534AB7]/30 flex-shrink-0">
                     <Lock className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-extrabold text-[#14142B]">Your guide will look like this</p>
-                    <p className="text-[11.5px] text-[#6B6A8A]">Every claim cited from your own materials.</p>
+                    <p className="text-[15px] font-extrabold text-[#14142B]">Your guide will look like this</p>
+                    <p className="text-[12px] text-[#6B6A8A]">Every claim cited from your own materials.</p>
                   </div>
                 </div>
                 <Link
                   href="/upload"
-                  className="inline-flex items-center gap-1.5 bg-[#534AB7] hover:bg-[#3F3795] text-white text-[12.5px] font-extrabold px-4 py-2 rounded-lg shadow-md shadow-[#534AB7]/25 transition-all active:scale-95 flex-shrink-0"
+                  className="inline-flex items-center gap-1.5 bg-[#534AB7] hover:bg-[#3F3795] text-white text-[15px] font-extrabold px-4 py-2 rounded-lg shadow-md shadow-[#534AB7]/25 transition-all active:scale-95 flex-shrink-0"
                 >
                   <Upload className="w-3.5 h-3.5" /> Upload
                 </Link>
@@ -736,7 +803,7 @@ export default function StudyGuidePage() {
 
             {/* 5 modes — what you can do with a study guide */}
             <div className="mb-7">
-              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+              <p className="text-[15px] font-extrabold text-[#5d5d64] uppercase tracking-widest mb-3">
                 Five ways to study every guide
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -751,8 +818,8 @@ export default function StudyGuidePage() {
                     <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md mx-auto mb-2`}>
                       <c.icon className="w-5 h-5 text-white" />
                     </div>
-                    <p className="text-[13px] font-extrabold text-[#1A1A2E] mb-0.5">{c.label}</p>
-                    <p className="text-[11px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
+                    <p className="text-[15px] font-extrabold text-[#1A1A2E] mb-0.5">{c.label}</p>
+                    <p className="text-[13px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
                   </div>
                 ))}
               </div>
@@ -760,36 +827,36 @@ export default function StudyGuidePage() {
 
             {/* Why this beats generic guides */}
             <div className="mb-7">
-              <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-3">
+              <p className="text-[15px] font-extrabold text-[#5d5d64] uppercase tracking-widest mb-3">
                 Why Atlas beats generic guides
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-3 gap-3">
                 <div className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl bg-[#534AB7] flex items-center justify-center shadow-md">
                       <Quote className="w-5 h-5 text-white" />
                     </div>
-                    <p className="text-[13px] font-extrabold text-[#1A1A2E]">Every claim cited</p>
+                    <p className="text-[16px] font-extrabold text-[#1A1A2E]">Every claim cited</p>
                   </div>
-                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed">Tap any sentence to see exactly which lecture or slide it came from.</p>
+                  <p className="text-[13px] text-[#6B6A8A] leading-relaxed">Tap any sentence to see exactly which lecture or slide it came from.</p>
                 </div>
                 <div className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md">
                       <Target className="w-5 h-5 text-white" />
                     </div>
-                    <p className="text-[13px] font-extrabold text-[#1A1A2E]">Your professor&apos;s emphasis</p>
+                    <p className="text-[16px] font-extrabold text-[#1A1A2E]">Your professor&apos;s emphasis</p>
                   </div>
-                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed">Highlights topics your prof mentioned repeatedly — not just textbook basics.</p>
+                  <p className="text-[13px] text-[#6B6A8A] leading-relaxed">Highlights topics your prof mentioned repeatedly — not just textbook basics.</p>
                 </div>
                 <div className="bg-white border border-[#ECE9FF] rounded-2xl p-4 shadow-sm">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center shadow-md">
                       <AlertTriangle className="w-5 h-5 text-white" />
                     </div>
-                    <p className="text-[13px] font-extrabold text-[#1A1A2E]">Honest about gaps</p>
+                    <p className="text-[16px] font-extrabold text-[#1A1A2E]">Honest about gaps</p>
                   </div>
-                  <p className="text-[12px] text-[#6B6A8A] leading-relaxed">If your materials don&apos;t cover something, Atlas says so. Never bluffs.</p>
+                  <p className="text-[13px] text-[#6B6A8A] leading-relaxed">If your materials don&apos;t cover something, Atlas says so. Never bluffs.</p>
                 </div>
               </div>
             </div>
@@ -800,8 +867,8 @@ export default function StudyGuidePage() {
                 <RefreshCw className="w-4 h-4 text-[#534AB7]" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-extrabold text-[#1A1A2E]">Always up to date</p>
-                <p className="text-[12px] text-[#6B6A8A] leading-relaxed">
+                <p className="text-[15px] font-extrabold text-[#1A1A2E]">Always up to date</p>
+                <p className="text-[13px] text-[#6B6A8A] leading-relaxed">
                   Upload a new lecture mid-semester? Your study guide regenerates automatically.
                 </p>
               </div>
