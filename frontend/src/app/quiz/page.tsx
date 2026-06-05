@@ -6,7 +6,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import {
   CheckCircle2, XCircle, ChevronRight, ChevronLeft,
   RotateCcw, Trophy, BookOpen, AlertTriangle, Brain,
-  Upload, Lock, Sparkles, Zap, Target, HelpCircle,
+  Upload, Lock, Sparkles, Zap, Target, HelpCircle, TrendingUp,
 } from 'lucide-react';
 
 interface Question {
@@ -263,42 +263,61 @@ export default function QuizPage() {
         <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-8">
           <div className="max-w-[960px] mx-auto">
 
-            {/* ── Compact stat-row hero (dashboard-style, not marketing-hero) ── */}
-            <div className="bg-white border border-[#ECE9FF] rounded-3xl shadow-sm overflow-hidden mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-5 p-5 md:p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#534AB7] to-[#7B6FE8] flex items-center justify-center shadow-lg shadow-[#534AB7]/30 flex-shrink-0">
+            {/* ── Hero card — lavender bg with Quizpage1.webp full-width illustration ── */}
+            <div className="relative overflow-hidden bg-[#F4F2FF] border border-[#E8E5FD] rounded-xl shadow-sm mb-3 min-h-[210px]">
+              {/* Full-width background illustration */}
+              <img
+                src="https://res.cloudinary.com/mview/image/upload/atlas/quizpage1.webp"
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+              />
+           
+
+              {/* Foreground content */}
+              <div className="relative z-10 grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-5 p-4 md:px-5">
+                <div className="flex items-center gap-4 max-w-[60%]">
+                  {/* Purple help-circle icon tile */}
+                  <div className="w-14 h-14 rounded-2xl mt-3 bg-gradient-to-br from-[#534AB7] to-[#7B6FE8] flex items-center justify-center shadow-lg shadow-[#534AB7]/30 flex-shrink-0">
                     <HelpCircle className="w-7 h-7 text-white" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-extrabold text-[#9B9AB5] uppercase tracking-widest mb-0.5">Quiz</p>
-                    <h1 className="text-xl md:text-2xl font-extrabold text-[#14142B] leading-tight">
+<p className="inline-flex items-center px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-semibold uppercase tracking-wider border border-violet-200">
+  Quiz
+</p>                    <h1 className="text-xl md:text-2xl font-extrabold text-[#14142B] leading-tight">
                       No questions ready yet
                     </h1>
-                    <p className="text-[12.5px] text-[#6B6A8A] mt-1">
+                    <p className="text-base text-[#6B6A8A] mt-1 leading-relaxed">
                       Upload course materials and Atlas writes a quiz tailored to what your professor covers.
                     </p>
                   </div>
                 </div>
 
+                {/* Upload button on the right */}
                 <Link
                   href="/upload"
-                  className="inline-flex items-center gap-2 bg-[#534AB7] hover:bg-[#3F3795] text-white px-5 py-3 rounded-xl font-extrabold text-sm shadow-md shadow-[#534AB7]/25 transition-all active:scale-95 flex-shrink-0"
+                  className="inline-flex  items-center gap-2 bg-[#534AB7] hover:bg-[#3F3795] text-white px-2 py-2 rounded-xl font-extrabold text-sm shadow-md shadow-[#534AB7]/25 transition-all active:scale-95 flex-shrink-0"
                 >
                   <Upload className="w-4 h-4" /> Upload materials
                 </Link>
               </div>
+            </div>
 
-              {/* Stat strip — 0/0/0 metrics */}
-              <div className="grid grid-cols-3 border-t border-[#ECE9FF] divide-x divide-[#ECE9FF] bg-[#FAFAFE]">
+            {/* ── Stat strip — separate card, 3 colored stat tiles ───────── */}
+            <div className="bg-white border border-[#ECE9FF] rounded-xl shadow-sm mb-6">
+              <div className="grid grid-cols-3 divide-x divide-[#ECE9FF]">
                 {[
-                  { label:'Questions', value:'0' },
-                  { label:'Avg score', value:'—' },
-                  { label:'Quizzes taken', value:'0' },
+                  { label:'Questions',    value:'0', icon: BookOpen,    iconColor: 'text-[#534AB7]',   iconBg: 'bg-[#F4F2FF]' },
+                  { label:'Avg score',    value:'—', icon: TrendingUp,  iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
+                  { label:'Quizzes taken',value:'0', icon: Trophy,      iconColor: 'text-orange-600',  iconBg: 'bg-orange-50' },
                 ].map((s) => (
-                  <div key={s.label} className="px-4 py-3 text-center">
-                    <p className="text-lg font-extrabold text-[#9B9AB5]">{s.value}</p>
-                    <p className="text-[10.5px] font-bold text-[#9B9AB5] uppercase tracking-wider mt-0.5">{s.label}</p>
+                  <div key={s.label} className="px-4 py-4 flex items-center justify-center gap-3">
+                    <div className={`w-12 h-12 rounded-xl ${s.iconBg} flex items-center justify-center flex-shrink-0`}>
+                      <s.icon className={`w-6 h-6 ${s.iconColor}`} />
+                    </div>
+                    <div>
+                      <p className="text-xl font-extrabold text-[#14142B] leading-none">{s.value}</p>
+                      <p className="text-[13px] font-bold text-[#9B9AB5] uppercase tracking-wider mt-1">{s.label}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -362,15 +381,15 @@ export default function QuizPage() {
                     <Lock className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-extrabold text-[#14142B]">This is just a sample</p>
-                    <p className="text-[11.5px] text-[#6B6A8A]">Upload materials to get your real quiz.</p>
+                    <p className="text-[16px] font-extrabold text-[#14142B]">This is just a sample</p>
+                    <p className="text-[13px] text-[#6B6A8A]">Upload materials to get your real quiz.</p>
                   </div>
                 </div>
                 <Link
                   href="/upload"
-                  className="inline-flex items-center gap-1.5 bg-[#534AB7] hover:bg-[#3F3795] text-white text-[12.5px] font-extrabold px-4 py-2 rounded-lg shadow-md shadow-[#534AB7]/25 transition-all active:scale-95 flex-shrink-0"
+                  className="inline-flex items-center gap-1.5 bg-[#534AB7] hover:bg-[#3F3795] text-white text-[14px] font-extrabold px-4 py-2 rounded-lg shadow-md shadow-[#534AB7]/25 transition-all active:scale-95 flex-shrink-0"
                 >
-                  <Upload className="w-3.5 h-3.5" /> Upload
+                  <Upload className="w-4 h-4" /> Upload
                 </Link>
               </div>
             </div>
@@ -394,13 +413,13 @@ export default function QuizPage() {
                   desc: 'Anything you miss is automatically queued for spaced-repetition review.',
                 },
               ].map((s) => (
-                <div key={s.title} className="bg-white border border-[#ECE9FF] rounded-2xl px-5 py-4 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
+                <div key={s.title} className="bg-white border border-[#ECE9FF] rounded-xl px-5 py-4 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
                   <div className={`w-11 h-11 rounded-xl ${s.color} flex items-center justify-center shadow-md flex-shrink-0`}>
                     <s.icon className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[14px] font-extrabold text-[#1A1A2E] mb-0.5">{s.title}</p>
-                    <p className="text-[12.5px] text-[#6B6A8A] leading-relaxed">{s.desc}</p>
+                    <p className="text-[13.5px] text-[#6B6A8A] leading-relaxed">{s.desc}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#9B9AB5] flex-shrink-0 mt-1" />
                 </div>
@@ -408,14 +427,14 @@ export default function QuizPage() {
             </div>
 
             {/* Footer — secondary action + privacy line */}
-            <div className="flex items-center justify-between gap-3 text-[12px] text-[#9B9AB5] px-2">
+            <div className="flex items-center justify-between gap-3 text-[14px] text-[#9B9AB5] px-2">
               <p className="flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-[#534AB7]" />
+                <Zap className="w-4 h-4 text-[#534AB7]" />
                 Quizzes regenerate every time you upload new material.
               </p>
               <Link
                 href="/flashcards"
-                className="font-bold text-[#534AB7] hover:underline whitespace-nowrap"
+                className="font-bold text-[15px] text-[#534AB7] hover:underline whitespace-nowrap"
               >
                 See flashcards →
               </Link>
