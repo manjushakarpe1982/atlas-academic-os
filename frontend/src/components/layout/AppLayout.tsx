@@ -103,11 +103,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [studyOpen,  setStudyOpen]  = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
-  const [notifs,     setNotifs]     = useState(NOTIFS);
+  const [notifs,     setNotifs]     = useState<typeof NOTIFS>([]);
 
   const unreadCount = notifs.filter((n) => !n.read).length;
   const markAllRead = () => setNotifs((p) => p.map((n) => ({ ...n, read: true })));
   const markRead    = (id: number) => setNotifs((p) => p.map((n) => n.id === id ? { ...n, read: true } : n));
+
+  // First-time students see an empty notifications dropdown.
+  // Real notifications will appear once they've added classes / uploaded materials / etc.
+  // Toggle via localStorage.atlas_has_notifications = 'true'.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('atlas_has_notifications') === 'true') {
+      setNotifs(NOTIFS);
+    }
+  }, []);
 
   useEffect(() => {
     const n = localStorage.getItem('atlas_full_name') || 'Student';
@@ -331,27 +340,39 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       </div>
                     </div>
 
-                    {/* Notification list */}
-                    <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
-                      {notifs.map((n) => (
-                        <div key={n.id} onClick={() => markRead(n.id)}
-                          className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-all hover:bg-gray-50 ${!n.read ? 'bg-indigo-50/30' : ''}`}>
-                          <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${!n.read ? n.color : 'bg-gray-200'}`} />
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-xs font-semibold leading-snug ${!n.read ? 'text-gray-900' : 'text-gray-500'}`}>
-                              {n.title}
-                            </p>
-                            <p className="text-[11px] text-gray-400 mt-0.5">{n.sub}</p>
-                          </div>
-                          <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">{n.time}</span>
+                    {/* Notification list — or empty state */}
+                    {notifs.length === 0 ? (
+                      <div className="px-4 py-10 flex flex-col items-center text-center">
+                        <div className="w-14 h-14 rounded-2xl bg-[#F4F2FF] flex items-center justify-center mb-3">
+                          <Bell className="w-6 h-6 text-[#534AB7]" />
                         </div>
-                      ))}
-                    </div>
+                        <p className="text-base font-extrabold text-gray-900 mb-1">You&apos;re all caught up</p>
+                        <p className="text-[13px] text-gray-500 leading-relaxed max-w-[220px]">
+                          Notifications about deadlines, grades, and study streaks will appear here once you start using Atlas.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+                        {notifs.map((n) => (
+                          <div key={n.id} onClick={() => markRead(n.id)}
+                            className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-all hover:bg-gray-50 ${!n.read ? 'bg-indigo-50/30' : ''}`}>
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${!n.read ? n.color : 'bg-gray-200'}`} />
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs font-semibold leading-snug ${!n.read ? 'text-gray-900' : 'text-gray-500'}`}>
+                                {n.title}
+                              </p>
+                              <p className="text-[11px] text-gray-400 mt-0.5">{n.sub}</p>
+                            </div>
+                            <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">{n.time}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Footer */}
                     <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50">
                       <Link href="/settings/notifications" onClick={() => setShowNotifs(false)}
-                        className="text-[13px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                        className="text-[14px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
                         Manage notification settings →
                       </Link>
                     </div>
@@ -360,8 +381,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               )}
             </div>
             <Link href="/upload"
-              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-all shadow-sm shadow-indigo-500/20">
-              <Upload className="w-3.5 h-3.5" />
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-all shadow-sm shadow-indigo-500/20">
+              <Upload className="w-5 h-5" />
               <span className="hidden sm:inline">Upload</span>
             </Link>
           </div>
