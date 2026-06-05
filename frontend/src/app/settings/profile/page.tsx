@@ -24,13 +24,13 @@ function Card({ title, icon: Icon, iconBg, children }: {
   title: string; icon: typeof User; iconBg: string; children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
       {/* Card header */}
       <div className="flex items-center gap-3 px-4 md:px-6 py-3.5 border-b border-gray-50">
         <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
           <Icon className="w-4 h-4 text-white" />
         </div>
-        <p className="text-sm font-bold text-gray-900">{title}</p>
+        <p className="text-lg font-bold text-gray-900">{title}</p>
       </div>
       <div className="px-4 md:px-6 py-4">{children}</div>
     </div>
@@ -48,11 +48,11 @@ function Field({ label, hint, children }: {
 }) {
   return (
     <div>
-      <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
+      <label className="block text-[13px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
         {label}
       </label>
       {children}
-      {hint && <p className="text-[11px] text-gray-400 mt-1 font-light">{hint}</p>}
+      {hint && <p className="text-[12px] text-gray-400 mt-1 font-light">{hint}</p>}
     </div>
   );
 }
@@ -98,10 +98,10 @@ function AppearanceCard() {
         <div className="w-8 h-8 rounded-xl bg-gray-700 flex items-center justify-center flex-shrink-0">
           <span className="text-sm">🎨</span>
         </div>
-        <p className="text-sm font-extrabold text-gray-900">Appearance</p>
+        <p className="text-lg font-extrabold text-gray-900">Appearance</p>
       </div>
       <div className="px-4 md:px-6 py-4">
-        <p className="text-xs text-gray-400 mb-3">Choose how Atlas looks to you</p>
+        <p className="text-sm text-gray-400 mb-3">Choose how Atlas looks to you</p>
         <div className="grid grid-cols-3 gap-2.5">
           {options.map((o) => (
             <button key={o.value} onClick={() => setTheme(o.value)}
@@ -112,8 +112,8 @@ function AppearanceCard() {
               }`}>
               <span className="text-2xl">{o.emoji}</span>
               <div className="text-center">
-                <p className={`text-xs font-bold ${theme===o.value?'text-indigo-700':'text-gray-700'}`}>{o.label}</p>
-                <p className={`text-[9px] mt-0.5 leading-tight ${theme===o.value?'text-indigo-500':'text-gray-400'}`}>{o.desc}</p>
+                <p className={`text-sm font-bold ${theme===o.value?'text-indigo-700':'text-gray-700'}`}>{o.label}</p>
+                <p className={`text-[13px] mt-0.5 leading-tight ${theme===o.value?'text-indigo-500':'text-gray-400'}`}>{o.desc}</p>
               </div>
               {theme === o.value && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
             </button>
@@ -191,7 +191,7 @@ export default function ProfileSettings() {
         <Card title="Your Profile" icon={User} iconBg="bg-indigo-500">
 
           {/* Avatar row */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-5 pb-5 border-b border-gray-50">
+          <div className="flex flex-row items-start sm:items-center gap-4 mb-5 pb-5 border-b border-gray-100">
             {/* Avatar circle */}
             <div className="relative flex-shrink-0">
               <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -212,28 +212,28 @@ export default function ProfileSettings() {
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="text-base font-extrabold text-gray-900">{firstName} {lastName}</p>
-              <p className="text-xs text-gray-400 mb-2">{email}</p>
+              <p className="text-lg font-extrabold text-gray-900">{firstName} {lastName}</p>
+              <p className="text-base text-gray-400 mb-2">{email}</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => fileRef.current?.click()}
-                  className="flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg transition-all shadow-sm shadow-indigo-500/20">
+                  className="flex items-center gap-1.5 text-base font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg transition-all shadow-sm shadow-indigo-500/20">
                   <Camera className="w-3.5 h-3.5" /> Upload photo
                 </button>
                 {avatar && (
                   <button
                     onClick={() => setAvatar(null)}
-                    className="text-xs font-semibold text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition-all">
+                    className="text-base font-semibold text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition-all">
                     Remove
                   </button>
                 )}
               </div>
-              <p className="text-[10px] text-gray-400 mt-1.5">JPG, PNG or GIF · Max 5 MB</p>
+              <p className="text-[12px] text-gray-400 mt-1.5">JPG, PNG or GIF · Max 5 MB</p>
             </div>
           </div>
 
           {/* Name fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 text-base gap-4 mb-4">
             <Field label="First name">
               <input className={INP} value={firstName}
                 onChange={(e) => setFirstName(e.target.value)} placeholder="Jordan" />
@@ -255,7 +255,7 @@ export default function ProfileSettings() {
               placeholder="Pre-med student passionate about biology and research…"
             />
             <div className="flex justify-end">
-              <p className={`text-[10px] font-medium mt-0.5 ${bio.length > 140 ? 'text-orange-500' : 'text-gray-300'}`}>
+              <p className={`text-[12px] font-medium mt-0.5 ${bio.length > 140 ? 'text-orange-500' : 'text-gray-300'}`}>
                 {bio.length}/160
               </p>
             </div>
@@ -329,7 +329,7 @@ export default function ProfileSettings() {
 
         {/* ── Change password ──────────────────────────────── */}
         <Card title="Change Password" icon={Lock} iconBg="bg-orange-400">
-          <p className="text-xs text-gray-400 mb-4 font-light">
+          <p className="text-sm text-gray-400 mb-4 font-light">
             Leave blank if you signed in with Google — your password is managed by Google.
           </p>
 

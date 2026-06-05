@@ -21,8 +21,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
         {/* Header */}
         <div className="mb-5">
-          <h1 className="text-lg md:text-xl font-extrabold text-gray-900">Settings</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Manage your account, schedule, and privacy preferences</p>
+          <h1 className="text-lg md:text-3xl font-extrabold text-gray-900">Settings</h1>
+          <p className="text-base text-gray-400 mt-0.5">Manage your account, schedule, and privacy preferences</p>
         </div>
 
         {/* ── Mobile: tab bar (shown only below lg) ─────────── */}
@@ -64,10 +64,10 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                       <item.icon className={`w-4 h-4 ${active ? 'text-white' : 'text-gray-400 group-hover:text-indigo-500'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold leading-none mb-0.5 ${active ? 'text-gray-900' : 'text-gray-700'}`}>
+                      <p className={`text-base font-semibold leading-none mb-0.5 ${active ? 'text-gray-900' : 'text-gray-700'}`}>
                         {item.label}
                       </p>
-                      <p className={`text-[10px] truncate font-light ${active ? 'text-indigo-500' : 'text-gray-400'}`}>
+                      <p className={`text-[12px] truncate font-light ${active ? 'text-indigo-500' : 'text-gray-400'}`}>
                         {item.desc}
                       </p>
                     </div>
@@ -77,12 +77,12 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
               })}
             </nav>
             <div className="mt-3 bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
-              <p className="text-xs font-bold text-indigo-800 mb-1">Need help?</p>
-              <p className="text-[11px] text-indigo-600 leading-relaxed mb-2">
+              <p className="text-base font-bold text-indigo-800 mb-1">Need help?</p>
+              <p className="text-[12px] text-indigo-600 leading-relaxed mb-2">
                 Changes are saved when you click Save.
               </p>
               <a href="https://support.claude.com" target="_blank" rel="noreferrer"
-                className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                className="text-[13px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
                 Contact support <ChevronRight className="w-3 h-3" />
               </a>
             </div>

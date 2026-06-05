@@ -31,8 +31,8 @@ function Card({ title, icon: Icon, iconBg, subtitle, children }: {
           <Icon className="w-4 h-4 text-white" />
         </div>
         <div>
-          <p className="text-sm font-bold text-gray-900 leading-none">{title}</p>
-          {subtitle && <p className="text-[11px] text-gray-400 mt-0.5">{subtitle}</p>}
+          <p className="text-lg font-bold text-gray-900 leading-none">{title}</p>
+          {subtitle && <p className="text-[13px] text-gray-400 mt-0.5">{subtitle}</p>}
         </div>
       </div>
       <div className="px-4 md:px-6 py-4">{children}</div>
@@ -85,8 +85,8 @@ function HoursCard({
     <div className={`${bgColor} rounded-2xl p-4 border border-white`}>
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="text-sm font-bold text-gray-800">{label}</p>
-          <p className="text-[11px] text-gray-500 font-light">{sublabel}</p>
+          <p className="text-base font-bold text-gray-800">{label}</p>
+          <p className="text-[13px] text-gray-500 font-light">{sublabel}</p>
         </div>
         <div className={`text-2xl font-extrabold ${color}`}>{value}<span className="text-sm font-semibold ml-0.5">h</span></div>
       </div>
@@ -104,7 +104,7 @@ function HoursCard({
       </div>
 
       {/* Tick marks */}
-      <div className="flex justify-between text-[9px] text-gray-400 font-medium">
+      <div className="flex justify-between text-[12px] text-gray-400 font-medium">
         {[0,2,4,6,8,10,12].map((t) => <span key={t}>{t}h</span>)}
       </div>
     </div>
@@ -252,10 +252,10 @@ export default function ScheduleSettings() {
           <div className="flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl px-4 py-3">
             <Info className="w-4 h-4 text-indigo-500 flex-shrink-0" />
             <div>
-              <p className="text-xs font-bold text-indigo-800">
+              <p className="text-sm font-bold text-indigo-800">
                 {totalWeekly} hours per week · {(totalWeekly * 4).toFixed(0)} hrs/month
               </p>
-              <p className="text-[11px] text-indigo-500 font-light mt-0.5">
+              <p className="text-[13px] text-indigo-500 font-light mt-0.5">
                 Recommended: 2–3 hrs/weekday, 4–5 hrs/weekend for a full course load
               </p>
             </div>

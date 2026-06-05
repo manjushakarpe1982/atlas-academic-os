@@ -50,7 +50,7 @@ function FreqPills({ value, options, onChange }: {
     <div className="flex flex-wrap gap-1.5 mt-2.5">
       {options.map((o) => (
         <button key={o} type="button" onClick={() => onChange(o)}
-          className={`px-3 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
+          className={`px-3 py-1 rounded-lg text-[13px] font-semibold border transition-all ${
             value === o
               ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
               : 'bg-white border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600'
@@ -82,8 +82,8 @@ function NotifRow({ icon: Icon, iconBg, iconColor, label, desc, enabled, onChang
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className={`text-sm font-semibold ${enabled ? 'text-gray-900' : 'text-gray-500'}`}>{label}</p>
-              <p className="text-[11px] text-gray-400 mt-0.5 font-light leading-relaxed">{desc}</p>
+              <p className={`text-lg font-semibold ${enabled ? 'text-gray-900' : 'text-gray-500'}`}>{label}</p>
+              <p className="text-[12px] text-gray-400 mt-0.5 font-light leading-relaxed">{desc}</p>
             </div>
             <Toggle enabled={enabled} onChange={onChange} />
           </div>
@@ -105,7 +105,7 @@ function SectionHeader({ label, icon: Icon, color }: {
   return (
     <div className="flex items-center gap-2 mb-3">
       <Icon className={`w-3.5 h-3.5 ${color}`} />
-      <p className={`text-[11px] font-extrabold uppercase tracking-widest ${color}`}>{label}</p>
+      <p className={`text-[14px] font-extrabold uppercase tracking-widest ${color}`}>{label}</p>
     </div>
   );
 }
@@ -115,7 +115,7 @@ function TimeInput({ value, onChange }: { value: string; onChange: (v: string) =
   return (
     <div className="flex items-center gap-2">
       <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-      <p className="text-[11px] text-gray-500 font-medium">Send at</p>
+      <p className="text-[12px] text-gray-500 font-medium">Send at</p>
       <input
         className="bg-indigo-50 border border-indigo-200 focus:border-indigo-500 text-indigo-700 rounded-lg px-3 py-1.5 text-xs font-bold outline-none transition-all w-24 text-center"
         value={value} onChange={(e) => onChange(e.target.value)}
@@ -167,15 +167,15 @@ export default function NotificationsSettings() {
               allEnabled ? 'bg-white/20' : 'bg-gray-200'
             }`}>
               {allEnabled
-                ? <Bell className="w-5 h-5 text-white" />
+                ? <Bell className="w-5 h-5 text-white border border-white" />
                 : <BellOff className="w-5 h-5 text-gray-400" />
               }
             </div>
             <div>
-              <p className={`text-sm font-bold ${allEnabled ? 'text-white' : 'text-gray-700'}`}>
+              <p className={`text-lg font-bold ${allEnabled ? 'text-white' : 'text-gray-700'}`}>
                 {allEnabled ? 'Notifications active' : 'All notifications paused'}
               </p>
-              <p className={`text-[11px] font-light ${allEnabled ? 'text-indigo-100' : 'text-gray-400'}`}>
+              <p className={`text-[13px] font-light ${allEnabled ? 'text-indigo-100' : 'text-gray-400'}`}>
                 {allEnabled ? `${activeCount} notification types enabled` : 'Turn on to receive study reminders'}
               </p>
             </div>
@@ -185,7 +185,7 @@ export default function NotificationsSettings() {
 
         {/* ── Delivery channels ────────────────────────────── */}
         <div className={BLOCKED}>
-          <SectionHeader label="Delivery Channels" icon={Settings2} color="text-gray-400" />
+          <SectionHeader label="Delivery Channels" icon={Settings2} color="text-gray-500" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
               { icon: Mail,       iconBg: 'bg-blue-50',   iconColor: 'text-blue-600',   label: 'Email',         desc: 'Daily plan, alerts & weekly report', enabled: emailEnabled, onChange: setEmailEnabled },
@@ -200,8 +200,8 @@ export default function NotificationsSettings() {
                   <c.icon className={`w-4.5 h-4.5 ${c.enabled ? c.iconColor : 'text-gray-400'}`} style={{width:18,height:18}} />
                 </div>
                 <div className="flex-1">
-                  <p className={`text-sm font-bold ${c.enabled ? 'text-gray-900' : 'text-gray-400'}`}>{c.label}</p>
-                  <p className="text-[10px] text-gray-400 font-light leading-tight">{c.desc}</p>
+                  <p className={`text-base font-bold ${c.enabled ? 'text-gray-900' : 'text-gray-400'}`}>{c.label}</p>
+                  <p className="text-[12px] text-gray-400 font-light leading-tight">{c.desc}</p>
                 </div>
                 <Toggle enabled={c.enabled} onChange={c.onChange} size="sm" />
               </div>
@@ -231,7 +231,7 @@ export default function NotificationsSettings() {
               desc="Warns you before homework, essays, and problem sets are due"
               enabled={deadlineAlerts} onChange={setDeadlineAlerts}>
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Alert timing</p>
+                <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Alert timing</p>
                 <FreqPills value={deadlineFreq}
                   options={['6 hrs before','12 hrs before','24 hrs before','48 hrs before']}
                   onChange={setDeadlineFreq} />
@@ -243,7 +243,7 @@ export default function NotificationsSettings() {
               desc="Reminds you to start studying several days before each exam"
               enabled={examAlerts} onChange={setExamAlerts}>
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Start alerting</p>
+                <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Start alerting</p>
                 <FreqPills value={examFreq}
                   options={['1 day before','3 days before','5 days before','1 week before']}
                   onChange={setExamFreq} />
@@ -272,7 +272,7 @@ export default function NotificationsSettings() {
               desc="Summary of study hours, grades, and plan completion every week"
               enabled={weeklyReport} onChange={setWeeklyReport}>
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Send on</p>
+                <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Send on</p>
                 <FreqPills value={weeklyDay}
                   options={['Friday','Saturday','Sunday']}
                   onChange={setWeeklyDay} />
@@ -291,7 +291,7 @@ export default function NotificationsSettings() {
               desc="Reminds you when cards are due for spaced repetition (SM-2)"
               enabled={flashcardRemind} onChange={setFlashcardRemind}>
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Frequency</p>
+                <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Frequency</p>
                 <FreqPills value={flashcardFreq}
                   options={['Daily','Every 2 days','Weekly','Minimal']}
                   onChange={setFlashcardFreq} />

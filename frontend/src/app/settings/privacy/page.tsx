@@ -51,14 +51,14 @@ function PrivacyToggleRow({ icon: Icon, iconBg, iconColor, label, desc, badge, e
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <p className={`text-sm font-semibold ${enabled ? 'text-gray-900' : 'text-gray-500'}`}>{label}</p>
+          <p className={`text-[14px] font-semibold ${enabled ? 'text-gray-900' : 'text-gray-500'}`}>{label}</p>
           {badge && (
-            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${badge.color}`}>
+            <span className={`text-[12px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${badge.color}`}>
               {badge.text}
             </span>
           )}
         </div>
-        <p className="text-[11px] text-gray-400 font-light leading-relaxed">{desc}</p>
+        <p className="text-[13px] text-gray-400 font-light leading-relaxed">{desc}</p>
       </div>
       <Toggle enabled={enabled} onChange={onChange} />
     </div>
@@ -75,8 +75,8 @@ function SectionHeader({ icon: Icon, label, color, sub }: {
         <Icon className="w-4 h-4 text-white" />
       </div>
       <div>
-        <p className="text-sm font-bold text-gray-900">{label}</p>
-        {sub && <p className="text-[11px] text-gray-400 font-light mt-0.5">{sub}</p>}
+        <p className="text-lg font-bold text-gray-900">{label}</p>
+        {sub && <p className="text-[14px] text-gray-400 font-light mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -93,13 +93,13 @@ function DangerRow({ icon: Icon, label, desc, buttonLabel, buttonColor, onClick,
       <div className="flex items-start gap-3 mb-3">
         <Icon className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900 mb-0.5">{label}</p>
-          <p className="text-[11px] text-gray-400 font-light leading-relaxed">{desc}</p>
+          <p className="text-base font-semibold text-gray-900 mb-0.5">{label}</p>
+          <p className="text-[12px] text-gray-400 font-light leading-relaxed">{desc}</p>
         </div>
       </div>
       {children}
       <button onClick={onClick}
-        className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl transition-all border ${buttonColor}`}>
+        className={`flex items-center gap-1.5 text-base font-bold px-4 py-2 rounded-xl transition-all border ${buttonColor}`}>
         <Icon className="w-3.5 h-3.5" />
         {buttonLabel}
       </button>
@@ -171,14 +171,14 @@ export default function PrivacySettings() {
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">Your data is protected</p>
-              <p className="text-[11px] text-green-100 font-light mt-0.5">
+              <p className="text-lg font-bold text-white">Your data is protected</p>
+              <p className="text-[12px] text-green-100 font-light mt-0.5">
                 AES-256 encryption · FERPA compliant · Never sold to third parties
               </p>
             </div>
             <div className="ml-auto flex items-center gap-1.5 bg-white/20 rounded-xl px-3 py-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
-              <span className="text-[11px] font-bold text-white">Secure</span>
+              <span className="text-[12px] font-bold text-white">Secure</span>
             </div>
           </div>
           {/* Security detail row */}
@@ -191,8 +191,8 @@ export default function PrivacySettings() {
               <div key={s.label} className="flex items-center gap-2 px-4 first:pl-0 last:pr-0">
                 <s.icon className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
                 <div>
-                  <p className="text-[11px] font-bold text-green-800">{s.label}</p>
-                  <p className="text-[10px] text-green-600">{s.sub}</p>
+                  <p className="text-[13px] font-bold text-green-800">{s.label}</p>
+                  <p className="text-[12px] text-green-600">{s.sub}</p>
                 </div>
               </div>
             ))}
@@ -262,8 +262,8 @@ export default function PrivacySettings() {
               <div key={s.label} className={`${s.bg} rounded-2xl p-3.5 text-center border border-white`}>
                 <s.icon className={`w-4 h-4 ${s.text} mx-auto mb-1.5`} />
                 <p className={`text-2xl font-extrabold ${s.text}`}>{s.value}</p>
-                <p className="text-[10px] text-gray-600 font-semibold mt-0.5">{s.label}</p>
-                <p className="text-[9px] text-gray-400">{s.sub}</p>
+                <p className="text-[12px] text-gray-600 font-semibold mt-0.5">{s.label}</p>
+                <p className="text-[13px] text-gray-400">{s.sub}</p>
               </div>
             ))}
           </div>
@@ -291,8 +291,8 @@ export default function PrivacySettings() {
         <div className="rounded-2xl border-2 border-red-100 overflow-hidden">
           <div className="bg-red-50 px-5 py-3 flex items-center gap-2 border-b border-red-100">
             <AlertTriangle className="w-4 h-4 text-red-500" />
-            <p className="text-sm font-extrabold text-red-700">Danger Zone</p>
-            <p className="text-[11px] text-red-400 font-light ml-1">These actions are permanent and cannot be undone</p>
+            <p className="text-lg font-extrabold text-red-700">Danger Zone</p>
+            <p className="text-[13px] text-red-400 font-light ml-1">These actions are permanent and cannot be undone</p>
           </div>
           <div className="p-5 space-y-4 bg-white">
 
@@ -303,14 +303,14 @@ export default function PrivacySettings() {
                   <Trash2 className="w-4 h-4 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 mb-0.5">Delete all study data</p>
-                  <p className="text-[11px] text-gray-500 font-light leading-relaxed">
+                  <p className="text-base font-bold text-gray-900 mb-0.5">Delete all study data</p>
+                  <p className="text-[13px] text-gray-500 font-light leading-relaxed">
                     Permanently removes all files, guides, flashcards, and grades. Your login stays intact.
                   </p>
                 </div>
               </div>
               <button onClick={() => setShowDeleteData(true)}
-                className="flex items-center gap-1.5 text-xs font-bold text-orange-600 border border-orange-200 hover:bg-orange-100 px-3.5 py-2 rounded-xl transition-all flex-shrink-0">
+                className="flex items-center gap-1.5 text-sm font-bold text-orange-600 border border-orange-200 hover:bg-orange-100 px-3.5 py-2 rounded-xl transition-all flex-shrink-0">
                 <Trash2 className="w-3.5 h-3.5" /> Delete data
               </button>
             </div>
@@ -322,14 +322,14 @@ export default function PrivacySettings() {
                   <Trash2 className="w-4 h-4 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-red-700 mb-0.5">Delete my account</p>
-                  <p className="text-[11px] text-gray-500 font-light leading-relaxed">
+                  <p className="text-base font-bold text-red-700 mb-0.5">Delete my account</p>
+                  <p className="text-[13px] text-gray-500 font-light leading-relaxed">
                     Permanently deletes your account, all uploaded files, grades, and every piece of data Atlas holds.
                   </p>
                 </div>
               </div>
               <button onClick={() => setShowDeleteAccount(true)}
-                className="flex items-center gap-1.5 text-xs font-bold text-red-600 border border-red-200 hover:bg-red-100 px-3.5 py-2 rounded-xl transition-all flex-shrink-0">
+                className="flex items-center gap-1.5 text-sm font-bold text-red-600 border border-red-200 hover:bg-red-100 px-3.5 py-2 rounded-xl transition-all flex-shrink-0">
                 <Trash2 className="w-3.5 h-3.5" /> Delete account
               </button>
             </div>
@@ -338,11 +338,11 @@ export default function PrivacySettings() {
 
         {/* ── Legal ────────────────────────────────────────── */}
         <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-          <p className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3">Legal & Compliance</p>
+          <p className="text-lg font-extrabold text-gray-500   mb-3">Legal & Compliance</p>
           <div className="grid grid-cols-2 gap-2 mb-3">
             {['Privacy Policy','Terms of Service','FERPA Compliance','GDPR Rights'].map((doc) => (
               <a key={doc} href="#"
-                className="flex items-center justify-between text-xs font-semibold text-gray-600 hover:text-indigo-600 bg-gray-50 hover:bg-indigo-50 border border-gray-100 hover:border-indigo-200 px-3.5 py-2.5 rounded-xl transition-all group">
+                className="flex items-center justify-between text-sm font-semibold text-gray-600 hover:text-indigo-600 bg-gray-50 hover:bg-indigo-50 border border-gray-100 hover:border-indigo-200 px-3.5 py-2.5 rounded-xl transition-all group">
                 <span className="flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-500" />
                   {doc}
@@ -351,7 +351,7 @@ export default function PrivacySettings() {
               </a>
             ))}
           </div>
-          <p className="text-[11px] text-gray-400 font-light leading-relaxed">
+          <p className="text-[12px] text-gray-400 font-light leading-relaxed">
             Atlas is FERPA compliant and follows GDPR guidelines. Your academic content is never used to train
             AI models without your explicit consent above. We never sell your data.
           </p>
