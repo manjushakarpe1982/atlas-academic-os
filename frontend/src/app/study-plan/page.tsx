@@ -6,12 +6,14 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 
 import AskAIWidget, { AskAIInline } from '@/components/AskAIWidget';
+
 import {
   Play, ChevronRight, Brain, Clock, AlertTriangle,
   Zap, Sparkles, BookOpen, SkipForward, ChevronDown,
   Upload, Lock, Target, ArrowRight,
 } from 'lucide-react';
 import Tooltip from '@/components/Tooltip';
+import WhyTaskModal, { WhyTaskData } from '@/components/WhyTaskModal';
 
 /* ─── Data ───────────────────────────────────────────────────── */
 const TASKS = [
@@ -26,6 +28,25 @@ const TASKS = [
       { label: 'Quiz score',   value: '40% — Below avg' },
       { label: 'Mastery',      value: '28% — Low' },
     ],
+    engine: {
+      mastery:   { value: 0.28, label: '28% — big gap to close' },
+      emphasis:  { value: 0.82, label: 'High — on review sheet + 5× mentioned'  },
+      proximity: { value: 0.85, label: 'Midterm in 3 days'      },
+      urgency:   { value: 0.74, label: 'Biology 101 needs the most attention'  },
+      priorityScore: 0.78,
+      signals: [
+        { kind: 'exam_appearance',         label: 'Listed as primary topic on Exam 2 review sheet', source: 'Exam 2 Review Sheet', weight: 1.0 },
+        { kind: 'verbal_cue',              label: '"You should know all five phases cold"',          source: 'Lecture 8 · 14:18',   weight: 0.8 },
+        { kind: 'quiz_appearance',         label: 'Missed 2 of 3 phase ordering questions',          source: 'Quiz 3',              weight: 0.7 },
+        { kind: 'lecture_mention',         label: 'Mentioned 5× across recent lectures',             source: 'Lectures 7-11',       weight: 0.3 },
+        { kind: 'slide_emphasis',          label: 'Highlighted on slides 5-21',                       source: 'Lecture 11',          weight: 0.5 },
+      ],
+      alternatives: [
+        { topic: 'DNA Replication',   score: 0.62, reason: 'Mid-priority — exam covers but you scored 65% on Quiz 3' },
+        { topic: 'Genetics',          score: 0.51, reason: 'Lower priority — mastery already at 55%' },
+        { topic: 'Statistics PS#4',   score: 0.48, reason: 'Due Friday but you scored 92% avg in Stats' },
+      ],
+    },
   },
   {
     rank: 2, topic: 'DNA Replication', class: 'Biology 101',    duration: 40,
@@ -38,6 +59,18 @@ const TASKS = [
       { label: 'Quiz score', value: '45%' },
       { label: 'Mastery',    value: '35% — Low' },
     ],
+    engine: {
+      mastery:   { value: 0.35, label: '35% — needs work'          },
+      emphasis:  { value: 0.70, label: 'Medium — on review sheet'   },
+      proximity: { value: 0.85, label: 'Same exam in 3 days'       },
+      urgency:   { value: 0.74, label: 'Biology 101 is high-urgency' },
+      priorityScore: 0.62,
+      signals: [
+        { kind: 'review_sheet_appearance', label: 'Listed on review sheet, page 2',  source: 'Exam 2 Review Sheet', weight: 0.9 },
+        { kind: 'lecture_mention',         label: 'Mentioned 3× in lectures',         source: 'Lectures 9-10',       weight: 0.3 },
+        { kind: 'quiz_appearance',         label: 'Scored 45% on Quiz 3 questions',   source: 'Quiz 3',              weight: 0.7 },
+      ],
+    },
   },
   {
     rank: 3, topic: 'Genetics',        class: 'Biology 101',    duration: 45,
@@ -50,6 +83,16 @@ const TASKS = [
       { label: 'Quiz score', value: '55%' },
       { label: 'Mastery',    value: '55% — Medium' },
     ],
+    engine: {
+      mastery:   { value: 0.55, label: '55% — partial mastery'      },
+      emphasis:  { value: 0.55, label: 'Light coverage so far'       },
+      proximity: { value: 0.85, label: 'Exam in 3 days'             },
+      urgency:   { value: 0.74, label: 'Biology 101'                 },
+      priorityScore: 0.51,
+      signals: [
+        { kind: 'lecture_mention', label: 'Mentioned 2× in lectures', source: 'Lectures 12-13', weight: 0.3 },
+      ],
+    },
   },
   {
     rank: 4, topic: 'Statistics PS#4', class: 'Statistics 201', duration: 40,
@@ -62,6 +105,16 @@ const TASKS = [
       { label: 'Quiz score', value: '92% avg' },
       { label: 'Mastery',    value: '72% — Good' },
     ],
+    engine: {
+      mastery:   { value: 0.72, label: '72% — strong mastery'    },
+      emphasis:  { value: 0.60, label: 'Required problem set'    },
+      proximity: { value: 0.90, label: 'Due in 2 days'           },
+      urgency:   { value: 0.42, label: 'Statistics is on track'  },
+      priorityScore: 0.48,
+      signals: [
+        { kind: 'review_sheet_appearance', label: 'Listed in syllabus as required', source: 'STAT 201 syllabus', weight: 0.6 },
+      ],
+    },
   },
 ];
 
@@ -76,8 +129,8 @@ function priorityCls(p: string) {
 }
 
 /* ─── Task card ──────────────────────────────────────────────── */
-function TaskCard({ task, isHero, onStart }: {
-  task: typeof TASKS[0]; isHero: boolean; onStart: () => void;
+function TaskCard({ task, isHero, onStart, onShowWhy }: {
+  task: typeof TASKS[0]; isHero: boolean; onStart: () => void; onShowWhy: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -128,11 +181,18 @@ function TaskCard({ task, isHero, onStart }: {
         </div>
 
         {/* ── Evidence toggle ──────────────────────────────────── */}
-        <button onClick={() => setOpen(!open)}
-          className="flex items-center gap-1 text-[11px] font-semibold text-indigo-500 hover:text-indigo-700 mb-3 transition-colors">
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-          {open ? 'Hide evidence' : 'Why this topic?'}
-        </button>
+        <div className="flex items-center gap-3 mb-3">
+          <button onClick={() => setOpen(!open)}
+            className="flex items-center gap-1 text-[11px] font-semibold text-indigo-500 hover:text-indigo-700 transition-colors">
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            {open ? 'Hide evidence' : 'Quick evidence'}
+          </button>
+          <span className="text-gray-300">·</span>
+          <button onClick={onShowWhy}
+            className="flex items-center gap-1 text-[11px] font-bold text-[#534AB7] hover:text-[#3F3795] hover:bg-[#F4F2FF] px-2 py-1 -mx-1 rounded-md transition-colors">
+            <Sparkles className="w-3 h-3" /> Why this task?
+          </button>
+        </div>
 
         {open && (
           <div className="grid grid-cols-2 gap-2 mb-3 animate-in">
@@ -181,6 +241,9 @@ export default function StudyPlanPage() {
   const router = useRouter();
   const totalMins = TASKS.reduce((s, t) => s + t.duration, 0);
   const highCount = TASKS.filter((t) => t.priority === 'High').length;
+
+  // Modal state for the "Why this task?" engine breakdown
+  const [whyTask, setWhyTask] = useState<WhyTaskData | null>(null);
 
   // The study plan is fully generated from uploaded materials. Until the
   // student has any, show a strong empty state that previews what a real
@@ -422,6 +485,12 @@ export default function StudyPlanPage() {
                 task={task}
                 isHero={i === 0}
                 onStart={() => router.push('/study-session')}
+                onShowWhy={() => setWhyTask({
+                  topic: task.topic,
+                  className: task.class,
+                  duration: task.duration,
+                  ...task.engine,
+                })}
               />
             ))}
 
@@ -521,6 +590,9 @@ export default function StudyPlanPage() {
           </div>
         </div>
       </div>
+
+      {/* "Why this task?" engine breakdown modal */}
+      <WhyTaskModal data={whyTask} onClose={() => setWhyTask(null)} />
     </AppLayout>
   );
 }
