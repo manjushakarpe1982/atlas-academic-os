@@ -1375,7 +1375,7 @@ export default function ExamModePage() {
 >
   {/* Desktop-only background image */}
   <img
-    src="https://res.cloudinary.com/mview/image/upload/atlas/exampage1.webp"
+    src="https://res.cloudinary.com/mview/image/upload/v1780665133/atlas/exampage2.webp"
     alt=""
     className="hidden lg:block absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
   />
