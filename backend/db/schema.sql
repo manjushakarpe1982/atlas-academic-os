@@ -91,3 +91,112 @@ create policy "users_self_update" on public.users
 drop policy if exists "onboarding_self_all" on public.onboarding;
 create policy "onboarding_self_all" on public.onboarding
     for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- ============================================================================
+-- Atlas — Files table
+-- Append this to backend/db/schema.sql  (or run separately in Supabase SQL editor)
+-- Safe to run multiple times (uses IF NOT EXISTS / idempotent guards).
+-- ============================================================================
+
+-- ── SEMESTERS (needed as FK target for classes) ────────────────────────────
+create table if not exists public.semesters (
+    id          uuid primary key default gen_random_uuid(),
+    user_id     uuid not null references public.users (id) on delete cascade,
+    name        text not null,                    -- e.g. "Fall 2024"
+    start_date  date,
+    end_date    date,
+    is_active   boolean not null default true,
+    created_at  timestamptz not null default now(),
+    updated_at  timestamptz not null default now()
+);
+
+-- ── CLASSES ────────────────────────────────────────────────────────────────
+create table if not exists public.classes (
+    id              uuid primary key default gen_random_uuid(),
+    user_id         uuid not null references public.users (id) on delete cascade,
+    semester_id     uuid references public.semesters (id) on delete set null,
+    name            text not null,                -- e.g. "Biology 101"
+    course_code     text,                         -- e.g. "BIO 101"
+    color           text default '#6366f1',       -- hex, for UI display
+    created_at      timestamptz not null default now(),
+    updated_at      timestamptz not null default now()
+);
+
+-- ── FILES ──────────────────────────────────────────────────────────────────
+-- One row per uploaded file. Tracks the full processing pipeline state.
+create table if not exists public.files (
+    id              uuid primary key default gen_random_uuid(),
+    user_id         uuid not null references public.users (id) on delete cascade,
+    class_id        uuid references public.classes (id) on delete set null,
+
+    -- Original file metadata
+    original_name   text not null,                -- original filename from browser
+    mime_type       text,                         -- detected MIME
+    size_bytes      bigint,                       -- file size
+    extension       text,                         -- lowercase: pdf, docx, mp3 …
+
+    -- Classification
+    -- Values: syllabus | lecture_slides | lecture_audio | notes |
+    --         assignment | quiz | exam | graded_work |
+    --         review_sheet | announcement | image | other
+    category        text not null default 'other',
+    category_source text not null default 'auto', -- 'auto' | 'user_override'
+
+    -- Storage
+    storage_path    text,       -- path inside the S3 / Supabase Storage bucket
+    storage_bucket  text,       -- bucket name (default 'atlas-files')
+
+    -- Pipeline status
+    -- Values: uploading | classifying | parsing | indexing | ready | error
+    status          text not null default 'uploading',
+    pipeline_step   int  not null default 0,      -- 0-4 matching PIPELINE_STEPS
+    error_message   text,
+
+    -- Extracted summary (shown in the file list card)
+    extracted_summary text,    -- e.g. "14 deadlines · 4 grade categories"
+
+    -- Timestamps
+    created_at      timestamptz not null default now(),
+    updated_at      timestamptz not null default now()
+);
+
+-- ── INDEXES ────────────────────────────────────────────────────────────────
+create index if not exists idx_files_user_id   on public.files (user_id);
+create index if not exists idx_files_class_id  on public.files (class_id);
+create index if not exists idx_files_status    on public.files (status);
+create index if not exists idx_files_category  on public.files (category);
+
+-- ── updated_at triggers ────────────────────────────────────────────────────
+drop trigger if exists trg_files_updated_at on public.files;
+create trigger trg_files_updated_at
+    before update on public.files
+    for each row execute function public.set_updated_at();
+
+drop trigger if exists trg_semesters_updated_at on public.semesters;
+create trigger trg_semesters_updated_at
+    before update on public.semesters
+    for each row execute function public.set_updated_at();
+
+drop trigger if exists trg_classes_updated_at on public.classes;
+create trigger trg_classes_updated_at
+    before update on public.classes
+    for each row execute function public.set_updated_at();
+
+-- ── ROW LEVEL SECURITY ─────────────────────────────────────────────────────
+alter table public.semesters enable row level security;
+alter table public.classes   enable row level security;
+alter table public.files     enable row level security;
+
+-- Semesters: each user sees only their own
+drop policy if exists "semesters_self_all" on public.semesters;
+create policy "semesters_self_all" on public.semesters
+    for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Classes: each user sees only their own
+drop policy if exists "classes_self_all" on public.classes;
+create policy "classes_self_all" on public.classes
+    for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Files: each user sees only their own
+drop policy if exists "files_self_all" on public.files;
+create policy "files_self_all" on public.files
+    for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
