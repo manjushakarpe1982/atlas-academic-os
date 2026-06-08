@@ -712,7 +712,7 @@ export default function StudyPlanPage() {
             <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1">
               <span
                 className="hover:text-indigo-600 cursor-pointer"
-                onClick={() => router.push("/home")}
+                onClick={() => router.push("/dashboard")}
               >
                 Home
               </span>
@@ -795,7 +795,7 @@ export default function StudyPlanPage() {
             ))}
 
             <button
-              onClick={() => router.push("/home")}
+              onClick={() => router.push("/dashboard")}
               className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 px-3 py-2 rounded-xl hover:bg-indigo-50 transition-all"
             >
               Back to Dashboard <ChevronRight className="w-4 h-4" />

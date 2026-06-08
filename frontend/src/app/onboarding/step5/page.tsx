@@ -26,7 +26,7 @@ export default function Step5Page() {
 
   const goToDashboard = () => {
     localStorage.setItem('atlas_onboarding_completed', 'true');
-    router.push('/home');
+    router.push('/dashboard');
   };
 
   const roleLabel = data.role

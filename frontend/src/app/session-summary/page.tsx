@@ -233,7 +233,7 @@ export default function SessionSummaryPage() {
                 {[
                   { emoji:'❓', label:'Practice Quiz',    href:'/quiz'       },
                   { emoji:'🃏', label:'Flashcards',       href:'/flashcards' },
-                  { emoji:'🏠', label:'Dashboard',        href:'/home'       },
+                  { emoji:'🏠', label:'Dashboard',        href:'/dashboard'       },
                   { emoji:'📊', label:'Analytics',        href:'/analytics'  },
                 ].map((a) => (
                   <a key={a.href} href={a.href}

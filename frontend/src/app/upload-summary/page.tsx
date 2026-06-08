@@ -282,7 +282,7 @@ export default function UploadSummaryPage() {
                   className="flex items-center justify-center gap-2 border border-gray-200 hover:border-indigo-300 text-gray-700 hover:text-indigo-600 font-semibold px-5 py-3 rounded-xl text-sm transition-all">
                   <BookOpen className="w-4 h-4" /> Open Study Guide
                 </button>
-                <button onClick={() => router.push('/home')}
+                <button onClick={() => router.push('/dashboard')}
                   className="flex items-center justify-center gap-2 border border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 font-semibold px-5 py-3 rounded-xl text-sm transition-all">
                   Dashboard <ArrowRight className="w-4 h-4" />
                 </button>
@@ -318,7 +318,7 @@ export default function UploadSummaryPage() {
                     </div>
                   ))}
                 </div>
-                <button onClick={() => router.push('/home')}
+                <button onClick={() => router.push('/dashboard')}
                   className="mt-3 w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-sm">
                   Go to Dashboard <ArrowRight className="w-3.5 h-3.5" />
                 </button>

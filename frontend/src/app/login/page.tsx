@@ -86,7 +86,7 @@ export default function LoginPage() {
       localStorage.setItem("atlas_onboarding_completed", data.onboarding_completed ? "true" : "false");
 
       // Returning users who already finished onboarding go straight to the app.
-      router.push(data.onboarding_completed ? "/home" : "/onboarding");
+      router.push(data.onboarding_completed ? "/dashboard" : "/onboarding");
     } catch {
       setError(`Cannot connect to the server. Make sure the backend is running on port ${process.env.PORT}.`);
     } finally {

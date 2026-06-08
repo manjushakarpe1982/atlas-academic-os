@@ -212,7 +212,7 @@ export default function WeeklyReviewPage() {
         {/* Header */}
         <div className="mb-5">
           <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1">
-            <span className="hover:text-indigo-600 cursor-pointer" onClick={() => router.push('/home')}>Home</span>
+            <span className="hover:text-indigo-600 cursor-pointer" onClick={() => router.push('/dashboard')}>Home</span>
             <ChevronRight className="w-3 h-3" />
             <span className="text-indigo-600 font-semibold">Weekly Review</span>
           </div>

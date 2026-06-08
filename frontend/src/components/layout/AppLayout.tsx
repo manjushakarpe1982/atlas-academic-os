@@ -25,7 +25,7 @@ const NOTIFS = [
 
 /* ─── Nav structure ──────────────────────────────────────────── */
 const MAIN_NAV = [
-  { href: '/home',           icon: LayoutDashboard, label: 'Dashboard',      desc: 'Your daily study plan'     },
+  { href: '/dashboard',           icon: LayoutDashboard, label: 'Dashboard',      desc: 'Your daily study plan'     },
   { href: '/classes',        icon: BookOpen,        label: 'Classes',        desc: 'All your class workspaces' },
   { href: '/calendar',       icon: Calendar,        label: 'Calendar',       desc: 'Week view & deadlines'     },
   { href: '/grades',         icon: BarChart2,       label: 'Grades',         desc: 'Grade tracker & GPA'       },
@@ -70,7 +70,7 @@ function NavLink({
 /* ─── Mobile bottom tab bar ──────────────────────────────────── */
 function MobileTabBar({ pathname }: { pathname: string }) {
   const tabs = [
-    { href: '/home',        icon: LayoutDashboard, label: 'Home'      },
+    { href: '/dashboard',        icon: LayoutDashboard, label: 'Home'      },
     { href: '/classes',     icon: BookOpen,        label: 'Classes'   },
     { href: '/study-plan',  icon: Layers,          label: 'Plan'      },
     { href: '/analytics',   icon: BarChart2,       label: 'Analytics' },
@@ -141,7 +141,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Logo */}
         <div className="px-5 py-4 border-b border-gray-50">
-          <Link href="/home" className="flex items-center gap-2.5 group">
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-all">
               A
             </div>
@@ -225,7 +225,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
           <aside className="relative w-[280px] bg-white h-full flex flex-col shadow-2xl">
             <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
-              <Link href="/home" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5">
+              <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">A</div>
                 <div>
                   <p className="font-extrabold text-sm text-gray-900">ATLAS</p>

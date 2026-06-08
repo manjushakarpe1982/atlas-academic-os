@@ -33,7 +33,7 @@ export default function NotFound() {
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {[
-            { href:'/home',       icon:Home,     label:'Dashboard',  desc:'Back to your plan'    },
+            { href:'/dashboard',       icon:Home,     label:'Dashboard',  desc:'Back to your plan'    },
             { href:'/classes',    icon:BookOpen, label:'Classes',    desc:'Your class workspaces'},
             { href:'/study-plan', icon:Search,   label:'Study Plan', desc:'Today\'s tasks'        },
             { href:'/help',       icon:Search,   label:'Help',       desc:'Find answers'         },
@@ -51,7 +51,7 @@ export default function NotFound() {
           ))}
         </div>
 
-        <Link href="/home"
+        <Link href="/dashboard"
           className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>

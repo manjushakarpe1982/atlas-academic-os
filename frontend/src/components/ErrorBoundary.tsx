@@ -35,7 +35,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20">
                 Reload page
               </button>
-              <a href="/home"
+              <a href="/dashboard"
                 className="flex-1 border-2 border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 font-bold py-2.5 rounded-xl text-sm transition-all text-center">
                 Go to Dashboard
               </a>

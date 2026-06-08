@@ -701,7 +701,7 @@ function Footer() {
     {
       title: "App",
       links: [
-        { label: "Dashboard", href: "/home" },
+        { label: "Dashboard", href: "/dashboard" },
         { label: "My Classes", href: "/classes" },
         { label: "Study Plan", href: "/study-plan" },
         { label: "Grades", href: "/grades" },

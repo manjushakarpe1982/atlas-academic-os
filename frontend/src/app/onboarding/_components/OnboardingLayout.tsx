@@ -141,7 +141,7 @@ export default function OnboardingLayout({
     } catch {
       /* non-fatal — still let them through */
     }
-    router.push("/home");
+    router.push("/dashboard");
   };
 
   return (

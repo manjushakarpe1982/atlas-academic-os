@@ -74,12 +74,12 @@ App: http://localhost:3000
 ## Onboarding flow
 
 1. **Signup / Login** → tokens stored in `localStorage`; the app routes to
-   `/onboarding` for new users or `/home` for users who already finished.
+   `/onboarding` for new users or `/dashboard` for users who already finished.
 2. **Steps 1–4** write into a shared React context (`OnboardingContext`).
    Pressing **Continue** saves the current data to the backend via
    `PUT /api/onboarding`. Leaving **step 4** sends `?complete=true`.
 3. **Step 5** confirms completion and links to the dashboard.
-4. **Skip for now** calls `POST /api/onboarding/complete` and jumps to `/home`.
+4. **Skip for now** calls `POST /api/onboarding/complete` and jumps to `/dashboard`.
 
 On return visits, the context loads any previously-saved answers from
 `GET /api/onboarding`, so the wizard is pre-filled.
