@@ -354,66 +354,127 @@ export default function ClassesPage() {
     ? Math.round(classes.filter((c) => c.current_grade !== null).reduce((s, c) => s + (c.current_grade || 0), 0) / classes.filter((c) => c.current_grade !== null).length)
     : null;
 
-  // ── Empty state ────────────────────────────────────────────────────────
+  // ── Empty state — original UI with Cloudinary images ───────────────────
   if (!loading && classes.length === 0) {
     return (
       <AppLayout>
-        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-6">
+        <div className="min-h-screen bg-[#F5F5FB] p-4 md:p-4">
           <div className="max-w-[920px] mx-auto">
+
             <div className="text-center mb-7">
               <h1 className="text-3xl md:text-[34px] font-extrabold text-[#14142B] leading-tight mb-2">
                 Add the classes you&apos;re taking
               </h1>
               <p className="text-sm text-[#6B6A8A] max-w-xl mx-auto leading-relaxed">
-                Atlas builds a personalised study plan for every class. Add them by uploading a syllabus, or enter them manually.
+                Atlas builds a personalised study plan for every class. Add them by
+                uploading a syllabus, or enter them manually — your choice.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-7">
+            {/* Two big action cards */}
+            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4 mb-7">
+              {/* Option 1 — Upload syllabus */}
               <Link href="/upload"
-                className="group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all min-h-[200px] bg-gradient-to-br from-indigo-500 to-violet-600 p-6 flex flex-col justify-end">
-                <div className="absolute top-4 right-4 bg-emerald-400 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">Recommended</div>
-                <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center mb-3">
-                  <Upload className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-xl font-extrabold text-white mb-1">Upload syllabus</h3>
-                <p className="text-sm text-white/80 leading-relaxed mb-3">Atlas reads your syllabus and creates the class automatically — topics, deadlines, and grade weights.</p>
-                <div className="inline-flex items-center gap-2 bg-white text-indigo-600 font-extrabold text-sm px-4 py-2.5 rounded-xl shadow-md w-fit">
-                  <Upload className="w-4 h-4" /> Upload a file <ChevronRight className="w-4 h-4" />
+                className="group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all active:scale-[0.99] min-h-[260px]">
+                <img
+                  src="https://res.cloudinary.com/mview/image/upload/v1780557159/atlas/classpage1.png"
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#c5bdf3] via-[#F4F2FF]/95 via-40% to-transparent pointer-events-none" />
+                <div className="relative z-10 p-6">
+                  <div className="flex items-start justify-between mb-1">
+                    <div className="w-11 h-11 rounded-xl bg-white/80 backdrop-blur flex items-center justify-center border border-[#E8E5FD] shadow-sm">
+                      <Upload className="w-5 h-5 text-[#534AB7]" />
+                    </div>
+                  </div>
+                  <span className="absolute top-5 right-5 inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold px-2 py-1 uppercase tracking-wider z-10">
+                    Recommended
+                  </span>
+                  <h3 className="text-xl font-extrabold text-[#14142B] mb-1.5">Upload syllabus</h3>
+                  <p className="text-[14px] text-[#6B6A8A] leading-relaxed mb-1 max-w-[65%]">
+                    Atlas reads your syllabus and creates the class automatically —
+                    with topics, deadlines, and grading weights all set up.
+                  </p>
+                  <div className="inline-flex items-center gap-2 bg-[#534AB7] hover:bg-[#3F3795] text-white font-extrabold text-sm px-4 py-2.5 rounded-xl shadow-md shadow-[#534AB7]/25">
+                    <Upload className="w-4 h-4" /> Upload a file
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </Link>
 
+              {/* Option 2 — Add manually */}
               <button onClick={() => setShowAdd(true)}
-                className="group text-left relative rounded-xl shadow-sm hover:shadow-lg border-2 border-dashed border-indigo-200 hover:border-indigo-400 transition-all min-h-[200px] bg-white p-6 flex flex-col justify-end">
-                <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center mb-3">
-                  <Plus className="w-5 h-5 text-indigo-600" />
-                </div>
-                <h3 className="text-xl font-extrabold text-[#14142B] mb-1">Add manually</h3>
-                <p className="text-sm text-[#6B6A8A] leading-relaxed mb-3">No syllabus? Enter class name, instructor, and credit hours by hand.</p>
-                <div className="inline-flex items-center gap-2 border-2 border-indigo-200 text-indigo-600 font-extrabold text-sm px-4 py-2.5 rounded-xl w-fit">
-                  Enter class details <ChevronRight className="w-4 h-4" />
+                className="group text-left relative overflow-hidden rounded-xl shadow-sm hover:shadow-lg hover:border-[#534AB7]/30 transition-all active:scale-[0.99] min-h-[260px]">
+                <img
+                  src="https://res.cloudinary.com/mview/image/upload/v1780557308/atlas/classpage3.png"
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 via-40% to-transparent pointer-events-none" />
+                <div className="relative z-10 p-6 max-w-[60%]">
+                  <div className="w-11 h-11 rounded-xl bg-[#F4F2FF] flex items-center justify-center mb-1 shadow-sm">
+                    <Plus className="w-5 h-5 text-[#534AB7]" />
+                  </div>
+                  <h3 className="text-xl font-extrabold text-[#14142B] mb-1.5">Add manually</h3>
+                  <p className="text-[14px] text-[#6B6A8A] leading-relaxed mb-2">
+                    Don&apos;t have a syllabus handy? Enter class details one at a
+                    time — code, name, professor, schedule.
+                  </p>
+                  <div className="inline-flex items-center gap-2 bg-white border-2 border-[#E8E5FD] text-[#534AB7] font-extrabold text-sm md:text-base px-4 py-1.5 rounded-xl">
+                    Enter class details
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-7">
-              {[
-                { icon: BookOpen, color: "bg-indigo-600",   label: "Topics covered",  desc: "Every concept from lectures, tagged by week." },
-                { icon: Target,   color: "bg-emerald-500",  label: "Grade weights",   desc: "Exam, quiz, homework — auto-extracted." },
-                { icon: BarChart2,color: "bg-blue-500",     label: "Your grades",     desc: "Live tracking with projected final score." },
-                { icon: Brain,    color: "bg-orange-500",   label: "Weak areas",      desc: "Topics you missed, ranked for review." },
-              ].map((c) => (
-                <div key={c.label} className="bg-white border border-indigo-100 rounded-xl p-4 shadow-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                      <c.icon className="w-5 h-5 text-white" />
+            {/* What Atlas tracks per class */}
+            <div className="mb-7">
+              <p className="text-[13px] font-extrabold text-[#3a3a3d] uppercase tracking-widest mb-3">
+                What Atlas tracks for each class
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  { icon: BookOpen,  color: 'bg-[#534AB7]',   label: 'Topics covered',  desc: 'Every concept from lectures, tagged by week and unit.' },
+                  { icon: Target,    color: 'bg-emerald-500', label: 'Grading weights', desc: 'Exam, quiz, homework percentages — auto-extracted.' },
+                  { icon: BarChart2, color: 'bg-blue-500',    label: 'Your grades',     desc: 'Live grade tracking with projected final score.' },
+                  { icon: Brain,     color: 'bg-orange-500',  label: 'Weak areas',      desc: 'Topics you missed, ranked for focused review.' },
+                ].map((c) => (
+                  <div key={c.label} className="bg-white border border-[#ECE9FF] rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shadow-md flex-shrink-0`}>
+                        <c.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <p className="text-[15px] font-extrabold text-[#1A1A2E] leading-tight">{c.label}</p>
                     </div>
-                    <p className="text-sm font-extrabold text-[#1A1A2E]">{c.label}</p>
+                    <p className="text-[14px] text-[#6B6A8A] leading-relaxed">{c.desc}</p>
                   </div>
-                  <p className="text-xs text-[#6B6A8A] leading-relaxed">{c.desc}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+
+            {/* Reassurance band */}
+            <div className="relative overflow-hidden bg-[#d3cef3] border border-[#E8E5FD] rounded-2xl shadow-sm min-h-[120px]">
+              <img
+                src="https://res.cloudinary.com/mview/image/upload/atlas/classpage2.webp"
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#cec8f1] via-[#F4F2FF] via-50% to-transparent pointer-events-none" />
+              <div className="relative z-10 px-5 py-5 flex items-start gap-3.5 md:max-w-[65%]">
+                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                  <Zap className="w-6 h-6 text-[#534AB7]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[16px] font-extrabold text-[#1A1A2E]">Add as many classes as you need</p>
+                  <p className="text-[14px] text-[#6B6A8A] leading-relaxed mt-0.5">
+                    You can come back any time to add new classes, edit details, or remove old ones.
+                  </p>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
         {showAdd && <ClassModal onClose={() => setShowAdd(false)} onSaved={loadClasses} />}
