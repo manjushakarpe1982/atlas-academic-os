@@ -25,19 +25,31 @@ from typing import Any, Optional
 import anthropic
 
 # ── Client ─────────────────────────────────────────────────────────────────
-# The SDK reads ANTHROPIC_API_KEY from the environment automatically.
 _client: Optional[anthropic.Anthropic] = None
 
 
 def _get_client() -> anthropic.Anthropic:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        # Always import settings fresh — this is the only reliable way
+        # to get the key on Windows where os.environ may not have it
+        from app.config import settings
+        api_key = settings.anthropic_api_key
+
+        if not api_key:
+            raise ValueError(
+                "ANTHROPIC_API_KEY is not set. "
+                "Add ANTHROPIC_API_KEY=sk-ant-... to backend/.env"
+            )
+        print(f"[parser] using API key: {api_key[:12]}...")
+        _client = anthropic.Anthropic(api_key=api_key)
     return _client
 
 
-MODEL = "claude-sonnet-4-6"
-MAX_TOKENS = 4096
+# Model: haiku is ~20x cheaper than Sonnet, fast enough for extraction
+# Override with ATLAS_PARSE_MODEL=sonnet in .env for higher accuracy
+MODEL = os.environ.get("ATLAS_PARSE_MODEL_NAME", "claude-haiku-4-5-20251001")
+MAX_TOKENS = 1024  # JSON output never needs more than this
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -78,30 +90,21 @@ def _safe_call(system: str, user: str) -> tuple[dict[str, Any] | None, str | Non
 
 # ── 4.1  Syllabus parser ────────────────────────────────────────────────────
 
-SYLLABUS_SYSTEM = """You extract structured course information from a syllabus.
-Return ONLY valid JSON matching this exact schema — no prose, no markdown fences.
-For any field you are unsure about, set its confidence to "medium" or "low".
-Never invent dates or weights. If you cannot find a value, use null.
-Weights should sum to approximately 100; if they don't, set confidence "low" on all weight items.
-Dates with no year should inherit the most likely current academic year.
+SYLLABUS_SYSTEM = """You are a precise document parser. Extract ONLY information explicitly stated in the document below.
 
-Schema:
-{
-  "course_name": string | null,
-  "instructor": string | null,
-  "credit_hours": integer | null,
-  "office_hours": string | null,
-  "grade_scale_override": object | null,
-  "grade_weights": [
-    {"category": string, "weight_pct": number, "confidence": "high"|"medium"|"low"}
-  ],
-  "assessments": [
-    {"title": string, "category": string, "due_date": "YYYY-MM-DD"|null, "confidence": "high"|"medium"|"low"}
-  ],
-  "topics": [
-    {"title": string, "week_hint": integer|null, "chapter_ref": string|null, "confidence": "high"|"medium"|"low"}
-  ]
-}"""
+STRICT RULES:
+- If a field is not clearly written in the document, return null. Never guess or infer.
+- confidence="high"  means the text is explicitly stated word-for-word in the document
+- confidence="medium" means it is strongly implied but not stated directly
+- confidence="low"   means you are uncertain — the user must verify this field
+- Never invent dates, percentages, or names that are not in the document
+- If grade weights do not sum to 100, that is fine — return exactly what the document says
+- Return ONLY valid JSON, no prose, no markdown fences
+
+{"course_name":str|null,"instructor":str|null,"credit_hours":int|null,"office_hours":str|null,
+"grade_weights":[{"category":str,"weight_pct":num,"confidence":"high"|"medium"|"low"}],
+"assessments":[{"title":str,"category":str,"due_date":"YYYY-MM-DD"|null,"confidence":"high"|"medium"|"low"}],
+"topics":[{"title":str,"week_hint":int|null,"chapter_ref":str|null,"confidence":"high"|"medium"|"low"}]}"""
 
 
 def parse_syllabus(text: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -135,17 +138,16 @@ def build_syllabus_summary(result: dict[str, Any]) -> str:
 
 # ── 4.4  Study material: notes / slides summary ─────────────────────────────
 
-NOTES_SYSTEM = """You extract key study information from course notes or lecture slides.
-Return ONLY valid JSON — no prose, no markdown fences.
+NOTES_SYSTEM = """You are a precise document parser. Extract ONLY information explicitly present in the document.
 
-Schema:
-{
-  "title_guess": string,
-  "main_topics": [{"title": string, "summary": string, "key_terms": [string]}],
-  "key_concepts": [string],
-  "potential_exam_topics": [string],
-  "summary": string
-}"""
+STRICT RULES:
+- Only list topics and concepts that are actually discussed in the document
+- Do not add topics that seem relevant but are not mentioned
+- potential_exam_topics: only include topics the document explicitly emphasises (bold, repeated, starred)
+- Return ONLY valid JSON, no prose, no markdown fences
+
+{"title_guess":str,"summary":str,"main_topics":[{"title":str,"summary":str,"key_terms":[str]}],
+"key_concepts":[str],"potential_exam_topics":[str]}"""
 
 
 def parse_notes_or_slides(text: str, category: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -170,20 +172,16 @@ def build_notes_summary(result: dict[str, Any]) -> str:
 
 # ── 4.6  Quiz / graded work: score + topic extraction ───────────────────────
 
-QUIZ_SYSTEM = """You extract assessment information from a quiz, exam, or graded assignment.
-Return ONLY valid JSON — no prose, no markdown fences.
+QUIZ_SYSTEM = """You are a precise document parser. Extract ONLY scores and topics explicitly shown in the document.
 
-Schema:
-{
-  "assessment_title": string | null,
-  "score": number | null,
-  "max_score": number | null,
-  "percentage": number | null,
-  "topics_tested": [string],
-  "weak_areas": [string],
-  "question_types": [string],
-  "needs_confirmation": boolean
-}"""
+STRICT RULES:
+- score and max_score: only if clearly written (e.g. "18/20" or "Score: 88"). If unclear set needs_confirmation=true
+- weak_areas: only topics where answers were clearly wrong or marked incorrect in this document
+- Never assume a topic is weak unless the document shows a wrong answer for it
+- Return ONLY valid JSON, no prose, no markdown fences
+
+{"assessment_title":str|null,"score":num|null,"max_score":num|null,"percentage":num|null,
+"topics_tested":[str],"weak_areas":[str],"question_types":[str],"needs_confirmation":bool}"""
 
 
 def parse_quiz_or_graded(text: str, category: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -211,17 +209,8 @@ def build_quiz_summary(result: dict[str, Any]) -> str:
 
 # ── Generic document summary ─────────────────────────────────────────────────
 
-GENERIC_SYSTEM = """You summarise an academic document.
-Return ONLY valid JSON — no prose, no markdown fences.
-
-Schema:
-{
-  "document_type": string,
-  "title_guess": string,
-  "summary": string,
-  "key_points": [string],
-  "relevant_topics": [string]
-}"""
+GENERIC_SYSTEM = """Summarise academic document. Return ONLY JSON, no prose, no fences.
+{"document_type":str,"title_guess":str,"summary":str,"key_points":[str],"relevant_topics":[str]}"""
 
 
 def parse_generic(text: str, category: str) -> tuple[dict[str, Any] | None, str | None]:

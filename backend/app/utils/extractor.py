@@ -111,16 +111,52 @@ def extract_text(data: bytes, extension: str) -> str:
     return ""
 
 
-def truncate_for_claude(text: str, max_chars: int = 80_000) -> str:
+
+def truncate_for_claude(text: str, max_chars: int = 12_000) -> str:
     """
-    Truncate extracted text to a safe length for Claude's context window.
-    80 000 chars ≈ ~20 000 tokens, well within claude-sonnet-4 limits.
-    Truncation happens at a paragraph boundary where possible.
+    Truncate extracted text before sending to Claude.
+
+    12,000 chars ≈ 3,000 tokens — enough for any syllabus or set of notes.
+    Sending 80,000 chars (the old limit) wasted ~17,000 tokens per call.
+
+    For syllabi the important content (grading, deadlines, topics) is almost
+    always in the first half of the document. For notes/slides we send the
+    first portion which covers the main topics.
+
+    Override with ATLAS_MAX_PARSE_CHARS env var if you have very long docs
+    and need higher accuracy.
     """
+    import os
+    max_chars = int(os.environ.get("ATLAS_MAX_PARSE_CHARS", max_chars))
     if len(text) <= max_chars:
         return text
-    # Try to cut at a paragraph boundary
+    # Cut at a paragraph boundary where possible
     cut = text.rfind("\n\n", 0, max_chars)
-    if cut > max_chars * 0.8:
-        return text[:cut] + "\n\n[... truncated for length ...]"
-    return text[:max_chars] + "\n\n[... truncated for length ...]"
+    if cut > max_chars * 0.7:
+        return text[:cut] + "\n\n[... document truncated for AI processing ...]"
+    return text[:max_chars] + "\n\n[... document truncated for AI processing ...]"
+
+
+def smart_truncate(text: str, category: str) -> str:
+    """
+    Category-aware truncation.
+    Syllabi: take first 12k chars (grading info is always at the top).
+    Slides:  spread across the whole doc to catch all topics.
+    Notes:   first 10k is usually sufficient.
+    Quiz:    typically short — 6k is plenty.
+    """
+    limits = {
+        "syllabus":       12_000,
+        "lecture_slides": 10_000,
+        "notes":          10_000,
+        "review_sheet":    8_000,
+        "quiz":            6_000,
+        "exam":            6_000,
+        "graded_work":     6_000,
+        "assignment":      8_000,
+        "announcement":    4_000,
+        "other":           8_000,
+    }
+    limit = limits.get(category, 8_000)
+    return truncate_for_claude(text, limit)
+

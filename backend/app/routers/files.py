@@ -33,6 +33,9 @@ from app.utils.supabase_client import supabase
 
 router = APIRouter()
 
+import os as _os
+MODEL_NAME = _os.environ.get("ATLAS_PARSE_MODEL_NAME", "claude-haiku-4-5-20251001")
+
 ALLOWED_EXTENSIONS = {
     "pdf", "docx", "doc", "pptx", "ppt", "txt", "md",
     "mp3", "m4a", "wav", "ogg", "aac",
@@ -148,54 +151,61 @@ def _set_status(file_id: str, status_str: str, step: int, extra: dict | None = N
 def _run_parse(file_id: str, user_id: str, data: bytes, extension: str, category: str) -> None:
     """
     Background task: extract text → call Claude → store results → mark ready.
-    Runs after the upload response has already been returned to the client.
-    The frontend polls GET /api/files or GET /api/files/{id} to see status updates.
     """
+    import traceback
+    print(f"[parse] START file_id={file_id} ext={extension} category={category}")
+
     # Skip audio / video / images — no text to extract
     if extension in SKIP_PARSE_EXTENSIONS:
         _set_status(file_id, "ready", 4, {
             "extracted_summary": f"{extension.upper()} uploaded — AI analysis available after transcription (coming soon)"
         })
+        print(f"[parse] SKIP (media file) file_id={file_id}")
         return
 
     # Step 2: parsing
     _set_status(file_id, "parsing", 2)
 
     try:
-        # Import here so the router doesn't fail if libs are missing at startup
-        from app.utils.extractor import extract_text, truncate_for_claude
+        from app.utils.extractor import extract_text, smart_truncate
         from app.utils.parser import parse_file
 
         # Extract text
+        print(f"[parse] extracting text file_id={file_id}")
         raw_text = extract_text(data, extension)
+        print(f"[parse] extracted {len(raw_text)} chars file_id={file_id}")
+
         if not raw_text.strip():
             _set_status(file_id, "ready", 4, {
                 "extracted_summary": "Could not extract text from this file — try a text-based PDF or DOCX"
             })
+            print(f"[parse] EMPTY TEXT file_id={file_id}")
             return
 
-        text = truncate_for_claude(raw_text)
+        text = smart_truncate(raw_text, category)
+        print(f"[parse] truncated to {len(text)} chars, calling Claude file_id={file_id}")
 
         # Step 3: call Claude
         _set_status(file_id, "indexing", 3)
         t0 = time.monotonic()
         result, error_msg, summary = parse_file(text, category)
         duration_ms = int((time.monotonic() - t0) * 1000)
+        print(f"[parse] Claude done in {duration_ms}ms error={error_msg} file_id={file_id}")
 
-        # Store parsed result
-        supabase.table("parsed_results").upsert({
+        # Store parsed result — delete first then insert (works in all SDK versions)
+        supabase.table("parsed_results").delete().eq("file_id", file_id).execute()
+        supabase.table("parsed_results").insert({
             "file_id":          file_id,
             "user_id":          user_id,
             "raw_result":       result or {},
-            "model_used":       "claude-sonnet-4-6",
+            "model_used":       MODEL_NAME,
             "parse_duration_ms": duration_ms,
             "parse_error":      error_msg,
-            # Denormalised fields for syllabi
             "course_name":  (result or {}).get("course_name"),
             "instructor":   (result or {}).get("instructor"),
             "credit_hours": (result or {}).get("credit_hours"),
             "office_hours": (result or {}).get("office_hours"),
-        }, on_conflict="file_id").execute()
+        }).execute()
 
         # For syllabi, also persist grade_weights, assessments, topics
         if category == "syllabus" and result:
@@ -208,6 +218,9 @@ def _run_parse(file_id: str, user_id: str, data: bytes, extension: str, category
         })
 
     except Exception as exc:
+        import traceback
+        full_error = traceback.format_exc()
+        print(f"[parse] ERROR file_id={file_id}:\n{full_error}")
         _set_status(file_id, "error", 2, {
             "error_message": f"AI parsing failed: {exc}"
         })
@@ -475,13 +488,14 @@ async def get_file_results(file_id: str, user_id: str = Depends(get_current_user
             supabase.table("parsed_results")
             .select("*")
             .eq("file_id", file_id)
-            .maybeSingle()
+            .limit(1)
             .execute()
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Could not fetch results: {exc}")
 
-    pr = pr_res.data
+    rows = pr_res.data or []
+    pr = rows[0] if rows else None
 
     return ParsedResultResponse(
         file_id=file_id,
