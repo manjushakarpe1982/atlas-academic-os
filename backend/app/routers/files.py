@@ -211,6 +211,47 @@ def _run_parse(file_id: str, user_id: str, data: bytes, extension: str, category
         if category == "syllabus" and result:
             _persist_syllabus_data(file_id, user_id, result)
 
+        # Generate suggestions inside the same background task — no extra API call needed
+        # We already have the parsed result, just ask Claude for suggestions in one more call
+        suggestions_json = []
+        if result:
+            try:
+                import json as _j
+                import re as _r
+                sug_system = (
+                    "Generate 5 study suggestions from this document data. "
+                    "Return ONLY a JSON array of 5 objects, no prose, no fences. "
+                    'Each: {"emoji":str,"text":str,"impact":str,"color":str}. '
+                    "color options: text-red-600 bg-red-50 border-red-200 | "
+                    "text-amber-600 bg-amber-50 border-amber-200 | "
+                    "text-indigo-600 bg-indigo-50 border-indigo-200 | "
+                    "text-purple-600 bg-purple-50 border-purple-200 | "
+                    "text-blue-600 bg-blue-50 border-blue-200. "
+                    "Base suggestions ONLY on the provided data. Never invent."
+                )
+                sug_user = f"Category: {category}\nData: {_j.dumps(result)[:2000]}"
+                from app.utils.parser import _get_client
+                sug_msg = _get_client().messages.create(
+                    model=MODEL_NAME, max_tokens=400,
+                    system=sug_system,
+                    messages=[{"role": "user", "content": sug_user}],
+                )
+                sug_raw = sug_msg.content[0].text.strip()
+                sug_raw = _r.sub(r"^```(?:json)?\s*|\s*```$", "", sug_raw).strip()
+                suggestions_json = _j.loads(sug_raw)[:5]
+                print(f"[parse] suggestions generated: {len(suggestions_json)} items")
+            except Exception as sug_exc:
+                print(f"[parse] suggestions failed (non-fatal): {sug_exc}")
+
+        # Save suggestions to parsed_results row
+        if suggestions_json:
+            try:
+                supabase.table("parsed_results").update({
+                    "suggestions": suggestions_json
+                }).eq("file_id", file_id).execute()
+            except Exception as e:
+                print(f"[parse] could not save suggestions: {e}")
+
         # Mark ready
         _set_status(file_id, "ready", 4, {
             "extracted_summary": summary,
@@ -559,3 +600,85 @@ async def delete_file(file_id: str, user_id: str = Depends(get_current_user_id))
         raise HTTPException(status_code=500, detail=f"Could not delete file: {exc}")
 
     return SimpleMessage(message=f"'{row['original_name']}' deleted.")
+
+# ── GET /api/files/{file_id}/suggestions ───────────────────────────────────
+# Reads suggestions saved during the parse step — NO extra Claude call.
+
+class SuggestionItem(BaseModel):
+    emoji:  str
+    text:   str
+    impact: str
+    color:  str
+
+class SuggestionsResponse(BaseModel):
+    file_id:     str
+    suggestions: list[SuggestionItem]
+
+@router.get(
+    "/{file_id}/suggestions",
+    response_model=SuggestionsResponse,
+    summary="Get AI study suggestions (pre-generated during parse)",
+)
+async def get_suggestions(
+    file_id: str,
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    Returns the suggestions that were generated during the background
+    parse task. No new Claude call is made here — suggestions are
+    saved to parsed_results.suggestions when the file is first processed.
+    """
+    # Verify ownership
+    try:
+        file_res = (
+            supabase.table("files")
+            .select("id, status")
+            .eq("id", file_id)
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
+    except Exception:
+        raise HTTPException(status_code=404, detail="File not found.")
+
+    if not file_res.data:
+        raise HTTPException(status_code=404, detail="File not found.")
+    if file_res.data["status"] != "ready":
+        raise HTTPException(status_code=400, detail="File is not ready yet.")
+
+    # Read suggestions from DB
+    try:
+        pr_res = (
+            supabase.table("parsed_results")
+            .select("suggestions")
+            .eq("file_id", file_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Could not fetch suggestions: {exc}")
+
+    rows = pr_res.data or []
+    raw_suggestions = (rows[0].get("suggestions") or []) if rows else []
+
+    suggestions = [
+        SuggestionItem(
+            emoji=s.get("emoji", "📖"),
+            text=s.get("text", "Review this material"),
+            impact=s.get("impact", "Study Tip"),
+            color=s.get("color", "text-blue-600 bg-blue-50 border-blue-200"),
+        )
+        for s in raw_suggestions[:5]
+    ]
+
+    # If no suggestions saved yet (old files before this fix), return fallback
+    if not suggestions:
+        suggestions = [
+            SuggestionItem(emoji="📖", text="Review all topics from this material",    impact="Study Tip",    color="text-blue-600 bg-blue-50 border-blue-200"),
+            SuggestionItem(emoji="🃏", text="Create flashcards for key terms",         impact="Study Tip",    color="text-purple-600 bg-purple-50 border-purple-200"),
+            SuggestionItem(emoji="❓", text="Test yourself with a practice quiz",      impact="Medium Impact",color="text-amber-600 bg-amber-50 border-amber-200"),
+            SuggestionItem(emoji="🔁", text="Re-read sections you found difficult",    impact="Study Tip",    color="text-indigo-600 bg-indigo-50 border-indigo-200"),
+            SuggestionItem(emoji="🧠", text="Explain each topic out loud to yourself", impact="High Impact",  color="text-red-600 bg-red-50 border-red-200"),
+        ]
+
+    return SuggestionsResponse(file_id=file_id, suggestions=suggestions)

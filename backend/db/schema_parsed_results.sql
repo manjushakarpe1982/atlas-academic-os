@@ -109,3 +109,7 @@ create policy "topics_self_all" on public.topics
     for all
     using (auth.uid() = user_id)
     with check (auth.uid() = user_id);
+
+-- Add suggestions column (run this if parsed_results table already exists)
+alter table public.parsed_results
+    add column if not exists suggestions jsonb not null default '[]'::jsonb;

@@ -9,6 +9,7 @@ import {
   Calendar, GraduationCap, Brain, Tag, Clock,
 } from 'lucide-react';
 import { api, getToken, API_BASE } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -92,7 +93,7 @@ function SyllabusResult({ r }: { r: Record<string, unknown> }) {
   return (
     <div className="mt-3 space-y-3">
       {/* Header fields */}
-      {!!(r.course_name || r.instructor || r.credit_hours) && (
+      {(!!r.course_name || !!r.instructor || !!r.credit_hours) && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {!!r.course_name && (
             <div className="bg-indigo-50 rounded-xl px-3 py-2">
@@ -198,7 +199,7 @@ function NotesResult({ r }: { r: Record<string, unknown> }) {
           <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-2">Potential exam topics</p>
           <div className="flex flex-wrap gap-1.5">
             {examTopics.map((t, i) => (
-              <span key={i} className="text-[11px] bg-red-50 border border-red-100 text-red-700 px-2.5 py-1 rounded-lg font-semibold">{t}</span>
+              !!t && <span key={i} className="text-[11px] bg-red-50 border border-red-100 text-red-700 px-2.5 py-1 rounded-lg font-semibold">{t}</span>
             ))}
           </div>
         </div>
@@ -249,7 +250,7 @@ function QuizResult({ r }: { r: Record<string, unknown> }) {
             </div>
           )}
         </div>
-      )}
+      )}  
       {weakAreas.length > 0 && (
         <div>
           <p className="text-[11px] font-extrabold text-red-500 uppercase tracking-wider mb-2">Weak areas to review</p>
@@ -308,6 +309,7 @@ function GenericResult({ r }: { r: Record<string, unknown> }) {
 }
 
 function ParsedResultPanel({ file }: { file: AtlasFile }) {
+  const router    = useRouter();
   const [open,    setOpen]    = useState(false);
   const [result,  setResult]  = useState<ParsedResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -327,6 +329,10 @@ function ParsedResultPanel({ file }: { file: AtlasFile }) {
     setOpen(!open);
   };
 
+  const goToSummary = () => {
+    router.push(`/upload-summary?file_id=${file.id}`);
+  };
+
   const cat = file.category;
   const isSyllabus = cat === 'syllabus';
   const isNotes    = ['lecture_slides','notes','review_sheet','announcement'].includes(cat);
@@ -334,11 +340,17 @@ function ParsedResultPanel({ file }: { file: AtlasFile }) {
 
   return (
     <div className="mt-2">
-      <button onClick={handleToggle}
-        className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-        {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-        {open ? 'Hide AI results' : 'View AI results'}
-      </button>
+      <div className="flex items-center gap-3">
+        <button onClick={handleToggle}
+          className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+          {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          {open ? 'Hide AI results' : 'View AI results'}
+        </button>
+        <button onClick={goToSummary}
+          className="flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-indigo-600 transition-colors">
+          Full summary →
+        </button>
+      </div>
 
       {open && (
         <div className="mt-3 bg-[#F8F7FF] border border-[#E8E5FD] rounded-2xl p-4">
