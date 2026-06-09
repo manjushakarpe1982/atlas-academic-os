@@ -601,6 +601,323 @@ async def delete_file(file_id: str, user_id: str = Depends(get_current_user_id))
 
     return SimpleMessage(message=f"'{row['original_name']}' deleted.")
 
+
+# ── PATCH /api/files/{file_id}/fields ──────────────────────────────────────
+# Feature 1: Edit extracted fields after parsing
+
+class EditFieldsRequest(BaseModel):
+    """Student corrections to AI-extracted fields. All fields optional."""
+    course_name:  Optional[str] = None
+    instructor:   Optional[str] = None
+    credit_hours: Optional[int] = None
+    office_hours: Optional[str] = None
+    category:     Optional[str] = None   # also updates files.category
+
+class EditFieldsResponse(BaseModel):
+    message: str
+    file_id: str
+
+@router.patch(
+    "/{file_id}/fields",
+    response_model=EditFieldsResponse,
+    summary="Save student corrections to AI-extracted fields",
+)
+async def edit_fields(
+    file_id: str,
+    body:    EditFieldsRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    Saves the student's one-tap corrections to the parsed result.
+    Only the fields provided in the request body are updated.
+    category_source is set to 'user_override' if category is changed.
+    """
+    # Verify ownership
+    try:
+        supabase.table("files").select("id").eq("id", file_id).eq("user_id", user_id).single().execute()
+    except Exception:
+        raise HTTPException(status_code=404, detail="File not found.")
+
+    # Update parsed_results row
+    pr_update: dict = {}
+    if body.course_name  is not None: pr_update["course_name"]  = body.course_name
+    if body.instructor   is not None: pr_update["instructor"]   = body.instructor
+    if body.credit_hours is not None: pr_update["credit_hours"] = body.credit_hours
+    if body.office_hours is not None: pr_update["office_hours"] = body.office_hours
+
+    if pr_update:
+        try:
+            # Also update raw_result so it stays in sync
+            pr_res = supabase.table("parsed_results").select("raw_result").eq("file_id", file_id).limit(1).execute()
+            rows = pr_res.data or []
+            if rows:
+                raw = rows[0].get("raw_result") or {}
+                raw.update(pr_update)
+                supabase.table("parsed_results").update({
+                    **pr_update,
+                    "raw_result": raw,
+                }).eq("file_id", file_id).execute()
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Could not update fields: {exc}")
+
+    # Update category on files table if provided
+    if body.category:
+        if body.category not in VALID_CATEGORIES:
+            raise HTTPException(status_code=400, detail=f"Invalid category '{body.category}'.")
+        try:
+            supabase.table("files").update({
+                "category": body.category,
+                "category_source": "user_override",
+            }).eq("id", file_id).execute()
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Could not update category: {exc}")
+
+    return EditFieldsResponse(message="Fields updated successfully.", file_id=file_id)
+
+
+# ── PATCH /api/files/{file_id}/link-class ──────────────────────────────────
+# Feature 2: Link a file to a class
+
+class LinkClassRequest(BaseModel):
+    class_id: Optional[str] = None   # pass null to unlink
+
+class LinkClassResponse(BaseModel):
+    message:  str
+    file_id:  str
+    class_id: Optional[str]
+
+@router.patch(
+    "/{file_id}/link-class",
+    response_model=LinkClassResponse,
+    summary="Link or unlink a file to a class",
+)
+async def link_class(
+    file_id: str,
+    body:    LinkClassRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    Links the file to a class (or unlinks if class_id is null).
+    When a syllabus is linked to a class, its grade_weights, assessments,
+    and topics rows are also updated with the class_id.
+    """
+    # Verify file ownership
+    try:
+        supabase.table("files").select("id, category").eq("id", file_id).eq("user_id", user_id).single().execute()
+    except Exception:
+        raise HTTPException(status_code=404, detail="File not found.")
+
+    # If linking to a class, verify the class belongs to this user
+    if body.class_id:
+        try:
+            cls = supabase.table("classes").select("id").eq("id", body.class_id).eq("user_id", user_id).single().execute()
+            if not cls.data:
+                raise HTTPException(status_code=404, detail="Class not found.")
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(status_code=404, detail="Class not found.")
+
+    # Update files table
+    try:
+        supabase.table("files").update({
+            "class_id": body.class_id,
+        }).eq("id", file_id).execute()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Could not link file: {exc}")
+
+    # Cascade class_id to related rows (grade_weights, assessments, topics)
+    if body.class_id:
+        for table in ["grade_weights", "assessments", "topics"]:
+            try:
+                supabase.table(table).update({"class_id": body.class_id}).eq("file_id", file_id).execute()
+            except Exception:
+                pass  # non-fatal — tables may not have rows yet
+
+    msg = f"File linked to class." if body.class_id else "File unlinked from class."
+    return LinkClassResponse(message=msg, file_id=file_id, class_id=body.class_id)
+
+
+# ── POST /api/files/upload-image ────────────────────────────────────────────
+# Feature 3: Photo grade reading (Prompt 4.6)
+
+class GradeReadItem(BaseModel):
+    class_hint:        Optional[str]
+    title:             Optional[str]
+    score:             Optional[float]
+    max_score:         Optional[float]
+    percentage:        Optional[float]
+    needs_confirmation: bool = False
+
+class PhotoGradeResponse(BaseModel):
+    message: str
+    grades:  list[GradeReadItem]
+    file_id: str
+
+@router.post(
+    "/upload-image",
+    response_model=PhotoGradeResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Upload a grade photo and extract scores with AI (Prompt 4.6)",
+)
+async def upload_image_grade(
+    file:     UploadFile = File(...),
+    class_id: Optional[str] = Form(None),
+    user_id:  str = Depends(get_current_user_id),
+):
+    """
+    Upload a photo of a returned quiz/test or a gradebook screenshot.
+    Claude reads the image directly and extracts scores.
+
+    Supports: jpg, jpeg, png, webp.
+    Returns a list of extracted grade items with needs_confirmation flag
+    for any ambiguous values.
+    """
+    original_name = file.filename or "grade_photo.jpg"
+    extension = os.path.splitext(original_name)[-1].lstrip(".").lower()
+
+    IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+    if extension not in IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=f"Only image files are supported here. Got '.{extension}'.",
+        )
+
+    data = await file.read()
+    size_bytes = len(data)
+
+    if size_bytes > 20 * 1024 * 1024:  # 20 MB limit for images
+        raise HTTPException(status_code=413, detail="Image too large. Maximum is 20 MB.")
+
+    mime_type = file.content_type or f"image/{extension}"
+
+    # Store the image in Supabase Storage
+    file_id = str(uuid.uuid4())
+    storage_path = make_storage_path(user_id, original_name)
+
+    try:
+        supabase.table("files").insert({
+            "id":              file_id,
+            "user_id":         user_id,
+            "class_id":        class_id or None,
+            "original_name":   original_name,
+            "mime_type":       mime_type,
+            "size_bytes":      size_bytes,
+            "extension":       extension,
+            "category":        "graded_work",
+            "category_source": "auto",
+            "storage_bucket":  settings.storage_bucket,
+            "status":          "parsing",
+            "pipeline_step":   2,
+        }).execute()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Could not create file record: {exc}")
+
+    try:
+        await storage_client.upload(data=data, path=storage_path, content_type=mime_type)
+        supabase.table("files").update({"storage_path": storage_path}).eq("id", file_id).execute()
+    except Exception as exc:
+        supabase.table("files").update({"status": "error", "error_message": str(exc)}).eq("id", file_id).execute()
+        raise HTTPException(status_code=500, detail=f"Storage upload failed: {exc}")
+
+    # Call Claude with the image directly (vision — Prompt 4.6)
+    try:
+        import base64 as _b64
+        import json as _json
+        import re as _re
+        from app.config import settings as _settings
+        import anthropic as _anthropic
+
+        client = _anthropic.Anthropic(api_key=_settings.anthropic_api_key)
+
+        image_b64 = _b64.standard_b64encode(data).decode("utf-8")
+        media_type_map = {
+            "jpg": "image/jpeg", "jpeg": "image/jpeg",
+            "png": "image/png", "webp": "image/webp",
+        }
+        media_type = media_type_map.get(extension, "image/jpeg")
+
+        system = (
+            "You read grade information from photos of returned quizzes, tests, or gradebook screenshots. "
+            "Return ONLY a JSON array. No prose, no markdown fences. "
+            'Each item: {"class_hint":str|null,"title":str|null,"score":num|null,"max_score":num|null,"percentage":num|null,"needs_confirmation":bool}. '
+            "Set needs_confirmation=true if the score is unclear or ambiguous. "
+            "For a gradebook screenshot return all visible grades as separate items. "
+            "Never invent scores — if you cannot read a value clearly, set it to null and needs_confirmation=true."
+        )
+
+        msg = client.messages.create(
+            model=MODEL_NAME,
+            max_tokens=512,
+            system=system,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": image_b64,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": "Extract all grade information from this image.",
+                    },
+                ],
+            }],
+        )
+
+        raw = msg.content[0].text.strip()
+        raw = _re.sub(r"^```(?:json)?\s*|\s*```$", "", raw).strip()
+        grades_data = _json.loads(raw)
+
+        grades = [
+            GradeReadItem(
+                class_hint=g.get("class_hint"),
+                title=g.get("title"),
+                score=g.get("score"),
+                max_score=g.get("max_score"),
+                percentage=g.get("percentage"),
+                needs_confirmation=g.get("needs_confirmation", True),
+            )
+            for g in grades_data
+        ]
+
+        # Save result to parsed_results
+        supabase.table("parsed_results").delete().eq("file_id", file_id).execute()
+        supabase.table("parsed_results").insert({
+            "file_id":   file_id,
+            "user_id":   user_id,
+            "raw_result": {"grades": grades_data},
+            "model_used": MODEL_NAME,
+        }).execute()
+
+        # Mark ready
+        summary = f"{len(grades)} grade{'s' if len(grades) != 1 else ''} extracted"
+        if any(g.needs_confirmation for g in grades):
+            summary += " · some need confirmation"
+        supabase.table("files").update({
+            "status": "ready",
+            "pipeline_step": 4,
+            "extracted_summary": summary,
+        }).eq("id", file_id).execute()
+
+    except Exception as exc:
+        supabase.table("files").update({
+            "status": "error",
+            "pipeline_step": 2,
+            "error_message": f"Grade reading failed: {exc}",
+        }).eq("id", file_id).execute()
+        raise HTTPException(status_code=500, detail=f"Grade reading failed: {exc}")
+
+    return PhotoGradeResponse(
+        message="Grade photo processed successfully.",
+        grades=grades,
+        file_id=file_id,
+    )
+
 # ── GET /api/files/{file_id}/suggestions ───────────────────────────────────
 # Reads suggestions saved during the parse step — NO extra Claude call.
 
@@ -682,3 +999,4 @@ async def get_suggestions(
         ]
 
     return SuggestionsResponse(file_id=file_id, suggestions=suggestions)
+

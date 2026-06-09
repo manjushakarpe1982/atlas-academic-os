@@ -29,6 +29,8 @@ interface AtlasFile {
   created_at:        string;
 }
 
+interface ClassItem { id: string; name: string; }
+
 interface ParsedResult {
   file_id:  string;
   category: string;
@@ -199,7 +201,7 @@ function NotesResult({ r }: { r: Record<string, unknown> }) {
           <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-2">Potential exam topics</p>
           <div className="flex flex-wrap gap-1.5">
             {examTopics.map((t, i) => (
-              !!t && <span key={i} className="text-[11px] bg-red-50 border border-red-100 text-red-700 px-2.5 py-1 rounded-lg font-semibold">{t}</span>
+              <span key={i} className="text-[11px] bg-red-50 border border-red-100 text-red-700 px-2.5 py-1 rounded-lg font-semibold">{t}</span>
             ))}
           </div>
         </div>
@@ -250,7 +252,7 @@ function QuizResult({ r }: { r: Record<string, unknown> }) {
             </div>
           )}
         </div>
-      )}  
+      )}
       {weakAreas.length > 0 && (
         <div>
           <p className="text-[11px] font-extrabold text-red-500 uppercase tracking-wider mb-2">Weak areas to review</p>
@@ -480,20 +482,20 @@ function DropZone({ onFiles }: { onFiles: (files: File[]) => void }) {
         dragging ? 'border-indigo-400 bg-indigo-50' : 'border-gray-300 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/30'
       }`}>
       <input ref={inputRef} type="file" multiple className="hidden"
-        accept=".pdf,.docx,.pptx,.mp3,.mp4,.m4a,.wav,.txt,.doc"
+        accept=".pdf,.docx,.pptx,.mp3,.mp4,.m4a,.wav,.txt,.doc,.jpg,.jpeg,.png,.webp,image/*"
         onChange={(e) => { const f = Array.from(e.target.files || []); if (f.length) onFiles(f); e.target.value = ''; }} />
       <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
         <Upload className="w-6 h-6 text-indigo-600" />
       </div>
       <p className="text-base font-bold text-gray-800 mb-1">Drop files here or click to browse</p>
-      <p className="text-sm text-gray-400 mb-4">Atlas reads your files with AI and extracts grades, deadlines, and topics</p>
+      <p className="text-sm text-gray-400 mb-4">Upload files or take a photo on your phone — Atlas reads everything with AI</p>
       <div className="flex justify-center gap-2 flex-wrap">
         {[
           { ext: 'PDF',  c: 'text-red-500',    bg: 'bg-red-50',    b: 'border-red-100'    },
           { ext: 'DOCX', c: 'text-blue-500',   bg: 'bg-blue-50',   b: 'border-blue-100'   },
           { ext: 'PPTX', c: 'text-orange-500', bg: 'bg-orange-50', b: 'border-orange-100' },
+          { ext: 'JPG',  c: 'text-pink-500',   bg: 'bg-pink-50',   b: 'border-pink-100'   },
           { ext: 'MP3',  c: 'text-emerald-500',bg: 'bg-emerald-50',b: 'border-emerald-100'},
-          { ext: 'MP4',  c: 'text-violet-500', bg: 'bg-violet-50', b: 'border-violet-100' },
           { ext: 'TXT',  c: 'text-gray-500',   bg: 'bg-gray-50',   b: 'border-gray-200'   },
         ].map((t) => (
           <span key={t.ext} className={`inline-flex items-center gap-1.5 ${t.bg} border ${t.b} rounded-lg px-2.5 py-1`}>
@@ -510,6 +512,8 @@ function DropZone({ onFiles }: { onFiles: (files: File[]) => void }) {
 
 export default function UploadPage() {
   const [files,   setFiles]   = useState<AtlasFile[]>([]);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [selectedClass, setSelectedClass] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [search,  setSearch]  = useState('');
   const [view,    setView]    = useState<'all' | 'processing' | 'ready' | 'error'>('all');
@@ -526,7 +530,12 @@ export default function UploadPage() {
     }
   }, []);
 
-  useEffect(() => { loadFiles(); }, [loadFiles]);
+  useEffect(() => {
+    loadFiles();
+    api<{ classes: ClassItem[] }>('/api/classes')
+      .then((r) => setClasses(r.classes))
+      .catch(() => {});
+  }, [loadFiles]);
 
   // Refresh a single file record (called by polling in FileRow)
   const refreshFile = useCallback(async (fileId: string) => {
@@ -549,6 +558,7 @@ export default function UploadPage() {
       try {
         const formData = new FormData();
         formData.append('file', f);
+        if (selectedClass) formData.append('class_id', selectedClass);
         const token = getToken();
         const res = await fetch(`${API_BASE}/api/files/upload`, {
           method: 'POST',
@@ -603,6 +613,37 @@ export default function UploadPage() {
                 Atlas reads your files with AI — extracting grades, deadlines, and topics automatically.
               </p>
             </div>
+            {/* Class selector — link upload to a class */}
+            {classes.length > 0 && (
+              <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2.5">
+                <BookOpen className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="flex-1 text-xs font-medium text-gray-700 bg-transparent outline-none">
+                  <option value="">No class selected (upload without linking)</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Class selector for first-time upload */}
+            {classes.length > 0 && (
+              <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2.5 mb-3">
+                <BookOpen className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="flex-1 text-xs font-medium text-gray-700 bg-transparent outline-none">
+                  <option value="">No class selected</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <DropZone onFiles={handleFiles} />
             {error && (
               <div className="mt-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2">
@@ -682,6 +723,22 @@ export default function UploadPage() {
 
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 min-w-0 space-y-4">
+            {/* Class selector — link upload to a class */}
+            {classes.length > 0 && (
+              <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2.5">
+                <BookOpen className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="flex-1 text-xs font-medium text-gray-700 bg-transparent outline-none">
+                  <option value="">No class selected (upload without linking)</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <DropZone onFiles={handleFiles} />
 
             <div className="flex items-center gap-2 flex-wrap">

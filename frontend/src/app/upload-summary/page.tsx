@@ -6,9 +6,9 @@ import AppLayout from '@/components/layout/AppLayout';
 import {
   CheckCircle2, FileText, Brain, Calendar, BookOpen,
   Target, Sparkles, ArrowRight, ChevronRight, RefreshCw,
-  AlertCircle, Star, BarChart2,
+  AlertCircle, Star, BarChart2, Edit2, Camera, Link, Save, X,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, getToken, API_BASE } from '@/lib/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -16,12 +16,14 @@ interface FileRecord {
   id: string; original_name: string; category: string;
   status: string; size_label: string; pipeline_step: number;
   error_message?: string; extracted_summary?: string; created_at: string;
+  class_id?: string;
 }
 interface ParsedResult {
   file_id: string; category: string; status: string;
   result: Record<string, unknown> | null; summary: string | null; error: string | null;
 }
 interface Suggestion { emoji: string; text: string; impact: string; color: string; }
+interface ClassItem  { id: string; name: string; }
 
 // ── Pipeline labels ────────────────────────────────────────────────────────
 
@@ -56,7 +58,22 @@ export default function UploadSummaryPage() {
   const [done,        setDone]        = useState(false);
   const [pipeStep,    setPipeStep]    = useState(0);
   const [animStep,    setAnimStep]    = useState(0);
-  const suggFetched = React.useRef(false);  // guard — fetch suggestions exactly once
+  // ── Refs to prevent duplicate API calls ─────────────────────────────────
+  const suggFetched    = React.useRef(false); // fetch suggestions once
+  const classesFetched = React.useRef(false); // fetch classes once
+  const resultFetched  = React.useRef(false); // fetch results once
+  const isDone         = React.useRef(false); // track done state for interval
+  const intervalRef    = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [classes,      setClasses]      = useState<ClassItem[]>([]);
+  const [editMode,     setEditMode]     = useState(false);
+  const [editFields,   setEditFields]   = useState<Record<string,string>>({});
+  const [savingEdit,   setSavingEdit]   = useState(false);
+  const [linkClass,    setLinkClass]    = useState('');
+  const [linkingClass, setLinkingClass] = useState(false);
+  const [photoGrades,  setPhotoGrades]  = useState<Array<Record<string,unknown>>>([]);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const photoRef = React.useRef<HTMLInputElement>(null);
 
   const fetchAll = useCallback(async () => {
     if (!fileId) return;
@@ -64,13 +81,31 @@ export default function UploadSummaryPage() {
       const f = await api<FileRecord>(`/api/files/${fileId}`);
       setFile(f);
       setPipeStep(f.pipeline_step ?? 0);
+
       if (f.status === 'ready' || f.status === 'error') {
-        try {
-          const r = await api<ParsedResult>(`/api/files/${fileId}/results`);
-          setResult(r);
-        } catch { /* ignore */ }
+        // Stop polling immediately
+        isDone.current = true;
+        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
         setDone(true);
-        // Fetch suggestions exactly once — guard prevents re-fetching on re-renders
+
+        // Fetch results exactly once
+        if (!resultFetched.current) {
+          resultFetched.current = true;
+          try {
+            const r = await api<ParsedResult>(`/api/files/${fileId}/results`);
+            setResult(r);
+          } catch { /* ignore */ }
+        }
+
+        // Fetch classes exactly once
+        if (!classesFetched.current) {
+          classesFetched.current = true;
+          api<{ classes: ClassItem[] }>('/api/classes')
+            .then((r) => { setClasses(r.classes); if (f.class_id) setLinkClass(f.class_id as string); })
+            .catch(() => {});
+        }
+
+        // Fetch suggestions exactly once
         if (f.status === 'ready' && !suggFetched.current) {
           suggFetched.current = true;
           setLoadingSugg(true);
@@ -84,13 +119,26 @@ export default function UploadSummaryPage() {
   }, [fileId]);
 
   useEffect(() => {
+    // Reset all guards when fileId changes
+    suggFetched.current    = false;
+    classesFetched.current = false;
+    resultFetched.current  = false;
+    isDone.current         = false;
+
     fetchAll();
-    const iv = setInterval(() => {
-      if (done) { clearInterval(iv); return; }
+
+    intervalRef.current = setInterval(() => {
+      if (isDone.current) {
+        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+        return;
+      }
       fetchAll();
     }, 2500);
-    return () => clearInterval(iv);
-  }, [fileId]); // only fileId — not fetchAll or done, prevents re-triggering
+
+    return () => {
+      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    };
+  }, [fileId]); // only re-run when fileId changes
 
   // Animate pipeline steps when processing
   useEffect(() => {
@@ -151,6 +199,58 @@ export default function UploadSummaryPage() {
     { icon: Target,   label: 'Quiz questions',     value: quizQuestions,  color: 'text-amber-600',  bg: 'bg-amber-50',   border: 'border-amber-100'   },
     { icon: FileText, label: 'Pages read',         value: pagesRead || 1, color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-blue-100'    },
   ];
+
+  // ── Edit fields handler ───────────────────────────────────────────────
+  const handleSaveEdit = async () => {
+    if (!fileId) return;
+    setSavingEdit(true);
+    try {
+      await api(`/api/files/${fileId}/fields`, {
+        method: 'PATCH',
+        body: editFields,
+      });
+      // Refresh result
+      const r = await api<{ file_id:string; category:string; status:string; result:Record<string,unknown>|null; summary:string|null; error:string|null }>(`/api/files/${fileId}/results`);
+      setResult(r);
+      setEditMode(false);
+      setEditFields({});
+    } catch { /* ignore */ }
+    finally { setSavingEdit(false); }
+  };
+
+  // ── Link to class handler ───────────────────────────────────────────────
+  const handleLinkClass = async (classId: string) => {
+    if (!fileId) return;
+    setLinkingClass(true);
+    try {
+      await api(`/api/files/${fileId}/link-class`, {
+        method: 'PATCH',
+        body: { class_id: classId || null },
+      });
+      setLinkClass(classId);
+    } catch { /* ignore */ }
+    finally { setLinkingClass(false); }
+  };
+
+  // ── Photo grade upload handler ──────────────────────────────────────────
+  const handlePhotoGrade = async (f: File) => {
+    if (!fileId) return;
+    setPhotoLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', f);
+      if (linkClass) formData.append('class_id', linkClass);
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/api/files/upload-image`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok) setPhotoGrades(data.grades || []);
+    } catch { /* ignore */ }
+    finally { setPhotoLoading(false); }
+  };
 
   const isReady   = done && file?.status === 'ready';
   const isError   = file?.status === 'error';
@@ -380,6 +480,164 @@ export default function UploadSummaryPage() {
                   <p className="text-xs text-red-600 mt-1">{file?.error_message || 'Unknown error'}</p>
                 </div>
               </div>
+            )}
+
+            {/* ── Feature 1: Edit extracted fields ── */}
+            {isReady && result?.result && cat === 'syllabus' && (
+              <section className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-extrabold flex-shrink-0">✎</div>
+                    <p className="text-sm font-extrabold text-gray-900">Review &amp; correct extracted fields</p>
+                  </div>
+                  {!editMode ? (
+                    <button onClick={() => {
+                      setEditMode(true);
+                      setEditFields({
+                        course_name:  String((result.result?.course_name  as string) || ''),
+                        instructor:   String((result.result?.instructor   as string) || ''),
+                        credit_hours: String((result.result?.credit_hours as number) || ''),
+                        office_hours: String((result.result?.office_hours as string) || ''),
+                      });
+                    }} className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-all border border-indigo-200">
+                      <Edit2 className="w-3.5 h-3.5" /> Edit fields
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button onClick={() => { setEditMode(false); setEditFields({}); }}
+                        className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-all border border-gray-200">
+                        <X className="w-3 h-3" /> Cancel
+                      </button>
+                      <button onClick={handleSaveEdit} disabled={savingEdit}
+                        className="flex items-center gap-1 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-all">
+                        <Save className="w-3 h-3" /> {savingEdit ? 'Saving…' : 'Save'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-400 mb-4 ml-8">
+                  AI gives a first draft — fix anything that looks wrong. Changes are saved immediately.
+                </p>
+                {editMode ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { key: 'course_name',  label: 'Course name'  },
+                      { key: 'instructor',   label: 'Instructor'   },
+                      { key: 'credit_hours', label: 'Credit hours' },
+                      { key: 'office_hours', label: 'Office hours' },
+                    ].map((f) => (
+                      <div key={f.key}>
+                        <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">{f.label}</label>
+                        <input
+                          value={editFields[f.key] || ''}
+                          onChange={(e) => setEditFields((p) => ({ ...p, [f.key]: e.target.value }))}
+                          className="w-full border border-gray-200 focus:border-indigo-500 rounded-xl px-3 py-2 text-sm outline-none transition-all"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {[
+                      { label: 'Course',   value: result.result?.course_name  as string },
+                      { label: 'Instructor', value: result.result?.instructor as string },
+                      { label: 'Credits',  value: result.result?.credit_hours as number },
+                      { label: 'Office hrs', value: result.result?.office_hours as string },
+                    ].map((f) => f.value && (
+                      <div key={f.label} className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">{f.label}</p>
+                        <p className="text-xs font-semibold text-gray-800 truncate">{String(f.value)}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* ── Feature 2: Link to class ── */}
+            {isReady && (
+              <section className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <Link className="w-4 h-4 text-indigo-600" />
+                  <p className="text-sm font-extrabold text-gray-900">Link to a class</p>
+                  {linkingClass && <RefreshCw className="w-3.5 h-3.5 text-indigo-400 animate-spin ml-auto" />}
+                </div>
+                <p className="text-[11px] text-gray-400 mb-3">
+                  Linking this file to a class lets Atlas use it for grade projections and your study plan.
+                </p>
+                {classes.length === 0 ? (
+                  <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                    <p className="text-xs text-amber-700 font-medium">
+                      No classes yet — add your first class in the Classes section, then come back to link this file.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={linkClass}
+                      onChange={(e) => handleLinkClass(e.target.value)}
+                      className="flex-1 border border-gray-200 focus:border-indigo-500 rounded-xl px-3 py-2.5 text-sm outline-none bg-white transition-all">
+                      <option value="">— Not linked to any class —</option>
+                      {classes.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                    {linkClass && (
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl flex-shrink-0">
+                        <CheckCircle2 className="w-3 h-3" /> Linked
+                      </span>
+                    )}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* ── Feature 3: Photo grade upload ── */}
+            {isReady && (
+              <section className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <Camera className="w-4 h-4 text-indigo-600" />
+                  <p className="text-sm font-extrabold text-gray-900">Add a grade photo</p>
+                </div>
+                <p className="text-[11px] text-gray-400 mb-3">
+                  Snap a photo of a returned quiz or your gradebook — Atlas reads the score automatically.
+                </p>
+                <input ref={photoRef} type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoGrade(f); e.target.value = ''; }} />
+                <button onClick={() => photoRef.current?.click()} disabled={photoLoading}
+                  className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-semibold px-4 py-2.5 rounded-xl text-sm transition-all disabled:opacity-50">
+                  {photoLoading
+                    ? <><RefreshCw className="w-4 h-4 animate-spin" /> Reading grades…</>
+                    : <><Camera className="w-4 h-4" /> Upload grade photo</>}
+                </button>
+
+                {photoGrades.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs font-bold text-gray-700">Grades extracted from photo:</p>
+                    {photoGrades.map((g, i) => (
+                      <div key={i} className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
+                        g.needs_confirmation ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
+                      }`}>
+                        <div className="flex-1 min-w-0">
+                          {!!g.title && <p className="text-sm font-bold text-gray-900 truncate">{String(g.title)}</p>}
+                          {!!g.class_hint && <p className="text-[11px] text-gray-500">{String(g.class_hint)}</p>}
+                        </div>
+                        {g.score !== null && g.score !== undefined && (
+                          <p className="text-base font-extrabold text-indigo-600 flex-shrink-0">
+                            {String(g.score)}{g.max_score ? `/${String(g.max_score)}` : ''}
+                            {g.percentage ? ` (${String(g.percentage)}%)` : ''}
+                          </p>
+                        )}
+                        {!!g.needs_confirmation && (
+                          <span className="text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                            Confirm
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             )}
 
             {/* CTAs */}

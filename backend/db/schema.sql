@@ -200,3 +200,12 @@ create policy "classes_self_all" on public.classes
 drop policy if exists "files_self_all" on public.files;
 create policy "files_self_all" on public.files
     for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ── CLASSES V2 migration (run if classes table already exists) ─────────────
+-- Adds new columns from the V1 spec. Safe to run multiple times.
+alter table public.classes
+  add column if not exists instructor      text,
+  add column if not exists credit_hours    int,
+  add column if not exists term            text default 'Fall 2026',
+  add column if not exists syllabus_file_id uuid references public.files(id) on delete set null,
+  add column if not exists textbook_isbn   text;
