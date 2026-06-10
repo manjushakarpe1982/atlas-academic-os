@@ -7,6 +7,7 @@ import { Brain, Eye, EyeOff, Check, X } from 'lucide-react';
 export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail]     = useState('');
+  const [fullName, setFullName] = useState('');
   const [pw,    setPw]        = useState('');
   const [cpw,   setCpw]       = useState('');
   const [show,  setShow]      = useState(false);
@@ -19,7 +20,9 @@ export default function SignupPage() {
   const long       = pw.length >= 8;
   const validPw    = hasUpper && hasLower && hasNum && long;
   const match      = pw === cpw && pw.length > 0;
-  const formOk     = validEmail && validPw && match;
+  
+  const validName = fullName.trim().length >= 2;
+const formOk = validName && validEmail && validPw && match;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +54,25 @@ export default function SignupPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Full Name */}
+<div>
+  <label className="text-xs font-bold text-gray-600 mb-1 block">
+    Full Name
+  </label>
+  <input
+    type="text"
+    value={fullName}
+    onChange={(e) => setFullName(e.target.value)}
+    placeholder="John Doe"
+    autoComplete="name"
+    className={inp(fullName ? validName : undefined)}
+  />
+  {fullName && !validName && (
+    <p className="text-red-500 text-xs mt-1">
+      Enter your full name
+    </p>
+  )}
+</div>
           {/* Email */}
           <div>
             <label className="text-xs font-bold text-gray-600 mb-1 block">Email address</label>
