@@ -1,206 +1,108 @@
 'use client';
-
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import Link from 'next/link';
 import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Brain, Eye, EyeOff, Check, X } from 'lucide-react';
 
 export default function SignupPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const router = useRouter();
+  const [email, setEmail]     = useState('');
+  const [pw,    setPw]        = useState('');
+  const [cpw,   setCpw]       = useState('');
+  const [show,  setShow]      = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const isEmailValid = emailRegex.test(email);
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const hasUpper   = /[A-Z]/.test(pw);
+  const hasLower   = /[a-z]/.test(pw);
+  const hasNum     = /[0-9]/.test(pw);
+  const long       = pw.length >= 8;
+  const validPw    = hasUpper && hasLower && hasNum && long;
+  const match      = pw === cpw && pw.length > 0;
+  const formOk     = validEmail && validPw && match;
 
-  const hasUppercase = /[A-Z]/.test(password);
-  const hasLowercase = /[a-z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
-  const isPasswordValid = password.length >= 8 && hasUppercase && hasLowercase && hasNumber;
-
-  const passwordsMatch = password === confirmPassword && password.length > 0;
-  const isFormValid = isEmailValid && isPasswordValid && passwordsMatch && termsAccepted;
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
-    if (!isFormValid) {
-      setError('❌ Please fill all fields correctly');
-      return;
-    }
-
+    if (!formOk) return;
     setLoading(true);
-
-    try {
-      const response = await fetch('http://localhost:8000/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          password_confirm: confirmPassword,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(`❌ ${data.detail || 'Signup failed'}`);
-        return;
-      }
-
-      window.location.href = `/auth/verify-email?email=${encodeURIComponent(email)}`;
-    } catch (err) {
-      setError('❌ Network error. Please try again.');
-    } finally {
+    // TODO: connect to backend
+    setTimeout(() => {
       setLoading(false);
-    }
+      router.push('/school-selection');
+    }, 800);
   };
 
+  const inp = (v?: boolean) =>
+    `w-full px-4 py-3 border-2 rounded-xl outline-none text-sm transition-all ${
+      v === true ? 'border-green-400' : v === false ? 'border-red-300' : 'border-gray-200 focus:border-indigo-500'
+    }`;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col items-center justify-center px-4">
-      <Card className="w-full max-w-md p-8">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <Brain className="w-8 h-8 text-blue-600" />
-          <span className="text-2xl font-bold">Atlas</span>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8">
+        <div className="flex items-center gap-2 mb-2">
+          <Brain className="w-7 h-7 text-indigo-600" />
+          <span className="text-xl font-extrabold text-gray-900">Atlas</span>
         </div>
-
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">Create account</h1>
-        <p className="text-gray-600 text-center mb-8">Step 2 of 4</p>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-red-700 text-sm">
-            {error}
-          </div>
-        )}
+        <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Create account</h1>
+        <p className="text-sm text-gray-400 mb-6">
+          Already have one?{' '}
+          <Link href="/auth/login" className="text-indigo-600 font-semibold hover:underline">Sign in</Link>
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email Field */}
+          {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="student@university.edu"
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                isEmailValid && email ? 'border-green-500 focus:ring-green-500' : 'border-gray-300 focus:ring-blue-500'
-              }`}
-            />
-            {isEmailValid && email && <p className="text-green-600 text-xs mt-1">✅ Valid email</p>}
-            {!isEmailValid && email && <p className="text-red-600 text-xs mt-1">❌ Enter valid email</p>}
+            <label className="text-xs font-bold text-gray-600 mb-1 block">Email address</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="you@university.edu" autoComplete="email"
+              className={inp(email ? validEmail : undefined)} />
+            {email && !validEmail && <p className="text-red-500 text-xs mt-1">Enter a valid email</p>}
           </div>
 
-          {/* Password Field */}
+          {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <label className="text-xs font-bold text-gray-600 mb-1 block">Password</label>
             <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              <input type={show ? 'text' : 'password'} value={pw} onChange={e => setPw(e.target.value)}
+                placeholder="Min 8 chars" className={inp(pw ? validPw : undefined)} autoComplete="new-password" />
+              <button type="button" onClick={() => setShow(!show)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                {show ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-
-            {/* Password Requirements */}
-            {password && (
-              <div className="mt-2 space-y-1 text-xs">
-                <div className={hasUppercase ? 'text-green-600' : 'text-gray-500'}>
-                  {hasUppercase ? '✓' : '○'} Uppercase letter
-                </div>
-                <div className={hasLowercase ? 'text-green-600' : 'text-gray-500'}>
-                  {hasLowercase ? '✓' : '○'} Lowercase letter
-                </div>
-                <div className={hasNumber ? 'text-green-600' : 'text-gray-500'}>
-                  {hasNumber ? '✓' : '○'} Number
-                </div>
-                <div className={password.length >= 8 ? 'text-green-600' : 'text-gray-500'}>
-                  {password.length >= 8 ? '✓' : '○'} 8+ characters
-                </div>
+            {pw && (
+              <div className="mt-2 grid grid-cols-2 gap-1">
+                {[{ ok: hasUpper, l: 'Uppercase' }, { ok: hasLower, l: 'Lowercase' },
+                  { ok: hasNum, l: 'Number' }, { ok: long, l: '8+ chars' }].map(r => (
+                  <div key={r.l} className={`flex items-center gap-1 text-xs ${r.ok ? 'text-green-600' : 'text-gray-400'}`}>
+                    {r.ok ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />} {r.l}
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Confirm Password */}
+          {/* Confirm */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+            <label className="text-xs font-bold text-gray-600 mb-1 block">Confirm password</label>
             <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                  passwordsMatch && confirmPassword ? 'border-green-500 focus:ring-green-500' : 'border-gray-300 focus:ring-blue-500'
-                }`}
-              />
-              {confirmPassword && (
-                <div className="absolute right-3 top-2.5">
-                  {passwordsMatch ? (
-                    <Check className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <X className="w-5 h-5 text-red-600" />
-                  )}
+              <input type={show ? 'text' : 'password'} value={cpw} onChange={e => setCpw(e.target.value)}
+                placeholder="Re-enter password" className={inp(cpw ? match : undefined)} autoComplete="new-password" />
+              {cpw && (
+                <div className="absolute right-3 top-3">
+                  {match ? <Check className="w-5 h-5 text-green-500" /> : <X className="w-5 h-5 text-red-400" />}
                 </div>
               )}
             </div>
-            {passwordsMatch && confirmPassword && <p className="text-green-600 text-xs mt-1">✅ Passwords match</p>}
-            {!passwordsMatch && confirmPassword && <p className="text-red-600 text-xs mt-1">❌ Passwords don't match</p>}
           </div>
 
-          {/* Terms Checkbox */}
-          <div className="flex items-start gap-2">
-            <input
-              type="checkbox"
-              id="terms"
-              checked={termsAccepted}
-              onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="mt-1"
-            />
-            <label htmlFor="terms" className="text-sm text-gray-700">
-              I agree to the{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-                Terms of Service
-              </a>{' '}
-              and{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-                Privacy Policy
-              </a>
-            </label>
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={!isFormValid || loading}
-          >
+          <button type="submit" disabled={!formOk || loading}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-all shadow-md">
             {loading ? 'Creating account...' : 'Create Account →'}
-          </Button>
+          </button>
         </form>
-
-        <p className="text-center text-gray-600 text-sm mt-6">
-          Already have an account?{' '}
-          <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium">
-            Sign in
-          </Link>
-        </p>
-      </Card>
+      </div>
     </div>
   );
 }

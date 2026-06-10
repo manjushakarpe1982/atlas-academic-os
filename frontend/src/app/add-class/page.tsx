@@ -1,200 +1,113 @@
 'use client';
-
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { useState, useEffect } from 'react';
-import { BookOpen, Camera, Upload } from 'lucide-react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Plus, BookOpen, LogOut, Brain } from 'lucide-react';
 
-export default function AddClassPage() {
-  const router = useRouter();
-  const [className, setClassName] = useState('');
-  const [syllabus, setSyllabus] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<'name' | 'syllabus' | 'confirm'>('name');
-  const [classNameSource, setClassNameSource] = useState<'typed' | 'syllabus'>('typed');
+const MOCK_CLASSES = [
+  { id: '1', name: 'BIOL 1107 — Intro Biology',    grade: 'B+', pct: 87, term: 'Fall 2026' },
+  { id: '2', name: 'MATH 251 — Calculus III',       grade: 'A−', pct: 91, term: 'Fall 2026' },
+  { id: '3', name: 'CHEM 1103 — General Chemistry', grade: 'C+', pct: 78, term: 'Fall 2026' },
+];
 
-  useEffect(() => {
-    const user = localStorage.getItem('user');
-    const ack = localStorage.getItem('acknowledgment');
-    
-    if (!user || !ack) {
-      router.push('/auth/login');
-    }
-  }, [router]);
+export default function ClassesPage() {
+  const router   = useRouter();
+  const [classes, setClasses]  = useState(MOCK_CLASSES);
+  const [name,    setName]     = useState('');
+  const [showForm, setShowForm] = useState(false);
 
-  const handleNameSubmit = () => {
-    if (className.trim()) {
-      setStep('syllabus');
-    }
+  const addClass = () => {
+    if (!name.trim()) return;
+    setClasses(p => [...p, { id: Date.now().toString(), name: name.trim(), grade: '—', pct: 0, term: 'Fall 2026' }]);
+    setName(''); setShowForm(false);
   };
 
-  const handleSyllabusUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setSyllabus(e.target.files[0]);
-      setStep('confirm');
-    }
-  };
-
-  const handleAddClass = async () => {
-    if (!className.trim()) return;
-
-    setLoading(true);
-    try {
-      // Store class info
-      const classes = JSON.parse(localStorage.getItem('classes') || '[]');
-      classes.push({
-        id: Date.now(),
-        name: className,
-        syllabus: syllabus?.name || null,
-        createdAt: new Date().toISOString()
-      });
-      localStorage.setItem('classes', JSON.stringify(classes));
-
-      // If user doesn't want to add more classes, go to dashboard
-      router.push('/dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddAnother = () => {
-    setClassName('');
-    setSyllabus(null);
-    setStep('name');
-    setClassNameSource('typed');
-  };
+  const gradeColor = (pct: number) =>
+    pct >= 90 ? 'text-emerald-600' : pct >= 70 ? 'text-indigo-600' : pct > 0 ? 'text-amber-600' : 'text-gray-400';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col items-center justify-center px-4 py-8">
-      <Card className="w-full max-w-2xl p-8">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <BookOpen className="w-8 h-8 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Add Your First Class</h1>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="flex gap-2 mb-8">
-          <div className={`flex-1 h-1 rounded ${step === 'name' || step === 'syllabus' || step === 'confirm' ? 'bg-blue-600' : 'bg-gray-200'}`} />
-          <div className={`flex-1 h-1 rounded ${step === 'syllabus' || step === 'confirm' ? 'bg-blue-600' : 'bg-gray-200'}`} />
-          <div className={`flex-1 h-1 rounded ${step === 'confirm' ? 'bg-blue-600' : 'bg-gray-200'}`} />
-        </div>
-
-        {/* Step 1: Class Name */}
-        {step === 'name' && (
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Step 1: Name Your Class</h2>
-            <p className="text-gray-600 mb-6">
-              Enter your class name (e.g., "BIOL 1107 - Intro Biology")
-            </p>
-            
-            <input
-              type="text"
-              value={className}
-              onChange={(e) => setClassName(e.target.value)}
-              placeholder="BIOL 1107 - Intro Biology"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-6"
-              autoFocus
-            />
-
-            <Button
-              onClick={handleNameSubmit}
-              disabled={!className.trim()}
-              className="w-full"
-              size="lg"
-            >
-              Next: Upload Syllabus
-            </Button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
+            <Brain className="w-4 h-4 text-white" />
           </div>
-        )}
+          <span className="font-extrabold text-gray-900 text-lg">Atlas</span>
+        </div>
+        <button onClick={() => router.push('/auth')}
+          className="text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1 text-sm">
+          <LogOut className="w-4 h-4" /> Sign out
+        </button>
+      </header>
 
-        {/* Step 2: Upload Syllabus */}
-        {step === 'syllabus' && (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Step 2: Upload Syllabus</h2>
-            <p className="text-gray-600 mb-6">
-              Take a photo or upload a PDF of your syllabus. Our AI will extract the course information.
-            </p>
+            <h1 className="text-2xl font-extrabold text-gray-900">My Classes</h1>
+            <p className="text-sm text-gray-400 mt-0.5">Fall 2026 · {classes.length} classes</p>
+          </div>
+          <button onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-md">
+            <Plus className="w-4 h-4" /> Add class
+          </button>
+        </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              {/* Camera Option */}
-              <label className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center cursor-pointer hover:bg-blue-50 transition">
-                <Camera className="w-12 h-12 text-blue-400 mx-auto mb-2" />
-                <span className="text-sm font-medium text-gray-900">Take Photo</span>
-                <input type="file" accept="image/*" capture className="hidden" />
-              </label>
-
-              {/* File Upload Option */}
-              <label className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center cursor-pointer hover:bg-blue-50 transition">
-                <Upload className="w-12 h-12 text-blue-400 mx-auto mb-2" />
-                <span className="text-sm font-medium text-gray-900">Upload PDF</span>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={handleSyllabusUpload}
-                  className="hidden"
-                />
-              </label>
+        {/* Add class form */}
+        {showForm && (
+          <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-4 shadow-sm">
+            <p className="text-sm font-bold text-gray-800 mb-3">New class name</p>
+            <div className="flex gap-2">
+              <input value={name} onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addClass()}
+                placeholder="e.g. BIOL 1107 — Intro Biology" autoFocus
+                className="flex-1 px-4 py-2.5 border-2 border-gray-200 focus:border-indigo-500 rounded-xl outline-none text-sm transition-all" />
+              <button onClick={addClass} disabled={!name.trim()}
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-xl text-sm">
+                Add
+              </button>
+              <button onClick={() => { setShowForm(false); setName(''); }}
+                className="border-2 border-gray-200 text-gray-500 font-semibold px-4 py-2.5 rounded-xl text-sm hover:bg-gray-50">
+                Cancel
+              </button>
             </div>
-
-            <Button
-              onClick={() => setStep('confirm')}
-              variant="outline"
-              className="w-full"
-              size="lg"
-            >
-              Skip for Now
-            </Button>
           </div>
         )}
 
-        {/* Step 3: Confirm */}
-        {step === 'confirm' && (
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Review Your Class</h2>
-            
-            <div className="bg-gray-50 rounded-lg p-6 mb-6 space-y-4">
-              <div>
-                <label className="text-sm text-gray-600">Class Name</label>
-                <p className="text-lg font-semibold text-gray-900">{className}</p>
-              </div>
-              
-              {syllabus && (
-                <div>
-                  <label className="text-sm text-gray-600">Syllabus</label>
-                  <p className="text-gray-900">✓ {syllabus.name}</p>
+        {/* Class list */}
+        <div className="space-y-3">
+          {classes.map(c => (
+            <div key={c.id}
+              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all cursor-pointer"
+              onClick={() => router.push('/dashboard')}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-11 h-11 bg-indigo-50 rounded-2xl flex items-center justify-center text-sm font-extrabold text-indigo-600 flex-shrink-0">
+                  {c.name.slice(0, 2).toUpperCase()}
                 </div>
-              )}
+                <div className="min-w-0">
+                  <p className="font-bold text-gray-900 text-sm truncate">{c.name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{c.term}</p>
+                </div>
+              </div>
+              <div className="text-right flex-shrink-0 ml-3">
+                <p className={`text-2xl font-extrabold ${gradeColor(c.pct)}`}>{c.grade}</p>
+                {c.pct > 0 && <p className="text-xs text-gray-400">{c.pct}%</p>}
+              </div>
             </div>
+          ))}
+        </div>
 
-            <div className="space-y-3">
-              <Button
-                onClick={handleAddClass}
-                disabled={loading}
-                className="w-full"
-                size="lg"
-              >
-                {loading ? 'Adding...' : 'Add Class & Go to Dashboard'}
-              </Button>
-
-              <Button
-                onClick={handleAddAnother}
-                variant="outline"
-                className="w-full"
-                size="lg"
-              >
-                Add Another Class
-              </Button>
-            </div>
+        {/* Empty */}
+        {classes.length === 0 && (
+          <div className="bg-white rounded-2xl p-10 text-center border border-gray-100">
+            <BookOpen className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+            <p className="font-bold text-gray-500 mb-1">No classes yet</p>
+            <button onClick={() => setShowForm(true)}
+              className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-indigo-700 mt-2">
+              Add your first class
+            </button>
           </div>
         )}
-
-        {/* Progress Info */}
-        <div className="text-center text-xs text-gray-500 mt-8">
-          You can add more classes anytime from your dashboard
-        </div>
-      </Card>
+      </div>
     </div>
   );
 }

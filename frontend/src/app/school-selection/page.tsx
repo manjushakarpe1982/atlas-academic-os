@@ -1,136 +1,60 @@
 'use client';
-
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { useState, useEffect } from 'react';
-import { Building2, BookOpen } from 'lucide-react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Building2 } from 'lucide-react';
 
-interface School {
-  id: string;
-  name: string;
-  lms: string;
-  logo: string;
-  icon: React.ReactNode;
-}
-
-const schools: School[] = [
-  {
-    id: 'arkansas',
-    name: 'University of Arkansas',
-    lms: 'Blackboard',
-    logo: '🏛️',
-    icon: <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">UA</div>
-  },
-  {
-    id: 'tamu',
-    name: 'Texas A&M University',
-    lms: 'Canvas',
-    logo: '🏛️',
-    icon: <div className="w-12 h-12 bg-red-700 rounded-lg flex items-center justify-center text-white font-bold text-lg">AM</div>
-  },
-  {
-    id: 'other',
-    name: 'Other School',
-    lms: 'Sakai or other LMS',
-    logo: '🏛️',
-    icon: <Building2 className="w-12 h-12 text-gray-400" />
-  }
+const SCHOOLS = [
+  { id: 'arkansas', name: 'University of Arkansas', lms: 'Blackboard Learn', abbr: 'UA', color: 'bg-red-600' },
+  { id: 'tamu',     name: 'Texas A&M University',   lms: 'Canvas',           abbr: 'AM', color: 'bg-red-800' },
+  { id: 'other',    name: 'Other School',            lms: 'Other LMS',        abbr: '?',  color: 'bg-gray-400' },
 ];
 
 export default function SchoolSelectionPage() {
   const router = useRouter();
-  const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState('');
+  const [loading,  setLoading]  = useState(false);
 
-  useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (!user) {
-      router.push('/auth/login');
-    }
-  }, [router]);
-
-  const handleContinue = async () => {
-    if (!selectedSchool) return;
-
+  const handleContinue = () => {
+    if (!selected) return;
     setLoading(true);
-    try {
-      const selected = schools.find(s => s.id === selectedSchool);
-      
-      // Store selected school
-      localStorage.setItem('selectedSchool', JSON.stringify({
-        id: selected?.id,
-        name: selected?.name,
-        lms: selected?.lms
-      }));
-
-      // Redirect to acknowledgment
-      router.push('/acknowledgment');
-    } finally {
-      setLoading(false);
-    }
+    // TODO: connect to backend
+    setTimeout(() => { setLoading(false); router.push('/acknowledgment'); }, 500);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col items-center justify-center px-4 py-8">
-      <Card className="w-full max-w-md p-8">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-8">
-          <BookOpen className="w-6 h-6 text-blue-600" />
-          <h1 className="text-lg font-bold text-gray-900">School Selection</h1>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8">
+        <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Which school do you attend?</h1>
+        <p className="text-sm text-gray-400 mb-6">This helps Atlas connect to your school calendar.</p>
 
-        {/* Title */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">
-          Which school do you use?
-        </h2>
-        <p className="text-center text-gray-600 text-sm mb-8">
-          You'll be asked to provide more information about your school experience.
-        </p>
-
-        {/* School List */}
-        <div className="space-y-3 mb-8">
-          {schools.map(school => (
-            <div
-              key={school.id}
-              onClick={() => setSelectedSchool(school.id)}
-              className={`p-4 border-2 rounded-lg cursor-pointer transition ${
-                selectedSchool === school.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                {school.icon}
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{school.name}</h3>
-                  <p className="text-sm text-gray-600">{school.lms}</p>
-                </div>
-                {selectedSchool === school.id && (
-                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm">✓</span>
-                  </div>
-                )}
+        <div className="space-y-3 mb-6">
+          {SCHOOLS.map(s => (
+            <button key={s.id} onClick={() => setSelected(s.id)}
+              className={`w-full flex items-center gap-4 p-4 border-2 rounded-2xl text-left transition-all ${
+                selected === s.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-100 hover:border-gray-300 bg-white'
+              }`}>
+              <div className={`w-12 h-12 ${s.color} rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
+                {s.abbr === '?' ? <Building2 className="w-5 h-5" /> : s.abbr}
               </div>
-            </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-900 text-sm">{s.name}</p>
+                <p className="text-xs text-gray-400">{s.lms}</p>
+              </div>
+              {selected === s.id && (
+                <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-xs font-bold">✓</span>
+                </div>
+              )}
+            </button>
           ))}
         </div>
 
-        {/* Continue Button */}
-        <Button
-          onClick={handleContinue}
-          disabled={!selectedSchool || loading}
-          className="w-full"
-          size="lg"
-        >
-          {loading ? 'Loading...' : 'Continue'}
-        </Button>
-
-        {/* Info Text */}
-        <p className="text-center text-xs text-gray-500 mt-6">
-          You can change your school later in settings
-        </p>
-      </Card>
+        <button onClick={handleContinue} disabled={!selected || loading}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-all shadow-md">
+          {loading ? 'Saving...' : 'Continue →'}
+        </button>
+        <p className="text-center text-xs text-gray-400 mt-3">You can change this later in settings</p>
+      </div>
     </div>
   );
 }
