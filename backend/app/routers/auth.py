@@ -1,98 +1,68 @@
-# Backend: app/routers/auth.py
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, EmailStr, Field
+from supabase import create_client, Client
+import os
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from datetime import datetime, timedelta
 import bcrypt
 import jwt
-from datetime import datetime, timedelta
-from typing import Optional
-import secrets
-import os
-from dotenv import load_dotenv
+import string
+import random
+import json
 
-load_dotenv()
+# Initialize Supabase
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-# ============================================================================
-# Configuration
-# ============================================================================
+try:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+except Exception as e:
+    print(f"⚠️ Supabase connection error: {e}")
+    supabase = None
 
-SECRET_KEY = os.getenv("SECRET_KEY", "test-secret-key-change-in-production")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-# ============================================================================
-# Pydantic Models
-# ============================================================================
-
+# Models
 class SignupRequest(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=8)
-    password_confirm: str
+    email: str
+    password: str
+    confirm_password: str
+    terms_agreed: bool
 
-class VerifyEmailRequest(BaseModel):
-    code: str = Field(min_length=6, max_length=6)
+class VerifyRequest(BaseModel):
+    email: str
+    code: str
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
+    remember_me: bool = False
 
-# ============================================================================
-# In-Memory Database (For Development)
-# ============================================================================
+# Temp storage for verification codes (until email is verified)
+verification_codes = {}
 
-# Users: {email: {id, email, password_hash, email_verified}}
-USERS = {}
-
-# Verification codes: {code: {email, user_id, expires_at}}
-VERIFICATIONS = {}
-
-# ============================================================================
-# Helper Functions
-# ============================================================================
-
+# Helper functions
 def hash_password(password: str) -> str:
-    """Hash password using bcrypt"""
-    try:
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-        return hashed.decode('utf-8')
-    except Exception as e:
-        print(f"Error hashing password: {e}")
-        raise
+    """Hash password with bcrypt"""
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 def verify_password(password: str, hashed: str) -> bool:
     """Verify password against hash"""
     try:
-        return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
-    except Exception as e:
-        print(f"Error verifying password: {e}")
+        return bcrypt.checkpw(password.encode(), hashed.encode())
+    except:
         return False
 
-def create_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_token(user_id: str, email: str) -> str:
     """Create JWT token"""
-    try:
-        to_encode = data.copy()
-        
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
-        else:
-            expire = datetime.utcnow() + timedelta(minutes=15)
-        
-        to_encode.update({"exp": expire})
-        
-        encoded_jwt = jwt.encode(
-            to_encode,
-            SECRET_KEY,
-            algorithm=ALGORITHM
-        )
-        
-        return encoded_jwt
-    except Exception as e:
-        print(f"Error creating token: {e}")
-        raise
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "iat": datetime.utcnow()
+    }
+    return jwt.encode(payload, "atlas-secret-key-2026", algorithm="HS256")
 
 def send_verification_email(email: str, code: str):
-    """Send verification email (prints to console for development)"""
+    """Print code to console (development)"""
     print(f"\n{'='*60}")
     print(f"📧 VERIFICATION EMAIL SENT")
     print(f"{'='*60}")
@@ -100,175 +70,151 @@ def send_verification_email(email: str, code: str):
     print(f"Code: {code}")
     print(f"{'='*60}\n")
 
-# ============================================================================
-# Router
-# ============================================================================
-
-router = APIRouter(prefix="/api/auth", tags=["auth"])
-
-# ============================================================================
-# ENDPOINT 1: POST /api/auth/signup
-# ============================================================================
-
-@router.post("/signup", status_code=201)
+@router.post("/signup")
 async def signup(request: SignupRequest):
-    """Create new account"""
+    """Create new user account"""
     try:
-        # Validate password confirmation
-        if request.password != request.password_confirm:
-            raise HTTPException(
-                status_code=400,
-                detail="Passwords do not match"
-            )
+        # Validation
+        if not request.email or not request.password:
+            raise HTTPException(status_code=400, detail="Email and password required")
         
-        # Validate password strength
+        if request.password != request.confirm_password:
+            raise HTTPException(status_code=400, detail="Passwords don't match")
+        
+        if len(request.password) < 8:
+            raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+        
         if not any(c.isupper() for c in request.password):
-            raise HTTPException(status_code=400, detail="Password must contain uppercase")
-        if not any(c.islower() for c in request.password):
-            raise HTTPException(status_code=400, detail="Password must contain lowercase")
+            raise HTTPException(status_code=400, detail="Password must contain uppercase letter")
+        
         if not any(c.isdigit() for c in request.password):
             raise HTTPException(status_code=400, detail="Password must contain number")
         
-        # Check if email exists
-        if request.email in USERS:
-            raise HTTPException(status_code=409, detail="Email already exists")
+        if not request.terms_agreed:
+            raise HTTPException(status_code=400, detail="Must agree to terms")
         
-        # Create user
-        user_id = secrets.token_hex(8)
-        hashed_password = hash_password(request.password)
+        # Check if user exists in Supabase
+        response = supabase.table("users").select("*").eq("email", request.email).execute()
         
-        USERS[request.email] = {
-            "id": user_id,
-            "email": request.email,
-            "password_hash": hashed_password,
-            "email_verified": False,
-            "created_at": datetime.now().isoformat()
-        }
+        if response.data and len(response.data) > 0:
+            raise HTTPException(status_code=400, detail="Email already exists")
         
         # Generate verification code
-        verification_code = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
+        code = ''.join(random.choices(string.digits, k=6))
         
-        # Store verification
-        VERIFICATIONS[verification_code] = {
+        # Hash password
+        hashed_password = hash_password(request.password)
+        
+        # Store in Supabase
+        user_data = {
             "email": request.email,
-            "user_id": user_id,
-            "expires_at": (datetime.now() + timedelta(hours=24)).isoformat()
+            "password_hash": hashed_password,
+            "first_name": "",
+            "last_name": "",
+            "full_name": "",
+            "email_verified": False,
+            "created_at": datetime.utcnow().isoformat(),
+            "onboarding_completed": False
         }
         
-        # Send email
-        send_verification_email(request.email, verification_code)
+        insert_response = supabase.table("users").insert(user_data).execute()
+        
+        if not insert_response.data:
+            raise HTTPException(status_code=500, detail="Failed to create user")
+        
+        # Store verification code temporarily
+        verification_codes[request.email] = {
+            "code": code,
+            "expires": datetime.utcnow() + timedelta(minutes=10)
+        }
+        
+        # Send code to console
+        send_verification_email(request.email, code)
         
         return {
-            "status": "success",
-            "message": "Account created. Check your email.",
-            "user_id": user_id
+            "message": "Account created. Check backend console for verification code.",
+            "email": request.email
         }
     
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        raise e
     except Exception as e:
         print(f"Signup error: {e}")
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Signup failed: {str(e)}")
 
-
-# ============================================================================
-# ENDPOINT 2: POST /api/auth/verify-email
-# ============================================================================
-
-@router.post("/verify-email", status_code=200)
-async def verify_email(request: VerifyEmailRequest):
+@router.post("/verify-email")
+async def verify_email(request: VerifyRequest):
     """Verify email with code"""
     try:
-        # Find verification
-        if request.code not in VERIFICATIONS:
+        # Check code
+        if request.email not in verification_codes:
+            raise HTTPException(status_code=400, detail="No verification code found")
+        
+        stored = verification_codes[request.email]
+        
+        if stored["code"] != request.code:
             raise HTTPException(status_code=400, detail="Invalid code")
         
-        verification = VERIFICATIONS[request.code]
-        
-        # Check expiry
-        expires_at = datetime.fromisoformat(verification["expires_at"])
-        if datetime.now() > expires_at:
-            del VERIFICATIONS[request.code]
+        if datetime.utcnow() > stored["expires"]:
             raise HTTPException(status_code=400, detail="Code expired")
         
-        # Mark email as verified
-        email = verification["email"]
-        if email in USERS:
-            USERS[email]["email_verified"] = True
+        # Update user in Supabase
+        supabase.table("users").update({
+            "email_verified": True
+        }).eq("email", request.email).execute()
         
-        # Delete code
-        del VERIFICATIONS[request.code]
+        # Remove code
+        del verification_codes[request.email]
         
-        return {
-            "status": "success",
-            "message": "Email verified. You can now login."
-        }
+        return {"message": "Email verified successfully"}
     
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        print(f"Verify email error: {e}")
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+        print(f"Verify error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-# ============================================================================
-# ENDPOINT 3: POST /api/auth/login
-# ============================================================================
-
-@router.post("/login", status_code=200)
+@router.post("/login")
 async def login(request: LoginRequest):
-    """Login with email and password"""
+    """Login user"""
     try:
-        # Find user
-        if request.email not in USERS:
+        # Get user from Supabase
+        response = supabase.table("users").select("*").eq("email", request.email).execute()
+        
+        if not response.data or len(response.data) == 0:
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
-        user = USERS[request.email]
-        
-        # Check email verified
-        if not user["email_verified"]:
-            raise HTTPException(status_code=401, detail="Email not verified")
+        user = response.data[0]
         
         # Verify password
-        if not verify_password(request.password, user["password_hash"]):
+        if not verify_password(request.password, user.get("password_hash", "")):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
-        # Create tokens
-        access_token = create_token(
-            data={"sub": user["id"], "email": user["email"]},
-            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        )
+        # Check email verified
+        if not user.get("email_verified", False):
+            raise HTTPException(status_code=401, detail="Email not verified. Please verify your email first.")
         
-        refresh_token = create_token(
-            data={"sub": user["id"], "type": "refresh"},
-            expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        )
+        # Create tokens
+        access_token = create_token(user["id"], user["email"])
+        refresh_token = create_token(user["id"], user["email"])
         
         return {
-            "status": "success",
             "access_token": access_token,
             "refresh_token": refresh_token,
             "user": {
                 "id": user["id"],
-                "email": user["email"]
+                "email": user["email"],
+                "full_name": user.get("full_name", "")
             }
         }
     
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        raise e
     except Exception as e:
         print(f"Login error: {e}")
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
-
-
-# ============================================================================
-# Health Check
-# ============================================================================
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/health")
 async def health():
     """Health check"""
-    return {
-        "status": "healthy",
-        "module": "auth"
-    }
+    return {"status": "ok", "supabase_connected": supabase is not None}
