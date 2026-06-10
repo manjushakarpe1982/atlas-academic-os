@@ -1,69 +1,40 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import { PageSkeleton } from '@/components/Skeleton';
 import Tooltip from '@/components/Tooltip';
+import { api } from '@/lib/api';
 import {
   TrendingUp, Plus, ChevronRight, Star,
   AlertTriangle, Target, BarChart2, Sparkles,
   BookOpen, ArrowRight, MoreVertical,
   Upload, Lock, GraduationCap, Brain, Zap, Shield,
+  RefreshCw,
 } from 'lucide-react';
 
 /* ─── Data ───────────────────────────────────────────────────── */
-const CLASSES = [
-  {
-    id:'stat201', name:'Statistics 201', code:'STAT 201', credits:3, prof:'Prof. Michael Lee',
-    status:'on-track', statusColor:'bg-green-100 text-green-700',
-    current:'A-', projected:'A', currentPct:91, projPct:94,
-    icon:'📊', iconBg:'bg-purple-50', iconColor:'text-purple-600',
-    borderColor:'border-l-purple-400',
-    scores:[{label:'Assignments',pct:92,color:'bg-purple-500'},{label:'Exams',pct:65,color:'bg-purple-400'},{label:'Participation',pct:65,color:'bg-purple-400'}],
-  },
-  {
-    id:'bio101', name:'Biology 101', code:'BIO 101', credits:4, prof:'Prof. Sarah Smith',
-    status:'on-track', statusColor:'bg-green-100 text-green-700',
-    current:'B+', projected:'A-', currentPct:87, projPct:91,
-    icon:'🧬', iconBg:'bg-green-50', iconColor:'text-green-600',
-    borderColor:'border-l-green-400',
-    scores:[{label:'Assignments',pct:85,color:'bg-green-500'},{label:'Exams',pct:79,color:'bg-green-400'},{label:'Lab & Quizzes',pct:99,color:'bg-green-400'}],
-  },
-  {
-    id:'eng110', name:'English 110', code:'ENG 110', credits:3, prof:'Prof. David Kim',
-    status:'at-risk', statusColor:'bg-red-100 text-red-600',
-    current:'B-', projected:'B', currentPct:79, projPct:83,
-    icon:'📖', iconBg:'bg-yellow-50', iconColor:'text-yellow-600',
-    borderColor:'border-l-yellow-400',
-    scores:[{label:'Assignments',pct:65,color:'bg-yellow-500'},{label:'Exams',pct:75,color:'bg-yellow-400'},{label:'Participation',pct:70,color:'bg-yellow-400'}],
-  },
-  {
-    id:'his105', name:'History 105', code:'HIS 105', credits:3, prof:'Prof. Brena Wilson',
-    status:'on-track', statusColor:'bg-green-100 text-green-700',
-    current:'A', projected:'A', currentPct:95, projPct:94,
-    icon:'🏛', iconBg:'bg-blue-50', iconColor:'text-blue-600',
-    borderColor:'border-l-blue-400',
-    scores:[{label:'Assignments',pct:99,color:'bg-blue-500'},{label:'Exams',pct:88,color:'bg-blue-400'},{label:'Participation',pct:92,color:'bg-blue-400'}],
-  },
-  {
-    id:'chem201', name:'Chemistry 201', code:'CHEM 201', credits:4, prof:'Prof. James Brown',
-    status:'at-risk', statusColor:'bg-red-100 text-red-600',
-    current:'D+', projected:'C-', currentPct:67, projPct:70,
-    icon:'🧪', iconBg:'bg-red-50', iconColor:'text-red-600',
-    borderColor:'border-l-red-400',
-    scores:[{label:'Assignments',pct:99,color:'bg-red-500'},{label:'Exams',pct:66,color:'bg-red-400'},{label:'Lab & Quizzes',pct:60,color:'bg-red-400'}],
-  },
-];
+// ── Real class data from API ─────────────────────────────────────────────
+interface RealClass {
+  id: string; name: string; instructor: string | null;
+  credit_hours: number | null; current_grade: number | null;
+}
 
-const GPA_TREND = [
-  {m:'Aug',v:3.2},{m:'Sep',v:3.3},{m:'Oct',v:3.25},{m:'Nov',v:3.4},
-  {m:'Dec',v:3.35},{m:'Jan',v:3.5},{m:'Feb',v:3.55},
-];
+interface GradeSummaryData {
+  current_grade: number | null; letter_grade: string | null;
+  breakdown: Array<{ category: string; weight_pct: number; avg_score: number | null; count: number; confidence: string }>;
+  confidence: string;
+}
 
-const GPA_PROJ = [
-  {m:'Jan',v:3.5},{m:'Feb',v:3.6},{m:'Mar',v:3.7},{m:'Apr',v:3.8},
-];
+function letterGrade(pct: number | null): string {
+  if (pct === null) return '—';
+  if (pct >= 93) return 'A';  if (pct >= 90) return 'A−';
+  if (pct >= 87) return 'B+'; if (pct >= 83) return 'B';
+  if (pct >= 80) return 'B−'; if (pct >= 77) return 'C+';
+  if (pct >= 73) return 'C';  if (pct >= 70) return 'C−';
+  if (pct >= 60) return 'D';  return 'F';
+}
 
 function gradeColor(g: string) {
   if (g.startsWith('A')) return 'text-green-600';
@@ -72,160 +43,49 @@ function gradeColor(g: string) {
   return 'text-red-600';
 }
 
-/* ─── GPA Trend SVG Chart ────────────────────────────────────── */
-function GPATrendChart() {
-  const W = 520;           // Increased for better proportion
-  const H = 130;
-  const Pl = 10;           // Reduced left padding (was 22) → starts from left
-  const Pr = 8;
-  const Pt = 8;
-  const Pb = 24;
-  
-  const cW = W - Pl - Pr;
-  const cH = H - Pt - Pb;
-  const minV = 0.8, maxV = 4.5;
-
-  const actual    = [{v:1.0},{v:2.5},{v:2.7},{v:2.6},{v:2.9},{v:3.3},{v:3.55}];
-  const months    = ['Aug','Sep','Oct','Nov','Dec','Jan','Feb'];
-  const projExtra = [{v:3.75},{v:3.9}];
-  const totalPts  = actual.length + projExtra.length;
-
-  const tx = (i: number) => Pl + (i / (totalPts - 1)) * cW;
-  const ty = (v: number) => Pt + cH - ((v - minV) / (maxV - minV)) * cH;
-
-  const aPts = actual.map((d, i) => ({ x: tx(i), y: ty(d.v) }));
-  const pPts = [aPts[aPts.length - 1], ...projExtra.map((d, i) => ({
-    x: tx(actual.length + i), 
-    y: ty(d.v)
-  }))];
-
-  const line = (pts: { x: number; y: number }[]) => {
-    let d = `M${pts[0].x},${pts[0].y}`;
-    for (let i = 1; i < pts.length; i++) {
-      const dx = (pts[i].x - pts[i - 1].x) * 0.35;
-      d += ` C${pts[i - 1].x + dx},${pts[i - 1].y} ${pts[i].x - dx},${pts[i].y} ${pts[i].x},${pts[i].y}`;
-    }
-    return d;
-  };
-
-  const ap = line(aPts);
-  const pp = line(pPts);
-  const bl = Pt + cH;
-  const area = `${ap} L${aPts[aPts.length - 1].x},${bl} L${Pl},${bl}Z`;
-  const yVals = [4.0, 3.0, 2.0, 1.0];
-
-  return (
-    <svg 
-      viewBox={`0 0 ${W} ${H}`} 
-      className="w-full h-auto"
-      style={{ height: '210px', display: 'block', overflow: 'visible' }}
-    >
-      <defs>
-        <linearGradient id="gGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#818CF8" stopOpacity="0.25"/>
-          <stop offset="100%" stopColor="#818CF8" stopOpacity="0.02"/>
-        </linearGradient>
-      </defs>
-
-      {/* Horizontal Grid Lines */}
-      {yVals.map(v => (
-        <g key={v}>
-          <line 
-            x1={Pl} y1={ty(v)} 
-            x2={W - Pr} y2={ty(v)} 
-            stroke="#E5E7EB" 
-            strokeWidth="0.8" 
-            strokeDasharray="3,2"
-          />
-          <text 
-            x={Pl - 6} y={ty(v) + 3} 
-            textAnchor="end" 
-            fontSize="7.5" 
-            fill="#9CA3AF"
-          >
-            {v.toFixed(1)}
-          </text>
-        </g>
-      ))}
-
-      {/* Area Under Curve */}
-      <path d={area} fill="url(#gGrad)" />
-
-      {/* Actual GPA Line */}
-      <path 
-        d={ap} 
-        fill="none" 
-        stroke="#6366F1" 
-        strokeWidth="2.5" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
-
-      {/* Projected GPA Line */}
-      <path 
-        d={pp} 
-        fill="none" 
-        stroke="#6366F1" 
-        strokeWidth="2.5" 
-        strokeDasharray="5,3" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
-
-      {/* Dots on Actual Points */}
-      {aPts.map((p, i) => (
-        <circle 
-          key={i} 
-          cx={p.x} 
-          cy={p.y} 
-          r="2.8" 
-          fill="white" 
-          stroke="#6366F1" 
-          strokeWidth="2" 
-        />
-      ))}
-
-      {/* Month Labels */}
-      {months.map((m, i) => (
-        <text 
-          key={m} 
-          x={tx(i)} 
-          y={H - 6} 
-          textAnchor="middle" 
-          fontSize="7.5" 
-          fill="#9CA3AF"
-          fontWeight="500"
-        >
-          {m}
-        </text>
-      ))}
-    </svg>
-  );
-}
 
 
-/* ─── Donut chart ────────────────────────────────────────────── */
-function DonutChart() {
-  const segments = [
-    { pct:20, color:'#4F46E5', label:'A (90-100%)' },
-    { pct:18, color:'#818CF8', label:'B (80-89%)'  },
-    { pct:27, color:'#FCD34D', label:'C (70-79%)'  },
-    { pct:27, color:'#F97316', label:'D (60-69%)'  },
-    { pct:8,  color:'#F3F4F6', label:'F (Below 60%)'},
+
+/* ─── Real Donut Chart ───────────────────────────────────────── */
+function RealDonutChart({ classes }: { classes: RealClass[] }) {
+  const withGrades = classes.filter(c => c.current_grade !== null);
+
+  const bands = [
+    { label: 'A (90-100%)', color: '#4F46E5', min: 90,  max: 101 },
+    { label: 'B (80-89%)',  color: '#818CF8', min: 80,  max: 90  },
+    { label: 'C (70-79%)',  color: '#FCD34D', min: 70,  max: 80  },
+    { label: 'D (60-69%)',  color: '#F97316', min: 60,  max: 70  },
+    { label: 'F (Below 60%)', color: '#E5E7EB', min: 0, max: 60  },
   ];
-  const r=28, cx=36, cy=36;
-  const circ=2*Math.PI*r;
-  let offset=0;
+
+  const counts = bands.map(b =>
+    withGrades.filter(c => (c.current_grade || 0) >= b.min && (c.current_grade || 0) < b.max).length
+  );
+
+  const total = counts.reduce((s, c) => s + c, 0);
+  const avg   = withGrades.length > 0
+    ? Math.round(withGrades.reduce((s, c) => s + (c.current_grade || 0), 0) / withGrades.length)
+    : null;
+
+  if (total === 0) {
+    return <p className="text-xs text-gray-400 py-3 text-center">Add grades to see distribution</p>;
+  }
+
+  const r = 28, cx = 36, cy = 36;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+
   return (
     <div className="flex items-center gap-4">
       <div className="relative flex-shrink-0">
         <svg width="72" height="72" viewBox="0 0 72 72">
-          {segments.map((s,i)=>{
-            const dash = (s.pct/100)*circ;
-            const el = (
+          {bands.map((b, i) => {
+            const pct  = (counts[i] / total) * 100;
+            const dash = (pct / 100) * circ;
+            const el   = (
               <circle key={i} cx={cx} cy={cy} r={r}
-                fill="none" stroke={s.color} strokeWidth="10"
-                strokeDasharray={`${dash} ${circ-dash}`}
+                fill="none" stroke={b.color} strokeWidth="10"
+                strokeDasharray={`${dash} ${circ - dash}`}
                 strokeDashoffset={-offset}
                 transform="rotate(-90 36 36)"
               />
@@ -235,16 +95,16 @@ function DonutChart() {
           })}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-base font-extrabold text-gray-900 leading-none">3.25</p>
+          <p className="text-base font-extrabold text-gray-900 leading-none">{avg}%</p>
           <p className="text-[8px] text-gray-400">Average</p>
         </div>
       </div>
       <div className="space-y-1">
-        {segments.map((s,i)=>(
+        {bands.map((b, i) => (
           <div key={i} className="flex items-center gap-1.5 text-[10px] text-gray-600">
-            <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{background:s.color}}/>
-            <span>{s.label}</span>
-            <span className="ml-auto font-bold text-gray-700">{[2,2,3,2,0][i]}</span>
+            <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: b.color }} />
+            <span>{b.label}</span>
+            <span className="ml-auto font-bold text-gray-700">{counts[i]}</span>
           </div>
         ))}
       </div>
@@ -252,142 +112,145 @@ function DonutChart() {
   );
 }
 
-/* ─── Target Grade Calculator ────────────────────────────────── */
-function TargetCalc() {
-  const [open, setOpen] = useState(false);
-  const [examScore, setExamScore] = useState(85);
-  const targetPct = 3.42 * 0.8 + (examScore/100) * 0.2;
-  const letter = targetPct >= 0.93 ? 'A' : targetPct >= 0.90 ? 'A-' : targetPct >= 0.87 ? 'B+' : targetPct >= 0.83 ? 'B' : 'B-';
+/* ─── Class row card — real data ─────────────────────────────── */
+function ClassRow({ cls }: { cls: RealClass }) {
+  const [open,    setOpen]    = useState(false);
+  const [summary, setSummary] = useState<GradeSummaryData | null>(null);
+  const [loadingS,setLoadingS]= useState(false);
+
+  const pct    = cls.current_grade;
+  const letter = letterGrade(pct);
+
+  const borderCol = pct === null ? 'border-l-gray-200'
+    : pct >= 90 ? 'border-l-emerald-400'
+    : pct >= 70 ? 'border-l-indigo-400'
+    : 'border-l-red-400';
+
+  const letterCol = pct === null ? 'text-gray-400'
+    : pct >= 90 ? 'text-emerald-600'
+    : pct >= 80 ? 'text-indigo-600'
+    : pct >= 70 ? 'text-amber-600'
+    : 'text-red-600';
+
+  const statusText  = pct === null ? 'No grades' : pct >= 70 ? 'On track' : 'At risk';
+  const statusColor = pct === null ? 'bg-gray-100 text-gray-500'
+    : pct >= 70 ? 'bg-green-100 text-green-700'
+    : 'bg-red-100 text-red-600';
+
+  const handleToggle = async () => {
+    setOpen(!open);
+    if (!open && !summary && !loadingS) {
+      setLoadingS(true);
+      try {
+        const s = await api<GradeSummaryData>(`/api/grades/class/${cls.id}/summary`);
+        setSummary(s);
+      } catch { /* ignore */ }
+      finally { setLoadingS(false); }
+    }
+  };
+
+  const strokeColor = (pct: number) =>
+    pct >= 90 ? '#10b981' : pct >= 80 ? '#6366f1' : pct >= 70 ? '#f59e0b' : '#ef4444';
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Target className="w-4 h-4 text-indigo-500" />
-          <p className="text-sm font-extrabold text-gray-900">To reach my target grade, I need...</p>
-        </div>
-        <button onClick={()=>setOpen(!open)}
-          className="text-xs font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 px-3 py-1.5 rounded-md transition-all">
-          Calculate
-        </button>
-      </div>
-
-      {/* 4 separate white cards */}
-      <div className="grid grid-cols-4 gap-3 mt-4">
-        {[
-          {label:'Current GPA',    value:'3.55', color:'text-gray-900',   icon:'📊', iconBg:'bg-indigo-50' },
-          {label:'Target GPA',     value:'3.80', color:'text-green-600',  icon:'🎯', iconBg:'bg-green-50'  },
-          {label:'Target Safe GPA',value:'3.70', color:'text-indigo-600', icon:'🛡', iconBg:'bg-blue-50'   },
-          {label:'Classes on track',value:'3 / 5',color:'text-gray-900',  icon:'🏆', iconBg:'bg-amber-50'  },
-        ].map((s,i)=>(
-          <div key={i} className="bg-white border border-gray-100 rounded-md p-3 shadow-sm text-center">
-            <div className={`w-10 h-10 rounded-2xl ${s.iconBg} flex items-center justify-center mx-auto mb-2 text-xl`}>
-              {s.icon}
-            </div>
-            <p className={`text-xl font-extrabold leading-none ${s.color}`}>{s.value}</p>
-            <p className="text-[10px] text-gray-400 mt-1 leading-tight">{s.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Progress bar */}
-      <div className="mt-4">
-        <div className="flex justify-between text-[11px] text-gray-500 mb-1.5">
-          <span className="font-semibold">GPA Progress to Target</span>
-          <span>Current: 3.55 · Target: 3.80</span>
-        </div>
-        <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-full bg-indigo-500 rounded-full" style={{width:'88%'}}/>
-        </div>
-        <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-          <span>0%</span>
-          <span className="text-indigo-500 font-semibold">You're 0.25 GPA away from your target</span>
-          <span>100%</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Class row card ─────────────────────────────────────────── */
-function ClassRow({ cls }: { cls: typeof CLASSES[0] }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className={`bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm border-l-4 ${cls.borderColor}`}>
+    <div className={`bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm border-l-4 ${borderCol}`}>
       <div className="p-4">
         {/* Top row */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl ${cls.iconBg} flex items-center justify-center text-xl flex-shrink-0`}>
-              {cls.icon}
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-base font-extrabold text-indigo-600 flex-shrink-0">
+              {cls.name.slice(0,2).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-sm font-extrabold text-gray-900">{cls.name}</p>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cls.statusColor}`}>
-                  {cls.status === 'on-track' ? 'On track' : 'At risk'}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColor}`}>
+                  {statusText}
                 </span>
               </div>
-              <p className="text-[11px] text-gray-400 mt-0.5">{cls.code} · {cls.credits} credits · Prof. {cls.prof.replace('Prof. ','')}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                {cls.credit_hours ? `${cls.credit_hours} credits` : ''}
+                {cls.instructor ? ` · ${cls.instructor}` : ''}
+              </p>
             </div>
           </div>
 
-          {/* Current + Projected grades */}
+          {/* Current grade */}
           <div className="flex items-center gap-4 flex-shrink-0">
             <div className="text-center">
               <p className="text-[10px] text-gray-400 mb-0.5">Current</p>
-              <p className={`text-2xl font-extrabold leading-none ${gradeColor(cls.current)}`}>{cls.current}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">{cls.currentPct}%</p>
+              <p className={`text-2xl font-extrabold leading-none ${letterCol}`}>{letter}</p>
+              {pct !== null && <p className="text-[10px] text-gray-400 mt-0.5">{pct}%</p>}
             </div>
-            <div className="text-center">
-              <p className="text-[10px] text-gray-400 mb-0.5">Projected</p>
-              <p className={`text-2xl font-extrabold leading-none ${gradeColor(cls.projected)}`}>{cls.projected}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">{cls.projPct}%</p>
-            </div>
-            <button className="p-1 rounded-lg hover:bg-gray-100 transition-all">
-              <MoreVertical className="w-4 h-4 text-gray-400"/>
-            </button>
           </div>
         </div>
 
-        {/* Score circles */}
-        <div className="flex items-center gap-16 mb-3">
-          {cls.scores.map((s,i)=>(
-            <div key={i} className="flex flex-col items-center gap-1">
-              {/* Circular progress */}
-              <div className="relative w-16 h-16">
-                <svg viewBox="0 0 44 44" className="w-full h-full -rotate-90">
-                  <circle cx="22" cy="22" r="18" fill="none" stroke="#f3f4f6" strokeWidth="5"/>
-                  <circle cx="22" cy="22" r="18" fill="none" stroke={s.color.replace('bg-','').includes('purple')?'#7C3AED':s.color.replace('bg-','').includes('green')?'#16A34A':s.color.replace('bg-','').includes('yellow')?'#D97706':s.color.replace('bg-','').includes('blue')?'#2563EB':'#DC2626'}
-                    strokeWidth="5" strokeLinecap="round"
-                    strokeDasharray={`${(s.pct/100)*113} 113`}/>
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-extrabold text-gray-700">{s.pct}%</span>
+        {/* Breakdown circles — shown from summary */}
+        {summary && summary.breakdown.length > 0 && (
+          <div className="flex items-center gap-8 mb-3 flex-wrap">
+            {summary.breakdown.slice(0, 4).map((b, i) => (
+              <div key={i} className="flex flex-col items-center gap-1">
+                <div className="relative w-16 h-16">
+                  <svg viewBox="0 0 44 44" className="w-full h-full -rotate-90">
+                    <circle cx="22" cy="22" r="18" fill="none" stroke="#f3f4f6" strokeWidth="5"/>
+                    {b.avg_score !== null && (
+                      <circle cx="22" cy="22" r="18" fill="none"
+                        stroke={strokeColor(b.avg_score)}
+                        strokeWidth="5" strokeLinecap="round"
+                        strokeDasharray={`${(b.avg_score/100)*113} 113`}/>
+                    )}
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[10px] font-extrabold text-gray-700">
+                      {b.avg_score !== null ? `${b.avg_score}%` : '—'}
+                    </span>
+                  </div>
                 </div>
+                <p className="text-[9px] text-gray-400 text-center leading-tight">{b.category}</p>
               </div>
-              <p className="text-[9px] text-gray-400 text-center leading-tight">{s.label}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {pct === null && !open && (
+          <p className="text-[11px] text-amber-600 mb-2">
+            📊 No grades yet — add a grade to see your projection
+          </p>
+        )}
 
         {/* Details toggle */}
-        <button onClick={()=>setOpen(!open)}
+        <button onClick={handleToggle}
           className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-          <span>{open ? '▲' : '▼'}</span> Details
+          <span>{open ? '▲' : '▼'}</span> {loadingS ? 'Loading…' : 'Details'}
         </button>
 
         {open && (
           <div className="mt-3 pt-3 border-t border-gray-50 space-y-2">
-            {cls.scores.map((s,i)=>(
-              <div key={i} className="flex items-center gap-3">
-                <p className="text-xs text-gray-500 w-28 flex-shrink-0">{s.label}</p>
-                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full ${s.color} rounded-full`} style={{width:`${s.pct}%`}}/>
+            {summary && summary.breakdown.length > 0 ? (
+              summary.breakdown.map((b, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <p className="text-xs text-gray-500 w-28 flex-shrink-0">
+                    {b.category} <span className="text-gray-300">({b.weight_pct}%)</span>
+                  </p>
+                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    {b.avg_score !== null && (
+                      <div className="h-full rounded-full"
+                        style={{width:`${b.avg_score}%`, backgroundColor: strokeColor(b.avg_score)}}/>
+                    )}
+                  </div>
+                  <span className="text-xs font-bold text-gray-700 w-10 text-right">
+                    {b.avg_score !== null ? `${b.avg_score}%` : '—'}
+                  </span>
+                  <span className="text-[10px] text-gray-400 w-14 text-right">
+                    {b.count} grade{b.count !== 1 ? 's' : ''}
+                  </span>
                 </div>
-                <span className="text-xs font-bold text-gray-700 w-8 text-right">{s.pct}%</span>
-              </div>
-            ))}
+              ))
+            ) : summary && summary.breakdown.length === 0 ? (
+              <p className="text-xs text-gray-400">No grade weights found — upload and link a syllabus first.</p>
+            ) : (
+              <p className="text-xs text-gray-400">Loading…</p>
+            )}
           </div>
         )}
       </div>
@@ -405,12 +268,20 @@ export default function GradesPage() {
   // empty GPA chart.
   const [hasGrades, setHasGrades] = useState(false);
 
-  useEffect(()=>{ const t=setTimeout(()=>setLoading(false),600); return()=>clearTimeout(t); },[]);
-  useEffect(()=>{
-    if (typeof window !== 'undefined' && localStorage.getItem('atlas_has_grades') === 'true') {
-      setHasGrades(true);
-    }
+  const [realClasses, setRealClasses] = useState<RealClass[]>([]);
+
+  const loadData = useCallback(() => {
+    setLoading(true);
+    api<{ classes: RealClass[]; total: number }>('/api/classes')
+      .then((res) => {
+        setRealClasses(res.classes);
+        if (res.classes.length > 0) setHasGrades(true);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   if (loading) return <PageSkeleton/>;
 
@@ -652,101 +523,46 @@ export default function GradesPage() {
           {/* ── LEFT — main content ───────────────────────────── */}
           <div className="flex-1 min-w-0 space-y-4">
 
-            {/* GPA Trend chart */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span>📈</span>
-                  <p className="text-sm font-extrabold text-gray-900">GPA Trend</p>
-                  <Tooltip text="Solid = actual GPA. Dashed = projected." position="right" width="w-48"/>
-                </div>
-                <div className="border border-gray-200 rounded-xl px-3.5 py-1.5 text-xs font-medium text-gray-600 bg-white shadow-sm cursor-pointer">
-                  This Semester ▾
-                </div>
-              </div>
 
-              {/* Left text + Right chart in one row */}
-              <div style={{display:'flex', alignItems:'flex-start', width:'100%'}}>
 
-                {/* LEFT — fixed narrow width */}
-                <div style={{width:'110px', flexShrink:0}}>
-                  <p style={{fontSize:'11px', color:'#9CA3AF', marginBottom:'2px'}}>Current GPA</p>
-                  <p style={{fontSize:'38px', fontWeight:800, color:'#111827', lineHeight:1}}>3.55</p>
-                  <p style={{fontSize:'11px', color:'#9CA3AF', marginTop:'12px', marginBottom:'2px'}}>Projected GPA</p>
-                  <p style={{fontSize:'32px', fontWeight:800, color:'#22C55E', lineHeight:1}}>3.80</p>
-                  <p style={{fontSize:'10px', color:'#22C55E', fontWeight:600, marginTop:'6px'}}>↑ +0.08 from last month</p>
-                </div>
-
-                {/* RIGHT — takes ALL remaining width */}
-                <div style={{flex:1, minWidth:0}}>
-                  <GPATrendChart/>
-                  <div style={{display:'flex', gap:'16px', marginTop:'6px', paddingLeft:'20px'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
-                      <svg width="20" height="3"><line x1="0" y1="1.5" x2="20" y2="1.5" stroke="#6366F1" strokeWidth="2"/></svg>
-                      <span style={{fontSize:'10px', color:'#6B7280'}}>Actual GPA</span>
-                    </div>
-                    <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
-                      <svg width="20" height="3"><line x1="0" y1="1.5" x2="20" y2="1.5" stroke="#6366F1" strokeWidth="2" strokeDasharray="4,2"/></svg>
-                      <span style={{fontSize:'10px', color:'#6B7280'}}>Projected GPA</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
             {/* Target Grade Calculator */}
-            <TargetCalc/>
+            
 
             {/* Class rows */}
             <div className="space-y-3">
-              {CLASSES.map(cls=><ClassRow key={cls.id} cls={cls}/>)}
+              {realClasses.length > 0
+                ? realClasses.map(cls=><ClassRow key={cls.id} cls={cls}/>)
+                : <div className="text-center py-8 text-gray-400 text-sm">
+                    No classes yet — add your classes first to track grades.
+                  </div>}
             </div>
           </div>
 
           {/* ── RIGHT sidebar ─────────────────────────────────── */}
           <div className="lg:w-[240px] lg:flex-shrink-0 space-y-4">
 
-            {/* Top Performing Classes */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Star className="w-4 h-4 text-yellow-500"/>
-                <p className="text-sm font-extrabold text-gray-900">Top Performing Classes</p>
-              </div>
-              <div className="space-y-2">
-                {[
-                  {rank:1, name:'History 105',    pct:95, color:'text-green-600'},
-                  {rank:2, name:'Statistics 201', pct:88, color:'text-indigo-600'},
-                  {rank:3, name:'Biology 101',    pct:82, color:'text-green-600'},
-                ].map(c=>(
-                  <div key={c.name} className="flex items-center bg-indigo-50 border border-indigo-100 rounded-md px-3 py-1.5 gap-1">
-                    <span className="w-5 h-5 rounded-full bg-indigo-200 text-indigo-600 text-[10px] font-extrabold flex items-center justify-center flex-shrink-0">{c.rank}</span>
-                    <p className="text-xs font-semibold text-gray-800 flex-1 truncate">{c.name}</p>
-                    <span className={`text-xs font-extrabold flex-shrink-0 ${c.color}`}>{c.pct}%</span>
-                  </div>
-                ))}
-              </div>
-              <button className="mt-3 w-full text-center text-xs font-semibold text-indigo-600 hover:underline">View all</button>
-            </div>
+            {/* Top Performing Classes removed — was static data */}
 
-            {/* Needs Attention */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-4 h-4 text-orange-500"/>
-                <p className="text-sm font-extrabold text-gray-900">Needs Attention</p>
+            {/* Needs Attention — real data */}
+            {realClasses.filter(c => c.current_grade !== null && c.current_grade < 70).length > 0 && (
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="w-4 h-4 text-orange-500"/>
+                  <p className="text-sm font-extrabold text-gray-900">Needs Attention</p>
+                </div>
+                <div className="space-y-2.5">
+                  {realClasses
+                    .filter(c => c.current_grade !== null && c.current_grade < 70)
+                    .map((c, i) => (
+                      <div key={c.id} className="flex items-center gap-2.5">
+                        <span className="w-5 h-5 rounded-full bg-orange-50 text-orange-600 text-[10px] font-extrabold flex items-center justify-center flex-shrink-0">{i+1}</span>
+                        <p className="text-xs font-semibold text-gray-800 flex-1 truncate">{c.name}</p>
+                        <span className="text-xs font-extrabold flex-shrink-0 text-red-500">{c.current_grade}%</span>
+                      </div>
+                    ))}
+                </div>
               </div>
-              <div className="space-y-2.5">
-                {[
-                  {rank:1, name:'English 110',  pct:70, color:'text-orange-500'},
-                  {rank:2, name:'Chemistry 201',pct:60, color:'text-red-500'},
-                ].map(c=>(
-                  <div key={c.name} className="flex items-center gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-orange-50 text-orange-600 text-[10px] font-extrabold flex items-center justify-center flex-shrink-0">{c.rank}</span>
-                    <p className="text-xs font-semibold text-gray-800 flex-1 truncate">{c.name}</p>
-                    <span className={`text-xs font-extrabold flex-shrink-0 ${c.color}`}>{c.pct}%</span>
-                  </div>
-                ))}
-              </div>
-              <button className="mt-3 w-full text-center text-xs font-semibold text-indigo-600 hover:underline">View all</button>
-            </div>
+            )}
 
             {/* Grade Distribution */}
             <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
@@ -754,18 +570,28 @@ export default function GradesPage() {
                 <BarChart2 className="w-4 h-4 text-indigo-500"/>
                 <p className="text-sm font-extrabold text-gray-900">Grade Distribution</p>
               </div>
-              <DonutChart/>
-              <button className="mt-3 w-full text-center text-xs font-semibold text-indigo-600 hover:underline">View full analytics</button>
+              <RealDonutChart classes={realClasses}/>
+
             </div>
 
-            {/* GPA Summary — indigo card */}
+            {/* GPA Summary — real avg */}
             <div className="bg-indigo-600 rounded-2xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <Star className="w-4 h-4 text-indigo-200"/>
-                <p className="text-xs font-extrabold text-indigo-100">GPA Summary</p>
+                <p className="text-xs font-extrabold text-indigo-100">Average Grade</p>
               </div>
-              <p className="text-3xl font-extrabold leading-none">3.55 <span className="text-lg text-indigo-200">/ 4.00</span></p>
-              <p className="text-xs text-indigo-200 mt-2">You're doing great! Keep going!</p>
+              {realClasses.filter(c => c.current_grade !== null).length > 0 ? (
+                <>
+                  <p className="text-3xl font-extrabold leading-none">
+                    {Math.round(realClasses.filter(c => c.current_grade !== null).reduce((s,c) => s + (c.current_grade||0), 0) / realClasses.filter(c => c.current_grade !== null).length)}%
+                  </p>
+                  <p className="text-xs text-indigo-200 mt-2">
+                    Across {realClasses.filter(c => c.current_grade !== null).length} class{realClasses.filter(c => c.current_grade !== null).length !== 1 ? 'es' : ''}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-indigo-200 mt-1">Add grades to see your average</p>
+              )}
             </div>
 
             {/* Insights */}
@@ -775,46 +601,100 @@ export default function GradesPage() {
                 <p className="text-sm font-extrabold text-gray-900">Insights</p>
               </div>
               <div className="space-y-2.5">
-                {[
-                  {icon:'📈', text:"Your GPA is above the class average",  color:'text-green-600'},
-                  {icon:'⚠️', text:"English 110 needs more attention",       color:'text-orange-500'},
-                  {icon:'✅', text:"You're improving in 3 classes",          color:'text-indigo-600'},
-                ].map((s,i)=>(
-                  <div key={i} className="flex items-start gap-2.5">
-                    <span className="text-base flex-shrink-0">{s.icon}</span>
-                    <p className={`text-xs font-medium ${s.color} leading-relaxed`}>{s.text}</p>
+                {realClasses.filter(c => c.current_grade !== null && c.current_grade < 70).length > 0 && (
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-base flex-shrink-0">⚠️</span>
+                    <p className="text-xs font-medium text-orange-500 leading-relaxed">
+                      {realClasses.filter(c => c.current_grade !== null && c.current_grade < 70).map(c => c.name).join(', ')} need{realClasses.filter(c => c.current_grade !== null && c.current_grade < 70).length === 1 ? 's' : ''} attention
+                    </p>
                   </div>
-                ))}
+                )}
+                {realClasses.filter(c => c.current_grade !== null && c.current_grade >= 90).length > 0 && (
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-base flex-shrink-0">⭐</span>
+                    <p className="text-xs font-medium text-green-600 leading-relaxed">
+                      {realClasses.filter(c => c.current_grade !== null && c.current_grade >= 90).map(c => c.name).join(', ')} — excellent work
+                    </p>
+                  </div>
+                )}
+                {realClasses.filter(c => c.current_grade !== null).length === 0 && (
+                  <p className="text-xs text-gray-400">Add grades to see personalised insights.</p>
+                )}
               </div>
-              <button className="mt-3 flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:underline">
-                View full Insights <ArrowRight className="w-3 h-3"/>
-              </button>
+
             </div>
           </div>
         </div>
       </div>
 
       {/* Add Grade Modal */}
-      {showAddModal && <AddGradeModal onClose={()=>setShowAddModal(false)} />}
+      {showAddModal && <AddGradeModal
+        onClose={() => setShowAddModal(false)}
+        onSaved={() => { setShowAddModal(false); loadData(); }}
+        realClasses={realClasses}
+      />}
     </AppLayout>
   );
 }
 
 /* ─── Add Grade Modal ────────────────────────────────────────── */
-function AddGradeModal({ onClose }: { onClose: () => void }) {
-  const [cls,    setCls]    = useState('bio101');
-  const [name,   setName]   = useState('');
-  const [type,   setType]   = useState('quiz');
-  const [score,  setScore]  = useState('');
-  const [total,  setTotal]  = useState('100');
-  const [weight, setWeight] = useState('');
-  const [saved,  setSaved]  = useState(false);
+function AddGradeModal({ onClose, onSaved, realClasses }: { onClose: () => void; onSaved: () => void; realClasses: RealClass[] }) {
+  const [cls,       setCls]       = useState(realClasses[0]?.id ?? '');
+  const [name,      setName]      = useState('');
+  const [category,  setCategory]  = useState('');
+  const [score,     setScore]     = useState('');
+  const [total,     setTotal]     = useState('100');
+  const [saving,    setSaving]    = useState(false);
+  const [saved,     setSaved]     = useState(false);
+  const [error,     setError]     = useState('');
+  const [weights,   setWeights]   = useState<Array<{category: string; weight_pct: number}>>([]);
+  const [loadingW,  setLoadingW]  = useState(false);
 
-  const save = () => {
-    if (!name.trim() || !score) return;
-    setSaved(true);
-    setTimeout(onClose, 800);
+  // Fetch grade weights when class changes
+  useEffect(() => {
+    if (!cls) return;
+    setLoadingW(true);
+    api<{ grade_weights: Array<{id:string; category:string; weight_pct:number}> }>(`/api/classes/${cls}`)
+      .then((c) => {
+        setWeights(c.grade_weights || []);
+        if (c.grade_weights?.length > 0) setCategory(c.grade_weights[0].category);
+        else setCategory('');
+      })
+      .catch(() => {})
+      .finally(() => setLoadingW(false));
+  }, [cls]);
+
+  const pct = score && total ? Math.round((parseFloat(score) / parseFloat(total)) * 100) : null;
+
+  const save = async () => {
+    if (!cls)         { setError('Please select a class.'); return; }
+    if (!name.trim()) { setError('Please enter an assignment name.'); return; }
+    if (!category)    { setError('Please select a category.'); return; }
+    if (!score || isNaN(parseFloat(score))) { setError('Please enter a valid score.'); return; }
+    setError('');
+    setSaving(true);
+    try {
+      await api('/api/grades', {
+        method: 'POST',
+        body: {
+          class_id:  cls,
+          category,
+          title:     name.trim(),
+          score:     parseFloat(score),
+          max_score: parseFloat(total) || 100,
+          source:    'manual',
+        },
+      });
+      setSaved(true);
+      setTimeout(() => { onSaved(); }, 900);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Could not save grade. Try again.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const inp = "w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm outline-none bg-white transition-all";
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
@@ -829,68 +709,94 @@ function AddGradeModal({ onClose }: { onClose: () => void }) {
             </button>
           </div>
           <div className="space-y-3">
+            {/* Class */}
             <div>
               <label className="text-xs font-bold text-gray-500 mb-1 block">Class</label>
-              <select value={cls} onChange={e=>setCls(e.target.value)}
-                className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm outline-none bg-white transition-all">
-                {CLASSES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+              <select value={cls} onChange={e => setCls(e.target.value)} className={inp}>
+                {realClasses.length > 0
+                  ? realClasses.map(c => <option key={c.id} value={c.id}>{c.name}{c.current_grade !== null ? ` (${letterGrade(c.current_grade)})` : ''}</option>)
+                  : <option disabled value="">No classes yet</option>}
               </select>
             </div>
+
+            {/* Assignment name */}
             <div>
               <label className="text-xs font-bold text-gray-500 mb-1 block">Assignment name *</label>
-              <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Quiz 3, Midterm Exam"
-                className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm outline-none transition-all" />
+              <input value={name} onChange={e => setName(e.target.value)}
+                placeholder="e.g. Quiz 3, Midterm Exam" className={inp} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-gray-500 mb-1 block">Type</label>
-                <select value={type} onChange={e=>setType(e.target.value)}
-                  className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm outline-none bg-white transition-all">
-                  {['quiz','exam','assignment','lab','participation'].map(t=>(
-                    <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>
+
+            {/* Category — from real grade weights */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 mb-1 block">Category *</label>
+              {loadingW ? (
+                <div className="border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-400">Loading categories…</div>
+              ) : weights.length > 0 ? (
+                <select value={category} onChange={e => setCategory(e.target.value)} className={inp}>
+                  {weights.map(w => (
+                    <option key={w.category} value={w.category}>
+                      {w.category} ({w.weight_pct}% of grade)
+                    </option>
                   ))}
                 </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 mb-1 block">Weight %</label>
-                <input value={weight} onChange={e=>setWeight(e.target.value)} placeholder="e.g. 10"
-                  className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm outline-none transition-all" />
-              </div>
+              ) : (
+                <div>
+                  <input value={category} onChange={e => setCategory(e.target.value)}
+                    placeholder="e.g. Exams, Homework, Quizzes" className={inp} />
+                  <p className="text-[11px] text-amber-600 mt-1">
+                    ⚠ No grade weights set for this class. Go to Classes → {realClasses.find(c=>c.id===cls)?.name || 'class'} → set weights first for accurate calculation.
+                  </p>
+                </div>
+              )}
             </div>
+
+            {/* Score */}
+            <div className="grid grid-cols-2 gap-3">
+            {/* Score */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 mb-1 block">Score *</label>
-                <input value={score} onChange={e=>setScore(e.target.value)} placeholder="e.g. 85"
-                  className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm outline-none transition-all" />
+                <input type="number" value={score} onChange={e => setScore(e.target.value)}
+                  placeholder="e.g. 85" className={inp} />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 mb-1 block">Out of</label>
-                <input value={total} onChange={e=>setTotal(e.target.value)}
-                  className="w-full border-2 border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm outline-none transition-all" />
+                <input type="number" value={total} onChange={e => setTotal(e.target.value)}
+                  className={inp} />
               </div>
             </div>
-            {score && total && (
-              <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3.5 py-2.5">
-                <p className="text-xs font-semibold text-indigo-700">
-                  Score: {Math.round((Number(score)/Number(total))*100)}% —
-                  {Number(score)/Number(total) >= 0.9 ? ' 🌟 Excellent!' : Number(score)/Number(total) >= 0.8 ? ' ✅ Good' : Number(score)/Number(total) >= 0.7 ? ' 📈 Passing' : ' ⚠️ Needs work'}
-                </p>
+
+            {/* Live score preview */}
+            {pct !== null && (
+              <div className={`rounded-xl px-3.5 py-2.5 text-center font-extrabold text-lg border ${
+                pct >= 90 ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
+                pct >= 80 ? 'bg-indigo-50 border-indigo-200 text-indigo-600' :
+                pct >= 70 ? 'bg-amber-50 border-amber-200 text-amber-600' :
+                'bg-red-50 border-red-200 text-red-600'
+              }`}>
+                {pct}% — {letterGrade(pct)}
               </div>
             )}
           </div>
-          <div className="flex gap-2.5 mt-5">
+          {error && (
+            <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+              <p className="text-xs text-red-600 font-medium">{error}</p>
+            </div>
+          )}
+          <div className="flex gap-2.5 mt-4">
             <button onClick={onClose}
               className="flex-1 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-bold py-2.5 rounded-xl text-sm transition-all">
               Cancel
             </button>
-            <button onClick={save} disabled={!name.trim() || !score}
+            <button onClick={save} disabled={!name.trim() || !score || saving}
               className={`flex-1 font-bold py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2 ${
                 saved ? 'bg-emerald-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-40'
               }`}>
-              {saved ? '✓ Grade added!' : <><Plus className="w-4 h-4"/> Add grade</>}
+              {saved ? '✓ Grade added!' : saving ? <><RefreshCw className="w-4 h-4 animate-spin"/> Saving…</> : <><Plus className="w-4 h-4"/> Add grade</>}
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

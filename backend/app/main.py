@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, onboarding, files, classes
+from app.routers import auth, onboarding, files, classes, grades
 
 app = FastAPI(
     title="Atlas API",
@@ -27,6 +27,7 @@ app.include_router(auth.router,       prefix="/api/auth",       tags=["Auth"])
 app.include_router(onboarding.router, prefix="/api/onboarding", tags=["Onboarding"])
 app.include_router(files.router,      prefix="/api/files",      tags=["Files"])
 app.include_router(classes.router,    prefix="/api/classes",    tags=["Classes"])
+app.include_router(grades.router,     prefix="/api/grades",     tags=["Grades"])
 
 
 # ── Health check ───────────────────────────────────────────────────────────

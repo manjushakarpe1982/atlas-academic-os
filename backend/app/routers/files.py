@@ -732,7 +732,17 @@ async def link_class(
             try:
                 supabase.table(table).update({"class_id": body.class_id}).eq("file_id", file_id).execute()
             except Exception:
-                pass  # non-fatal — tables may not have rows yet
+                pass  # non-fatal
+
+        # If this file is a syllabus, set it as the class syllabus_file_id
+        try:
+            file_cat = supabase.table("files").select("category").eq("id", file_id).single().execute()
+            if file_cat.data and file_cat.data.get("category") == "syllabus":
+                supabase.table("classes").update({
+                    "syllabus_file_id": file_id
+                }).eq("id", body.class_id).execute()
+        except Exception:
+            pass  # non-fatal
 
     msg = f"File linked to class." if body.class_id else "File unlinked from class."
     return LinkClassResponse(message=msg, file_id=file_id, class_id=body.class_id)

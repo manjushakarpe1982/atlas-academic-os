@@ -130,12 +130,17 @@ def _fmt_size(n: Optional[int]) -> str:
 def _compute_current_grade(weights: list[dict], grades: list[dict]) -> Optional[float]:
     """
     Weighted grade calculation from spec §3.2.
-    Only uses categories that have at least one grade recorded.
+    Falls back to simple average when no grade weights exist.
     """
-    if not weights or not grades:
+    if not grades:
         return None
 
-    # avg score per category
+    # Simple average fallback when no weights configured
+    if not weights:
+        scores = [(g["score"] / g["max_score"]) * 100 for g in grades if g.get("max_score")]
+        return round(sum(scores) / len(scores), 1) if scores else None
+
+    # Weighted calculation
     cat_scores: dict[str, list[float]] = {}
     for g in grades:
         cat = g.get("category", "")
@@ -155,7 +160,10 @@ def _compute_current_grade(weights: list[dict], grades: list[dict]) -> Optional[
             weighted_sum  += avg * w.get("weight_pct", 0)
 
     if graded_weight == 0:
-        return None
+        # No category matches — fall back to simple average of all grades
+        scores = [(g["score"] / g["max_score"]) * 100 for g in grades if g.get("max_score")]
+        return round(sum(scores) / len(scores), 1) if scores else None
+
     return round(weighted_sum / graded_weight, 1)
 
 
@@ -341,3 +349,51 @@ async def delete_class(class_id: str, user_id: str = Depends(get_current_user_id
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Could not delete class: {exc}")
     return SimpleMessage(message=f"'{name}' deleted.")
+
+# ── POST /api/classes/{class_id}/grade-weights ────────────────────────────
+
+class GradeWeightInput(BaseModel):
+    category:   str
+    weight_pct: float
+
+class GradeWeightsSet(BaseModel):
+    weights: list[GradeWeightInput]
+
+@router.post("/{class_id}/grade-weights", response_model=ClassRecord)
+async def set_grade_weights(
+    class_id: str,
+    body: GradeWeightsSet,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Manually set grade weights for a class."""
+    try:
+        supabase.table("classes").select("id").eq("id", class_id).eq("user_id", user_id).single().execute()
+    except Exception:
+        raise HTTPException(status_code=404, detail="Class not found.")
+
+    if not body.weights:
+        raise HTTPException(status_code=400, detail="At least one weight required.")
+
+    total = sum(w.weight_pct for w in body.weights)
+    if total < 90 or total > 110:
+        raise HTTPException(status_code=400, detail=f"Weights must sum to ~100%. Got {total}%.")
+
+    try:
+        # Delete existing manual weights (keep syllabus-linked ones separate)
+        supabase.table("grade_weights").delete().eq("class_id", class_id).is_("file_id", "null").execute()
+        # Insert new weights
+        rows = [
+            {
+                "class_id":   class_id,
+                "user_id":    user_id,
+                "category":   w.category,
+                "weight_pct": w.weight_pct,
+                "confidence": "high",
+            }
+            for w in body.weights
+        ]
+        supabase.table("grade_weights").insert(rows).execute()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Could not save weights: {exc}")
+
+    return await get_class(class_id, user_id)
