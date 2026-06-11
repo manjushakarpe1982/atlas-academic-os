@@ -9,7 +9,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["'Lexend Deca'", "system-ui", "sans-serif"],
+        sans: ['var(--font-lexend-deca)', "'Lexend Deca'", "system-ui", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

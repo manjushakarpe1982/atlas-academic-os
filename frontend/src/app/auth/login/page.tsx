@@ -2,41 +2,94 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, EyeOff } from 'lucide-react';
+import { Brain, Eye, EyeOff, HelpCircle, ArrowLeft } from 'lucide-react';
+
+function GoogleIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24">
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    </svg>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail]     = useState('');
-  const [pw,    setPw]        = useState('');
-  const [show,  setShow]      = useState(false);
+  const [email,   setEmail]   = useState('');
+  const [pw,      setPw]      = useState('');
+  const [show,    setShow]    = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!email || !pw) return;
+    setError(''); setLoading(true);
     // TODO: connect to backend
-    setTimeout(() => {
-      setLoading(false);
-      router.push('/classes');
-    }, 800);
+    setTimeout(() => { setLoading(false); router.push('/classes'); }, 800);
+  };
+
+  const handleGoogle = () => {
+    // TODO: connect Google OAuth
+    router.push('/classes');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8">
-        <div className="flex items-center gap-2 mb-2">
-          <Brain className="w-7 h-7 text-indigo-600" />
-          <span className="text-xl font-extrabold text-gray-900">Atlas</span>
+    <div className="min-h-screen bg-white flex flex-col max-w-md mx-auto">
+
+      {/* ── FIXED HEADER ── */}
+      <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
+        <div className="px-5 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+              <Brain className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-extrabold text-gray-900 text-base">Atlas</span>
+          </div>
+          <a href="#" onClick={e => e.preventDefault()}
+            className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+            <HelpCircle className="w-4 h-4" />
+            Need Help?
+          </a>
         </div>
+      </header>
+
+      {/* ── SCROLLABLE CONTENT ── */}
+      <main className="flex-1 overflow-y-auto px-5 pt-8 pb-28">
+
         <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Welcome back</h1>
         <p className="text-sm text-gray-400 mb-6">
           No account?{' '}
-          <Link href="/auth/signup" className="text-indigo-600 font-semibold hover:underline">Create one</Link>
+          <Link href="/auth/signup" className="text-indigo-600 font-semibold hover:underline">
+            Create one free
+          </Link>
         </p>
+
+        {/* Continue with Google */}
+        <button onClick={handleGoogle}
+          className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 hover:border-gray-300 bg-white text-gray-700 font-semibold py-3 rounded-xl text-sm transition-all shadow-sm mb-4">
+          <GoogleIcon />
+          Continue with Google
+        </button>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400 font-medium">or sign in with email</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-700 text-sm">
+            ❌ {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-gray-600 mb-1 block">Email</label>
+            <label className="text-xs font-bold text-gray-600 mb-1 block">Email address</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)}
               placeholder="you@university.edu" required autoComplete="email"
               className="w-full px-4 py-3 border-2 border-gray-200 focus:border-indigo-500 rounded-xl outline-none text-sm transition-all" />
@@ -53,19 +106,31 @@ export default function LoginPage() {
                 {show ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            <div className="text-right mt-1">
-              <Link href="/auth/forgot-password" className="text-xs text-indigo-600 hover:underline">
+            <div className="text-right mt-1.5">
+              <Link href="/auth/forgot-password"
+                className="text-xs text-indigo-600 font-semibold hover:underline">
                 Forgot password?
               </Link>
             </div>
           </div>
 
           <button type="submit" disabled={!email || !pw || loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-all shadow-md">
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl transition-all shadow-md text-sm mt-2">
             {loading ? 'Signing in...' : 'Sign In →'}
           </button>
         </form>
-      </div>
+      </main>
+
+      {/* ── FIXED FOOTER ── */}
+      <footer className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-100 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+        <div className="max-w-md mx-auto px-5 py-4">
+          <button onClick={() => router.back()}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        </div>
+      </footer>
+
     </div>
   );
 }

@@ -1,28 +1,23 @@
-import "./globals.css";
-import type { ReactNode } from "react";
-import { Lexend_Deca } from "next/font/google";
+import type { Metadata } from 'next';
+import { Lexend_Deca } from 'next/font/google';
+import './globals.css';
 
 const lexendDeca = Lexend_Deca({
-  variable: "--font-lexend-deca",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
-  adjustFontFallback: true,
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-lexend-deca',
 });
 
-export const metadata = {
-  title: "Atlas - AI-Powered Study Planner",
-  description: "Get personalized study recommendations ranked by grade impact.",
+export const metadata: Metadata = {
+  title: 'Atlas Academic OS',
+  description: 'AI-powered study planner',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={lexendDeca.variable}>
+    <html lang="en" className={lexendDeca.variable}>
+      <body className={lexendDeca.className}>
         {children}
       </body>
     </html>
