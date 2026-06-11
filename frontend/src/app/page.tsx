@@ -132,12 +132,13 @@ export default function LandingPage() {
                 <div className="flex items-start gap-4 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                   {/* Icon + number */}
                   <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                    <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl border border-gray-100">
-                      {step.icon}
-                    </div>
                     <div className={`w-5 h-5 ${step.color} rounded-full flex items-center justify-center`}>
                       <span className="text-white text-[10px] font-extrabold">{step.num}</span>
                     </div>
+                    <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl border border-gray-100">
+                      {step.icon}
+                    </div>
+                    
                   </div>
                   {/* Text */}
                   <div className="flex-1 pt-1">
