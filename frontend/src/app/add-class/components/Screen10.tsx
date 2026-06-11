@@ -35,16 +35,7 @@ export default function Screen10({ onNext }: ScreenProps) {
           </div>
         </div>
 
-        <div className="w-full space-y-3 mt-6">
-          <button onClick={onNext}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl text-sm shadow-md">
-            Add Another Class
-          </button>
-          <button onClick={() => router.push('/dashboard')}
-            className="w-full border-2 border-gray-200 text-gray-600 font-bold py-3 rounded-2xl text-sm hover:bg-gray-50">
-            Continue to Dashboard
-          </button>
-        </div>
+        
       </div>
     </Phone>
   );

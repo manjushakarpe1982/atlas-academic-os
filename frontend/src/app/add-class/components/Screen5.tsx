@@ -8,18 +8,16 @@ import { MOCK_COURSE } from './mockData';
 export default function Screen5({ onNext, onBack }: ScreenProps) {
   return (
     <Phone step={3} total={5}>
-      <div className="px-5 py-4 overflow-y-auto" style={{ maxHeight: 500 }}>
-        <button onClick={onBack} className="mb-3 text-gray-400 hover:text-gray-600">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-
-        <div className="flex items-center justify-between mb-1">
-          <h1 className="text-xl font-extrabold text-gray-900">Review what we found</h1>
-          <span className="text-[10px] font-extrabold bg-indigo-600 text-white px-2 py-1 rounded-full">
+      <div className=" py-2 overflow-y-auto">
+      
+<span className="text-[12px] font-extrabold bg-indigo-600 text-white px-2 py-1.5  rounded-full">
             MOST IMPORTANT
           </span>
+        <div className="flex items-center justify-between mt-2 mb-1">
+          <h1 className="text-2xl font-extrabold text-gray-900">Review what we found</h1>
+          
         </div>
-        <p className="text-xs text-gray-400 mb-4">
+        <p className="text-sm text-gray-400 mb-4">
           Please check everything and edit if anything looks wrong.
         </p>
 
@@ -72,10 +70,7 @@ export default function Screen5({ onNext, onBack }: ScreenProps) {
           ))}
         </div>
 
-        <button onClick={onNext}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl text-sm shadow-md transition-all">
-          Everything Looks Good
-        </button>
+       
       </div>
     </Phone>
   );

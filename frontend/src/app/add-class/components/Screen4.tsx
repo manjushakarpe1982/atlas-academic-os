@@ -14,13 +14,11 @@ const PARSE_ITEMS = [
 export default function Screen4({ onNext, onBack }: ScreenProps) {
   return (
     <Phone step={2} total={5}>
-      <div className="px-6 py-4">
-        <button onClick={onBack} className="mb-4 text-gray-400 hover:text-gray-600">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+      <div className=" py-2">
+      
 
         <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Reading your syllabus...</h1>
-        <p className="text-sm text-gray-400 mb-8">This usually takes 15–30 seconds.</p>
+        <p className="text-base text-gray-400 mb-8">This usually takes 15–30 seconds.</p>
 
         {/* Circular progress */}
         <div className="flex justify-center mb-8">
@@ -43,17 +41,14 @@ export default function Screen4({ onNext, onBack }: ScreenProps) {
               {item.done
                 ? <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
                 : <Circle className="w-5 h-5 text-gray-300 flex-shrink-0" />}
-              <span className={`text-sm ${item.done ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
+              <span className={`text-base ${item.done ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
                 {item.label}
               </span>
             </div>
           ))}
         </div>
 
-        <button onClick={onNext}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl text-sm shadow-md transition-all">
-          Continue
-        </button>
+       
       </div>
     </Phone>
   );

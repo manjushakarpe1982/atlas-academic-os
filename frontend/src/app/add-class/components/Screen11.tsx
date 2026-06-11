@@ -12,7 +12,7 @@ export default function Screen11({ onAddAnother }: Props) {
 
   return (
     <Phone>
-      <div className="px-5 py-4">
+      <div className=" py-4">
         <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Your Classes</h1>
         <p className="text-xs text-gray-400 mb-5">3 of 5 classes added</p>
 
@@ -52,10 +52,7 @@ export default function Screen11({ onAddAnother }: Props) {
 
         <p className="text-xs text-gray-400 text-center mb-4">You can add up to 5 classes</p>
 
-        <button onClick={() => router.push('/dashboard')}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-2xl text-sm shadow-md">
-          Go to Dashboard
-        </button>
+      
       </div>
     </Phone>
   );

@@ -8,10 +8,8 @@ import { MOCK_COURSE } from './mockData';
 export default function Screen6({ onNext, onBack }: ScreenProps) {
   return (
     <Phone step={3} total={5}>
-      <div className="px-5 py-4">
-        <button onClick={onBack} className="mb-3 text-gray-400 hover:text-gray-600">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+      <div className=" py-2 ">
+       
 
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-extrabold text-gray-900">Important Dates</h1>
@@ -62,10 +60,7 @@ export default function Screen6({ onNext, onBack }: ScreenProps) {
           <button className="text-xs text-indigo-600 font-semibold mt-2">+ 13 more weeks</button>
         </div>
 
-        <button onClick={onNext}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl text-sm shadow-md">
-          Everything Looks Good
-        </button>
+       
       </div>
     </Phone>
   );

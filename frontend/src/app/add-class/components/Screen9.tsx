@@ -17,12 +17,9 @@ export default function Screen9({ onNext, onBack }: ScreenProps) {
 
   return (
     <Phone step={5} total={5}>
-      <div className="px-5 py-4">
-        <button onClick={onBack} className="mb-3 text-gray-400 hover:text-gray-600">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-
-        <h1 className="text-xl font-extrabold text-gray-900 mb-0.5">Enter current grades</h1>
+      <div className=" py-4">
+     
+        <h1 className="text-2xl font-extrabold text-gray-900 mb-0.5">Enter current grades</h1>
         <p className="text-xs font-semibold text-gray-400 mb-0.5">(Optional)</p>
         <p className="text-xs text-gray-400 mb-4">
           Add any grades you already have. You can skip this for now.
@@ -67,16 +64,7 @@ export default function Screen9({ onNext, onBack }: ScreenProps) {
           <Plus className="w-3.5 h-3.5" /> Add Another Grade
         </button>
 
-        <div className="flex gap-3">
-          <button onClick={onBack}
-            className="flex-1 border-2 border-gray-200 text-gray-600 font-bold py-3 rounded-2xl text-sm hover:bg-gray-50">
-            Skip for now
-          </button>
-          <button onClick={onNext}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-2xl text-sm shadow-md">
-            Save &amp; Continue
-          </button>
-        </div>
+       
       </div>
     </Phone>
   );

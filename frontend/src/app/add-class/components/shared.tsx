@@ -57,25 +57,10 @@ export function Phone({
 }) {
   return (
     <div
-      className="relative bg-white rounded-[2.5rem] shadow-2xl border border-gray-200 overflow-hidden"
-      style={{ width: 320, minHeight: 580 }}
+      className="relative"
+  
     >
-      {/* Status bar */}
-      <div className="bg-white px-6 pt-3 pb-1 flex items-center justify-between">
-        <span className="text-xs font-bold text-gray-900">9:41</span>
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-2 border border-gray-900 rounded-sm relative">
-            <div className="absolute inset-0.5 bg-gray-900 rounded-sm w-3/4" />
-          </div>
-        </div>
-      </div>
-
-      {/* Segmented progress bar inside phone */}
-      {step && total && (
-        <div className="px-6 pt-1 pb-2">
-          <SegmentedProgress step={step} total={total} label={`Step ${step} of ${total}`} />
-        </div>
-      )}
+    
 
       {/* Screen content */}
       <div className="flex-1">{children}</div>
