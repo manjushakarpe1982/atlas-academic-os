@@ -83,7 +83,7 @@ export default function SignupPage() {
 
         {/* Continue with Google */}
         <button onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 hover:border-gray-300 bg-white text-gray-700 font-semibold py-3 rounded-xl text-sm transition-all shadow-sm mb-4">
+          className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 hover:border-gray-300 bg-white text-gray-700 font-semibold py-3 rounded-xl text-base transition-all shadow-sm mb-4">
           <GoogleIcon />
           Continue with Google
         </button>
@@ -91,7 +91,7 @@ export default function SignupPage() {
         {/* Divider */}
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-xs text-gray-400 font-medium">or sign up with email</span>
+          <span className="text-sm text-gray-500 font-medium">or sign up with email</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
@@ -99,7 +99,7 @@ export default function SignupPage() {
 
           {/* Full Name */}
           <div>
-            <label className="text-xs font-bold text-gray-600 mb-1 block">Full name</label>
+            <label className="text-[15px] font-bold text-gray-600 mb-1 block">Full name</label>
             <input type="text" value={fullName} onChange={e => setFullName(e.target.value)}
               placeholder="Jane Smith" autoComplete="name"
               className={inp(fullName ? fullName.trim().length > 1 : undefined)} />
@@ -110,7 +110,7 @@ export default function SignupPage() {
 
           {/* Email */}
           <div>
-            <label className="text-xs font-bold text-gray-600 mb-1 block">Email address</label>
+            <label className="text-[15px] font-bold text-gray-600 mb-1 block">Email address</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)}
               placeholder="you@university.edu" autoComplete="email"
               className={inp(email ? validEmail : undefined)} />
@@ -119,7 +119,7 @@ export default function SignupPage() {
 
           {/* Password */}
           <div>
-            <label className="text-xs font-bold text-gray-600 mb-1 block">Password</label>
+            <label className="text-[15px] font-bold text-gray-600 mb-1 block">Password</label>
             <div className="relative">
               <input type={show ? 'text' : 'password'} value={pw} onChange={e => setPw(e.target.value)}
                 placeholder="Min 8 chars, 1 uppercase, 1 number"
@@ -147,7 +147,7 @@ export default function SignupPage() {
 
           {/* Confirm Password */}
           <div>
-            <label className="text-xs font-bold text-gray-600 mb-1 block">Confirm password</label>
+            <label className="text-[15px] font-bold text-gray-600 mb-1 block">Confirm password</label>
             <div className="relative">
               <input type={show ? 'text' : 'password'} value={cpw} onChange={e => setCpw(e.target.value)}
                 placeholder="Re-enter password" className={inp(cpw ? match : undefined)} autoComplete="new-password" />
@@ -160,24 +160,26 @@ export default function SignupPage() {
             {cpw && !match && <p className="text-red-500 text-xs mt-1">Passwords do not match</p>}
           </div>
 
-          <p className="text-xs text-gray-400 leading-relaxed">
+          <p className="text-sm text-gray-500 leading-relaxed">
             By creating an account you agree to our{' '}
             <a href="#" className="text-indigo-600 underline">Terms of Service</a> and{' '}
             <a href="#" className="text-indigo-600 underline">Privacy Policy</a>.
           </p>
 
           <button type="submit" disabled={!formOk || loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl transition-all shadow-md text-sm">
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all shadow-md text-base">
             {loading ? 'Creating account...' : 'Create Account →'}
           </button>
         </form>
       </main>
 
       {/* ── FIXED FOOTER ── */}
-      <footer className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-100 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
-        <div className="max-w-md mx-auto px-5 py-4">
-          <button onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
+       <footer className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-100 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+        <div className="max-w-md mx-auto px-5 py-3">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-base font-semibold text-gray-700 hover:text-indigo-600 transition-colors"
+          >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
         </div>
