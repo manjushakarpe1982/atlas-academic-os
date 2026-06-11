@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { Phone } from './shared';
-import { ScreenProps } from './types';
+interface Props { onNext: () => void; onBack: () => void; classId: string | null; }
 import { MOCK_GRADES } from './mockData';
 
 type Tab = 'manual' | 'photo' | 'gradebook';
 
-export default function Screen9({ onNext, onBack }: ScreenProps) {
+export default function Screen9({ onNext, onBack }: Props) {
   const [tab,    setTab]    = useState<Tab>('manual');
   const [grades, setGrades] = useState(MOCK_GRADES);
 

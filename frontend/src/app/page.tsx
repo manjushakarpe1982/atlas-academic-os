@@ -62,57 +62,64 @@ export default function LandingPage() {
         Image fills the section with object-contain so nothing is cropped.
         Text is absolutely positioned on top with a left-side gradient for readability.
       */}
-          <section className="pt-10 md:pt-14 bg-[#F8F9FF] overflow-hidden">
-  <div className="relative w-full ">
+        <section className="bg-[#F8F9FF] overflow-hidden pt-6">
+  <div className="px-5">
 
-    
+    {/* Badge */}
+    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold mb-5">
+      <CheckCircle2 className="w-4 h-4" />
+      Built for College Students
+    </div>
 
     {/* Content */}
-    <div className="relative z-10 px-5 md:px-10 pt-10 md:pt-20">
-      <div className="max-w-[320px] md:max-w-[500px]">
+    <div className="flex flex-col items-center text-center">
 
-        {/* Small Badge */}
-        <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-xs font-semibold mb-5">
-          <CheckCircle2 className="w-4 h-4" />
-          Built for College Students
-        </div>
-
-        {/* Heading */}
-        <h1 className="text-[38px] md:text-6xl font-extrabold text-gray-900 leading-[1.05]">
+      {/* Text */}
+      <div className="max-w-[320px]">
+        <h1 className="text-[44px] leading-[0.95] font-extrabold text-gray-900">
           Smarter Study.
         </h1>
 
-        <h1 className="text-[38px] md:text-6xl font-extrabold text-indigo-600 leading-[1.05] mb-5">
+        <h1 className="text-[44px] leading-[0.95] font-extrabold text-indigo-600 mb-4">
           Better Grades.
         </h1>
 
-        {/* Description */}
-        <p className="text-[15px] md:text-lg text-gray-600 leading-7 mb-7">
-          Atlas analyzes your syllabus, grades, and deadlines to tell you
-          exactly <span className="font-semibold text-gray-900">what to study</span> and{" "}
-          <span className="font-semibold text-gray-900">when to study it.</span>
+        <p className="text-[17px] text-gray-600 leading-7 mb-6">
+          Atlas analyzes your syllabus, grades, and deadlines to tell you exactly{" "}
+          <span className="font-semibold text-gray-900">
+            what to study
+          </span>{" "}
+          and{" "}
+          <span className="font-semibold text-gray-900">
+            when to study it.
+          </span>
         </p>
 
         {/* Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-
+        <div className="flex flex-col gap-3 w-full">
           <Link
             href="/auth/signup"
-            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl text-base shadow-lg shadow-indigo-200 transition-all"
+            className="h-14 rounded-2xl bg-indigo-600 text-white font-bold text-base flex items-center justify-center shadow-lg"
           >
-            Get Started Free
-            <ArrowRight className="w-4 h-4" />
+            Get Started Free →
           </Link>
 
-          <button className="flex items-center justify-center gap-2 border border-gray-200 bg-white text-gray-700 font-semibold py-3 px-6 rounded-xl text-base hover:border-indigo-300 hover:text-indigo-600 transition-all">
-            <span className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
-              <Play className="w-3 h-3 text-indigo-600 fill-indigo-600" />
-            </span>
+          <button className="h-14 rounded-2xl border border-gray-200 bg-white text-gray-800 font-semibold flex items-center justify-center gap-2">
+            <Play className="w-4 h-4" />
             See How It Works
           </button>
         </div>
+      </div>
 
-       
+      {/* Hero Image */}
+      <div className="relative w-full max-w-[260px] h-[220px] mt-8">
+        <Image
+          src="https://res.cloudinary.com/mview/image/upload/v1781153485/atlas/homepage1.png"
+          alt="Atlas hero"
+          fill
+          priority
+          className="object-contain"
+        />
       </div>
     </div>
   </div>

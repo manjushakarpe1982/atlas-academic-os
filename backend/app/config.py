@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     backend_url:          str = "http://localhost:8000"
     jwt_secret:           str = "atlas-secret-change-in-production"
     jwt_algorithm:        str = "HS256"
+    anthropic_api_key:    str = ""
+    storage_bucket:       str = "atlas-files"
 
     def get_key(self) -> str:
         return self.supabase_service_key or self.supabase_key
