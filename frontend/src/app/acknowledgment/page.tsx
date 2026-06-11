@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, FileText, BarChart2, Calendar, Edit3, Shield, Lock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, FileText, BarChart2, Calendar, Edit3, Shield, Lock, Brain } from 'lucide-react';
 
 const ITEMS = [
   { icon: FileText,  title: 'Upload your syllabus',                    desc: 'so Atlas can understand your course structure, grading breakdown, and important dates.'           },
@@ -23,29 +23,29 @@ export default function AcknowledgmentPage() {
     // TODO: connect to backend POST /api/ack
     setTimeout(() => { setLoading(false); router.push('/add-class'); }, 600);
   };
-
+const USER_INITIAL = 'J';
   return (
-    <div className="min-h-screen bg-white flex flex-col max-w-md mx-auto">
+    <div className="min-h-screen bg-white flex flex-col ">
+       <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
+        <div className="px-5 h-14 flex items-center justify-between">
 
-      {/* ── HEADER ── */}
-      <div className="px-5 pt-5 pb-3">
-        <div className="flex items-center justify-between mb-3">
-          <button onClick={() => router.back()}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
-          <h1 className="text-base font-bold text-gray-900">Acknowledgment</h1>
-          <div className="w-8" />
-        </div>
-        {/* Progress bar */}
-        <div className="flex gap-1.5 mb-1">
-          {[1,2,3,4,5].map(i => (
-            <div key={i} className={`flex-1 h-1 rounded-full ${i <= 2 ? 'bg-indigo-600' : 'bg-gray-200'}`} />
-          ))}
-        </div>
-        <p className="text-xs font-semibold text-indigo-600 text-center">Step 2 of 5</p>
-      </div>
+          {/* Left — Atlas icon + name */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+              <Brain className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-extrabold text-gray-900 text-base">Atlas</span>
+          </div>
 
+          {/* Right — user initial avatar */}
+          <div className="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center shadow-sm">
+            <span className="text-white text-sm font-extrabold">{USER_INITIAL}</span>
+          </div>
+
+        </div>
+      </header>
+
+   
       {/* ── HERO IMAGE + HEADLINE ── */}
       <div className="px-5 pt-2 pb-4 flex items-center gap-4">
         <div className="flex-shrink-0 w-24 h-24 relative">
@@ -68,17 +68,17 @@ export default function AcknowledgmentPage() {
 
       {/* ── LIST — scrollable, ends before footer ── */}
       <div className="px-5 pb-44 flex-1 overflow-y-auto">
-        <p className="text-sm font-extrabold text-indigo-600 mb-3">Here&apos;s what to expect:</p>
+        <p className="text-base font-extrabold text-indigo-600 mb-3">Here&apos;s what to expect:</p>
         <div className="space-y-2">
           {ITEMS.map(item => (
             <div key={item.title}
               className="flex items-start gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
-              <div className="w-9 h-9 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                <item.icon className="w-4 h-4 text-indigo-600" />
+              <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                <item.icon className="w-6 h-6 text-indigo-600" />
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-900 leading-snug">{item.title}</p>
-                <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{item.desc}</p>
+                <p className="text-base font-bold text-gray-900 leading-snug">{item.title}</p>
+                <p className="text-sm text-gray-500 leading-relaxed mt-0.5">{item.desc}</p>
               </div>
             </div>
           ))}
@@ -109,7 +109,7 @@ export default function AcknowledgmentPage() {
           <button
             onClick={handleContinue}
             disabled={!checked || loading}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-4 rounded-2xl text-base shadow-lg shadow-indigo-200 transition-all mb-3">
+            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-base shadow-lg shadow-indigo-200 transition-all mb-3">
             {loading ? 'Setting up...' : 'Continue Setup'}
             {!loading && <ArrowRight className="w-5 h-5" />}
           </button>
