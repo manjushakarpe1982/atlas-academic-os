@@ -22,17 +22,13 @@ const HOW_IT_WORKS = [
 ];
 
 const WHY_ATLAS = [
-  { icon: Target,     color: 'bg-indigo-100 text-indigo-600', title: 'Focus on What Matters',  desc: 'Study high-impact topics first.'                   },
-  { icon: Calendar,   color: 'bg-orange-100 text-orange-600', title: 'Never Miss a Deadline',  desc: 'All assignments, quizzes, and exams in one place.' },
-  { icon: TrendingUp, color: 'bg-green-100 text-green-600',   title: 'Track Progress',         desc: 'See your grades improve over time.'                },
-  { icon: Sparkles,   color: 'bg-yellow-100 text-yellow-600', title: 'AI Study Materials',     desc: 'Practice questions, flashcards, and summaries.'    },
+  { icon: Target,     color: 'bg-indigo-300 text-indigo-600', title: 'Focus on What Matters',  desc: 'Study high-impact topics first.'                   },
+  { icon: Calendar,   color: 'bg-orange-300 text-orange-600', title: 'Never Miss a Deadline',  desc: 'All assignments, quizzes, and exams in one place.' },
+  { icon: TrendingUp, color: 'bg-green-300 text-green-600',   title: 'Track Progress',         desc: 'See your grades improve over time.'                },
+  { icon: Sparkles,   color: 'bg-yellow-300 text-yellow-600', title: 'AI Study Materials',     desc: 'Practice questions, flashcards, and summaries.'    },
 ];
 
-const TOPICS = [
-  { label: 'Cell Division', impact: 'High Impact',   impactColor: 'text-green-600 bg-green-50'  },
-  { label: 'Derivatives',   impact: 'Medium Impact', impactColor: 'text-amber-600 bg-amber-50'  },
-  { label: 'Lab Report',    impact: 'Low Impact',    impactColor: 'text-gray-500  bg-gray-100'  },
-];
+
 
 export default function LandingPage() {
   return (
@@ -66,66 +62,71 @@ export default function LandingPage() {
         Image fills the section with object-contain so nothing is cropped.
         Text is absolutely positioned on top with a left-side gradient for readability.
       */}
-           <section className="pt-14">
-        <div className="max-w-md mx-auto">
-          {/* Outer wrapper drives height from image aspect ratio */}
-          <div className="relative w-full" style={{ paddingBottom: '90%' }}>
+          <section className="pt-10 md:pt-14 bg-[#F8F9FF] overflow-hidden">
+  <div className="relative w-full ">
 
-            {/* Background image — object-contain = never cropped */}
-            <Image
-              src="https://res.cloudinary.com/mview/image/upload/v1781153485/atlas/homepage1.png"
-              alt="Atlas hero"
-              fill
-              className="object-contain object-right-bottom"
-              priority
-            />
+    
 
-          
+    {/* Content */}
+    <div className="relative z-10 px-5 md:px-10 pt-10 md:pt-20">
+      <div className="max-w-[320px] md:max-w-[500px]">
 
-            {/* Text — absolutely positioned top-left, overlapping the image */}
-            <div className="absolute inset-0 flex flex-col justify-center px-5 pt-4 pb-4">
-              <h1 className="text-4xl font-extrabold text-gray-900 leading-tight mb-1">
-                Smarter Study.
-              </h1>
-              <h1 className="text-4xl font-extrabold text-indigo-600 leading-tight mb-3">
-                Better Grades.
-              </h1>
-              <p className="text-sm text-gray-600 leading-relaxed mb-5 max-w-[200px]">
-                Atlas uses AI to analyze your syllabus, grades, and schedule to tell you what to study and when.
-              </p>
-
-              <div className="flex flex-col gap-2.5 max-w-[200px]">
-                <Link href="/auth/signup"
-                  className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-2xl text-xs shadow-lg shadow-indigo-200 transition-all">
-                  Get Started Free <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-                <button className="flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 font-bold py-2.5 px-5 rounded-2xl text-xs hover:border-indigo-300 hover:text-indigo-600 transition-all bg-white/90">
-                  <span className="w-4 h-4 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <Play className="w-2 h-2 text-indigo-600 ml-0.5" />
-                  </span>
-                  See How It Works
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1.5 mt-3">
-                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
-                <span className="text-xs text-gray-500 font-medium">Built for college students</span>
-              </div>
-            </div>
-
-          </div>
+        {/* Small Badge */}
+        <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-xs font-semibold mb-5">
+          <CheckCircle2 className="w-4 h-4" />
+          Built for College Students
         </div>
-      </section>
+
+        {/* Heading */}
+        <h1 className="text-[38px] md:text-6xl font-extrabold text-gray-900 leading-[1.05]">
+          Smarter Study.
+        </h1>
+
+        <h1 className="text-[38px] md:text-6xl font-extrabold text-indigo-600 leading-[1.05] mb-5">
+          Better Grades.
+        </h1>
+
+        {/* Description */}
+        <p className="text-[15px] md:text-lg text-gray-600 leading-7 mb-7">
+          Atlas analyzes your syllabus, grades, and deadlines to tell you
+          exactly <span className="font-semibold text-gray-900">what to study</span> and{" "}
+          <span className="font-semibold text-gray-900">when to study it.</span>
+        </p>
+
+        {/* Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+
+          <Link
+            href="/auth/signup"
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl text-base shadow-lg shadow-indigo-200 transition-all"
+          >
+            Get Started Free
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+
+          <button className="flex items-center justify-center gap-2 border border-gray-200 bg-white text-gray-700 font-semibold py-3 px-6 rounded-xl text-base hover:border-indigo-300 hover:text-indigo-600 transition-all">
+            <span className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+              <Play className="w-3 h-3 text-indigo-600 fill-indigo-600" />
+            </span>
+            See How It Works
+          </button>
+        </div>
+
+       
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* ── HOW ATLAS WORKS — column layout ── */}
       <section id="how-it-works" className="py-5 px-5 bg-gray-100">
-        <div className="max-w-md mx-auto">
+        <div className="">
           <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-3">
             How Atlas Works
           </h2>
 
           {/* COLUMN — one step per row */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col ">
             {HOW_IT_WORKS.map((step, i) => (
               <div key={step.title}>
                 <div className="flex items-start gap-4 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
@@ -159,18 +160,29 @@ export default function LandingPage() {
       {/* ── WHY STUDENTS CHOOSE ATLAS ── */}
       <section id="features" className="py-4 px-5 bg-white">
         <div className="max-w-lg mx-auto">
-          <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-8">
+          <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-4">
             Why Students Choose Atlas
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {WHY_ATLAS.map(f => (
-              <div key={f.title} className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-                <div className={`w-10 h-10 ${f.color} rounded-xl flex items-center justify-center mb-3`}>
-                  <f.icon className="w-5 h-5" />
-                </div>
-                <p className="text-base font-extrabold text-gray-900 mb-1">{f.title}</p>
-                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
-              </div>
+            <div key={f.title} className="bg-gray-50 rounded-2xl p-2 border border-gray-100">
+  <div className="flex items-start gap-4">
+    {/* Icon */}
+    <div className={`w-11 h-11 ${f.color} rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5`}>
+      <f.icon className="w-5 h-5 text-white" />
+    </div>
+
+    {/* Heading + Description */}
+    <div className="flex-1">
+      <h3 className="text-base font-extrabold text-gray-900 mb-1">
+        {f.title}
+      </h3>
+      <p className="text-sm text-gray-500 leading-relaxed">
+        {f.desc}
+      </p>
+    </div>
+  </div>
+</div>
             ))}
           </div>
         </div>
