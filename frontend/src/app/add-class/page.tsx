@@ -31,7 +31,7 @@ const BUTTONS: Record<number, BtnCfg> = {
   1:  { left: null,           right: 'Add First Class'     },
   2:  { left: 'Back',         right: 'Confirm'             },
   3:  { left: 'Back',         right: 'Continue'            },
-  4:  { left: null,            right: null                  }, // AI parsing — no buttons
+  4:  { left: null,            right: 'Continue'                  }, // AI parsing — no buttons
   5:  { left: 'Back',         right: 'Continue'            },
   6:  { left: null,           right: 'Everything Looks Good ✓' },
   7:  { left: 'Skip for now', right: 'Continue'            },
