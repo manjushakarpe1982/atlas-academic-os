@@ -54,7 +54,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col max-w-md mx-auto">
+    <div className="min-h-screen bg-white flex flex-col ">
       {/* ── FIXED HEADER ── */}
       <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
         <div className="px-5 h-14 flex items-center justify-between">
