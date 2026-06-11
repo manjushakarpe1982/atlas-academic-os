@@ -9,7 +9,6 @@ import { useRouter } from 'next/navigation';
 import { Brain, HelpCircle, ArrowRight } from 'lucide-react';
 
 import { Step } from './components/types';
-import { STEP_LABELS } from './components/mockData';
 
 import Screen1  from './components/Screen1';
 import Screen2  from './components/Screen2';
@@ -27,12 +26,12 @@ const TOTAL_STEPS = 11;
 
 // Per-step footer button config
 // left: null = no left button
-type BtnCfg = { left: string | null; right: string  | null; };
+type BtnCfg = { left: string | null; right: string | null };
 const BUTTONS: Record<number, BtnCfg> = {
   1:  { left: null,           right: 'Add First Class'     },
   2:  { left: 'Back',         right: 'Confirm'             },
   3:  { left: 'Back',         right: 'Continue'            },
-  4:  { left: null,         right: null            },
+  4:  { left: null,            right: null                  }, // AI parsing — no buttons
   5:  { left: 'Back',         right: 'Continue'            },
   6:  { left: null,           right: 'Everything Looks Good ✓' },
   7:  { left: 'Skip for now', right: 'Continue'            },
@@ -98,7 +97,7 @@ export default function AddClassPage() {
       </header>
 
       {/* ── MAIN: screen content ── */}
-      <main className="flex-1 flex flex-col pb-36">
+      <main className="flex-1 flex flex-col pb-48">
         <div className="flex justify-center px-4 pt-6 pb-4">
           {screens[step]}
         </div>
@@ -119,32 +118,34 @@ export default function AddClassPage() {
             ))}
           </div>
 
-          {/* Step label */}
-          <p className="text-xs text-gray-400 text-center mb-3">
-            {STEP_LABELS[step - 1]}
+          {/* Step number */}
+          <p className="text-xs font-bold text-gray-400 text-center mb-3">
+            {step} / {TOTAL_STEPS}
           </p>
 
-          {/* Action buttons */}
-          <div className={`flex gap-3 ${!btn.left ? '' : ''}`}>
+          {/* Action buttons — hidden on processing steps (right === null) */}
+          {btn.right !== null && (
+            <div className="flex gap-3">
 
-            {/* Left button — only shown when config has left label */}
-            {btn.left ? (
-              <button onClick={handleLeft}
-                className="flex-1 border-2 border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 font-bold py-3.5 rounded-2xl text-sm transition-all">
-                {btn.left}
-              </button>
-            ) : null}
-
-            {/* Right button — primary, full width when no left button */}
-            <button onClick={handleRight}
-              className={`${btn.left ? 'flex-1' : 'w-full'} bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-2`}>
-              {btn.right}
-              {(step < 10 && step !== 6 && step !== 8) && (
-                <ArrowRight className="w-4 h-4" />
+              {/* Left button */}
+              {btn.left && (
+                <button onClick={handleLeft}
+                  className="flex-1 border-2 border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 font-bold py-3.5 rounded-2xl text-sm transition-all">
+                  {btn.left}
+                </button>
               )}
-            </button>
 
-          </div>
+              {/* Right button */}
+              <button onClick={handleRight}
+                className={`${btn.left ? 'flex-1' : 'w-full'} bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-2`}>
+                {btn.right}
+                {(step < 10 && step !== 6 && step !== 8) && (
+                  <ArrowRight className="w-4 h-4" />
+                )}
+              </button>
+
+            </div>
+          )}
         </div>
       </footer>
 
