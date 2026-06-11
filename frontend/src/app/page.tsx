@@ -66,7 +66,7 @@ export default function LandingPage() {
         Image fills the section with object-contain so nothing is cropped.
         Text is absolutely positioned on top with a left-side gradient for readability.
       */}
-      <section className="pt-14">
+           <section className="pt-14">
         <div className="max-w-md mx-auto">
           {/* Outer wrapper drives height from image aspect ratio */}
           <div className="relative w-full" style={{ paddingBottom: '90%' }}>
@@ -80,8 +80,7 @@ export default function LandingPage() {
               priority
             />
 
-            {/* Left-side gradient so text is always readable over the image */}
-            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent" />
+          
 
             {/* Text — absolutely positioned top-left, overlapping the image */}
             <div className="absolute inset-0 flex flex-col justify-center px-5 pt-4 pb-4">
@@ -119,9 +118,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW ATLAS WORKS — column layout ── */}
-      <section id="how-it-works" className="py-10 px-5 bg-gray-50">
+      <section id="how-it-works" className="py-5 px-5 bg-gray-100">
         <div className="max-w-md mx-auto">
-          <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-8">
+          <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-3">
             How Atlas Works
           </h2>
 
@@ -141,8 +140,8 @@ export default function LandingPage() {
                   </div>
                   {/* Text */}
                   <div className="flex-1 pt-1">
-                    <p className="text-sm font-extrabold text-gray-900 mb-1">{step.title}</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+                    <p className="text-base font-extrabold text-gray-900 mb-1">{step.title}</p>
+                    <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
                   </div>
                 </div>
                 {/* Connector arrow between steps */}
@@ -158,8 +157,8 @@ export default function LandingPage() {
       </section>
 
       {/* ── WHY STUDENTS CHOOSE ATLAS ── */}
-      <section id="features" className="py-10 px-5 bg-white">
-        <div className="max-w-md mx-auto">
+      <section id="features" className="py-4 px-5 bg-white">
+        <div className="max-w-lg mx-auto">
           <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-8">
             Why Students Choose Atlas
           </h2>
@@ -169,8 +168,8 @@ export default function LandingPage() {
                 <div className={`w-10 h-10 ${f.color} rounded-xl flex items-center justify-center mb-3`}>
                   <f.icon className="w-5 h-5" />
                 </div>
-                <p className="text-sm font-extrabold text-gray-900 mb-1">{f.title}</p>
-                <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
+                <p className="text-base font-extrabold text-gray-900 mb-1">{f.title}</p>
+                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -178,7 +177,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA BANNER ── */}
-      <section className="py-10 px-5 bg-gradient-to-br from-indigo-600 to-indigo-700">
+      <section className="py-5 px-3 bg-gradient-to-br from-indigo-400 to-indigo-500">
         <div className="max-w-md mx-auto text-center">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-5 h-5 text-white" />
@@ -189,19 +188,14 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 bg-white text-indigo-600 font-extrabold py-3.5 px-8 rounded-2xl text-sm shadow-lg hover:bg-indigo-50 transition-all">
             Get Started Free <ArrowRight className="w-4 h-4" />
           </Link>
-          <p className="text-xs text-indigo-300 mt-3">No credit card required</p>
+         
         </div>
       </section>
 
       {/* ── FOOTER ── */}
       <footer className="bg-gray-900 py-6 px-5 text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="w-6 h-6 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <span className="text-white text-xs font-extrabold">A</span>
-          </div>
-          <span className="font-extrabold text-white">Atlas</span>
-        </div>
-        <p className="text-xs text-gray-400">
+        
+        <p className="text-base text-gray-400">
           © 2026 Atlas Academic OS · University of Arkansas &amp; Texas A&amp;M Beta
         </p>
       </footer>
