@@ -1,6 +1,5 @@
 'use client';
-// ── Shared UI components used across all screens ───────────────────────────
-
+// ── Shared UI components ───────────────────────────────────────────────────
 
 // Confidence badge
 export function ConfBadge({ level }: { level: string }) {
@@ -13,6 +12,36 @@ export function ConfBadge({ level }: { level: string }) {
     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${styles[level] || styles.Medium}`}>
       {level}
     </span>
+  );
+}
+
+// Segmented progress bar — each step is a short pill/dash
+// Filled segments = indigo-600, unfilled = gray-200, gap between each
+export function SegmentedProgress({
+  step,
+  total,
+  label,
+}: {
+  step: number;
+  total: number;
+  label?: string;
+}) {
+  return (
+    <div className="w-full">
+      <div className="flex items-center gap-1.5">
+        {Array.from({ length: total }).map((_, i) => (
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+              i < step ? 'bg-indigo-600' : 'bg-gray-200'
+            }`}
+          />
+        ))}
+      </div>
+      {label && (
+        <p className="text-xs text-gray-400 text-center mt-1">{label}</p>
+      )}
+    </div>
   );
 }
 
@@ -41,27 +70,15 @@ export function Phone({
         </div>
       </div>
 
-      {/* Screen content */}
-      <div className="flex-1">{children}</div>
-
-      {/* Step progress dots */}
+      {/* Segmented progress bar inside phone */}
       {step && total && (
-        <div className="px-6 pb-4">
-          <div className="flex items-center gap-1 mb-1">
-            {Array.from({ length: total }).map((_, i) => (
-              <div
-                key={i}
-                className={`h-1 flex-1 rounded-full transition-all ${
-                  i < step ? 'bg-indigo-600' : 'bg-gray-200'
-                }`}
-              />
-            ))}
-          </div>
-          <p className="text-xs text-gray-400 text-center">
-            Step {step} of {total}
-          </p>
+        <div className="px-6 pt-1 pb-2">
+          <SegmentedProgress step={step} total={total} label={`Step ${step} of ${total}`} />
         </div>
       )}
+
+      {/* Screen content */}
+      <div className="flex-1">{children}</div>
     </div>
   );
 }
