@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, ArrowRight, FileText, BarChart2, Calendar, Edit3, Shield, Lock, Brain } from 'lucide-react';
+import { api, getUser, getToken } from '@/lib/api';
 
 const ITEMS = [
   { icon: FileText,  title: 'Upload your syllabus',                    desc: 'so Atlas can understand your course structure, grading breakdown, and important dates.'           },
@@ -16,14 +17,38 @@ export default function AcknowledgmentPage() {
   const router  = useRouter();
   const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState('');
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!checked) return;
     setLoading(true);
-    // TODO: connect to backend POST /api/ack
-    setTimeout(() => { setLoading(false); router.push('/add-class'); }, 600);
+    setError('');
+    try {
+      await api('/api/ack', {
+        method: 'POST',
+        body:   { ack_version: '1.0' },
+      });
+      // Update stored user so subsequent pages know ack is done
+      const user = getUser();
+      if (user) {
+        localStorage.setItem('user', JSON.stringify({
+          ...user,
+          acknowledged_at: new Date().toISOString(),
+        }));
+      }
+      router.push('/add-class');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to record acknowledgment.');
+    } finally {
+      setLoading(false);
+    }
   };
-const USER_INITIAL = 'J';
+
+  // Real user initial from stored auth
+  const user        = getUser();
+  const USER_INITIAL = user?.full_name?.[0]?.toUpperCase()
+    || user?.email?.[0]?.toUpperCase()
+    || 'U';
   return (
     <div className="min-h-screen bg-white flex flex-col ">
        <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
@@ -65,6 +90,13 @@ const USER_INITIAL = 'J';
           </p>
         </div>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="mx-5 mb-2 bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm font-medium">
+          ❌ {error}
+        </div>
+      )}
 
       {/* ── LIST — scrollable, ends before footer ── */}
       <div className="px-5 pb-44 flex-1 overflow-y-auto">

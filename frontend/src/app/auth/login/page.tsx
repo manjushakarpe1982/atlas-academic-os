@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Brain, Eye, EyeOff, HelpCircle, ArrowLeft } from "lucide-react";
 import Image from "next/image";
+import { API_BASE, saveAuth } from "@/lib/api";
 
 function GoogleIcon() {
   return (
@@ -36,16 +37,36 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !pw) return;
     setError("");
     setLoading(true);
-    // TODO: connect to backend
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password: pw }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.detail || "Invalid email or password");
+        return;
+      }
+      // Save token + user, then route based on onboarding state
+      saveAuth(data.access_token, data.user);
+      if (!data.user?.school) {
+        router.push("/school-selection");
+      } else if (!data.user?.acknowledged_at) {
+        router.push("/acknowledgment");
+      } else {
+        router.push("/classes");
+      }
+    } catch {
+      setError("Cannot reach server. Make sure the backend is running.");
+    } finally {
       setLoading(false);
-      router.push("/classes");
-    }, 800);
+    }
   };
 
   const handleGoogle = () => {
