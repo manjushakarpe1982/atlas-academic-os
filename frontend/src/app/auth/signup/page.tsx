@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Brain, Eye, EyeOff, Check, X, HelpCircle, ArrowLeft } from 'lucide-react';
+import { API_BASE, saveAuth } from '@/lib/api';
 
 function GoogleIcon() {
   return (
@@ -23,6 +24,7 @@ export default function SignupPage() {
   const [cpw,      setCpw]      = useState('');
   const [show,     setShow]     = useState(false);
   const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
 
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const hasUpper   = /[A-Z]/.test(pw);
@@ -33,16 +35,39 @@ export default function SignupPage() {
   const match      = pw === cpw && pw.length > 0;
   const formOk     = fullName.trim().length > 1 && validEmail && validPw && match;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formOk) return;
+    setError('');
     setLoading(true);
-    // TODO: connect to backend
-    setTimeout(() => { setLoading(false); router.push('/school-selection'); }, 800);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name:        fullName.trim(),
+          email:            email.trim(),
+          password:         pw,
+          confirm_password: cpw,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.detail || 'Signup failed. Please try again.');
+        return;
+      }
+      // Save token and user, then go to school selection
+      saveAuth(data.access_token, data.user);
+      router.push('/school-selection');
+    } catch {
+      setError('Cannot reach server. Make sure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogle = () => {
-    // TODO: connect Google OAuth
+    // TODO: implement Google OAuth
     router.push('/school-selection');
   };
 
@@ -54,9 +79,9 @@ export default function SignupPage() {
     }`;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col ">
+    <div className="min-h-screen bg-white flex flex-col">
 
-      {/* ── FIXED HEADER ── */}
+      {/* ── HEADER ── */}
       <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
         <div className="px-5 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -73,7 +98,7 @@ export default function SignupPage() {
         </div>
       </header>
 
-      {/* ── SCROLLABLE CONTENT ── */}
+      {/* ── CONTENT ── */}
       <main className="flex-1 overflow-y-auto px-5 pt-6 pb-28">
         <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Create account</h1>
         <p className="text-sm text-gray-400 mb-6">
@@ -81,7 +106,14 @@ export default function SignupPage() {
           <Link href="/auth/login" className="text-indigo-600 font-semibold hover:underline">Sign in</Link>
         </p>
 
-        {/* Continue with Google */}
+        {/* Error banner */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-700 text-sm font-medium">
+            ❌ {error}
+          </div>
+        )}
+
+        {/* Google */}
         <button onClick={handleGoogle}
           className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 hover:border-gray-300 bg-white text-gray-700 font-semibold py-3 rounded-xl text-base transition-all shadow-sm mb-4">
           <GoogleIcon />
@@ -96,7 +128,6 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-
           {/* Full Name */}
           <div>
             <label className="text-[15px] font-bold text-gray-600 mb-1 block">Full name</label>
@@ -173,13 +204,11 @@ export default function SignupPage() {
         </form>
       </main>
 
-      {/* ── FIXED FOOTER ── */}
-       <footer className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-100 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+      {/* ── FOOTER ── */}
+      <footer className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-100 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
         <div className="max-w-md mx-auto px-5 py-3">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-base font-semibold text-gray-700 hover:text-indigo-600 transition-colors"
-          >
+          <button onClick={() => router.back()}
+            className="flex items-center gap-2 text-base font-semibold text-gray-700 hover:text-indigo-600 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
         </div>

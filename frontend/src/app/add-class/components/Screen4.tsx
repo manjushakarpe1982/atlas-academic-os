@@ -3,6 +3,7 @@
 import { ArrowLeft, FileText, CheckCircle2, Circle } from 'lucide-react';
 import { Phone } from './shared';
 import { ScreenProps } from './types';
+import Image from 'next/image';
 
 const PARSE_ITEMS = [
   { label: 'Course information',       done: true  },
@@ -47,6 +48,16 @@ export default function Screen4({ onNext, onBack }: ScreenProps) {
             </div>
           ))}
         </div>
+
+         <Image
+                    src=" https://res.cloudinary.com/mview/image/upload/v1781169607/atlas/aiparsingpage.png"
+                    alt="Add your first class"
+                    fill
+                    className="object-cover object-center rounded-t-2xl"
+                    priority
+                  />
+
+       
 
        
       </div>
