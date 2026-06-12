@@ -123,7 +123,7 @@ export default function AddClassPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className=" flex flex-col">
 
       {/* ── HEADER ── */}
       <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
@@ -143,7 +143,7 @@ export default function AddClassPage() {
       </header>
 
       {/* ── SCREEN ── */}
-      <main className="flex-1 flex flex-col pb-48">
+      <main className="flex-1 flex flex-col ">
         {error && (
           <div className="max-w-2xl mx-auto w-full px-4 pt-3">
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm font-medium">
