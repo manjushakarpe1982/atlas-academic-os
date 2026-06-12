@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, HelpCircle, ArrowLeft, ArrowRight, Shield } from 'lucide-react';
+
 import CalScreen1 from './components/CalScreen1';
 import CalScreen2 from './components/CalScreen2';
 import CalScreen3 from './components/CalScreen3';
@@ -16,8 +17,6 @@ import CalScreen5 from './components/CalScreen5';
 import CalScreen6 from './components/CalScreen6';
 import CalScreen7 from './components/CalScreen7';
 import CalScreen8 from './components/CalScreen8';
-
-
 
 type CalStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -60,7 +59,7 @@ export default function CalendarPage() {
   };
 
   const handleLeft = () => {
-    if (step === 1) { go(7); return; }           // Skip → skipped screen
+    if (step === 1) { router.push('/dashboard'); return; }  // Skip → dashboard
     if (step === 2) { go(1); return; }
     if (step === 3) { go(2); return; }
     if (step === 4) { go(3); return; }
@@ -92,7 +91,7 @@ export default function CalendarPage() {
       </header>
 
       {/* ── SCREEN CONTENT ── */}
-      <main className="">
+      <main className="flex-1 flex justify-center items-start px-4 pt-6 pb-48">
         {step === 1 && <CalScreen1 onNext={() => go(2)} onSkip={() => go(7)} />}
         {step === 2 && (
           <CalScreen2
@@ -114,7 +113,7 @@ export default function CalendarPage() {
           />
         )}
         {step === 4 && <CalScreen4 onBack={() => go(3)} onDone={() => go(3)} platform={platform} />}
-        {step === 5 && <CalScreen5 onDone={() => go(6)} onError={() => go(8)} platform={platform} />}
+        {step === 5 && <CalScreen5 onDone={() => go(6)} onError={() => go(8)} platform={platform} feedUrl={feedUrl} />}
         {step === 6 && <CalScreen6 onNext={() => router.push('/dashboard')} />}
         {step === 7 && <CalScreen7 onDashboard={() => router.push('/dashboard')} onConnect={() => go(2)} />}
         {step === 8 && <CalScreen8 onRetry={() => go(3)} onBack={() => go(2)} />}

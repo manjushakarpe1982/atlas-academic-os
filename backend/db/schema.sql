@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS public.users (
     acknowledged_at  TIMESTAMPTZ,
     ack_version      TEXT,
     last_login_at    TIMESTAMPTZ,
-    deleted_at       TIMESTAMPTZ,
+    reset_token        TEXT,
+    reset_token_expiry TIMESTAMPTZ,
+    deleted_at         TIMESTAMPTZ,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -195,3 +197,22 @@ CREATE TABLE IF NOT EXISTS public.calendar_feeds (
 -- ============================================================
 -- END OF SCHEMA
 -- ============================================================
+
+-- ── CALENDAR EVENTS ───────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.calendar_events (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id      UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    feed_id      UUID REFERENCES public.calendar_feeds(id) ON DELETE CASCADE,
+    title        TEXT NOT NULL,
+    start_date   TIMESTAMPTZ,
+    end_date     TIMESTAMPTZ,
+    description  TEXT,
+    category     TEXT DEFAULT 'other',
+    location     TEXT,
+    external_uid TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_calendar_events_user_id   ON public.calendar_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_start_date ON public.calendar_events(start_date);
