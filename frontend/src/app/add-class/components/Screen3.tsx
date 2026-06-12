@@ -51,30 +51,41 @@ export default function Screen3({ onNext, onBack, classId }: Props) {
     <Phone>
       <div className="flex flex-col bg-white overflow-y-auto h-screen">
 
-        {/* ── Header row ── */}
-        <div className="flex items-start justify-between px-5 ">
-          <div className="flex-1 pr-3">
-            <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Upload your syllabus</h1>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              Take a clear photo or upload a PDF.<br />Multi-page supported.
+
+
+        <div className="flex items-start justify-between  pt-1 pb-3">
+          <div className="flex-1">
+            <h1 className="text-2xl font-extrabold text-gray-900 leading-tight mb-1">
+             Upload your 
+            </h1>
+            <h1 className="text-2xl font-extrabold text-indigo-600 leading-tight mb-2">
+           syllabus
+            </h1>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Take a clear photo or upload a PDF. Multi-page supported.
             </p>
           </div>
-         
+
+          {/* Cloudinary image — calenderpage1 */}
+          <div className="flex-shrink-0 relative">
+            {/* Sparkle */}
+            <Image
+               src="https://res.cloudinary.com/mview/image/upload/atlas/addclasspage3.webp"
+              alt="Calendar feed illustration"
+              width={150}
+              height={140}
+              className="object-contain"
+              priority
+            />
+          </div>
         </div>
 
-        {/* ── Hero image ── */}
-        <div className="relative flex justify-center py-3">
-          <span className="absolute top-2 left-10 text-indigo-200 text-sm">✦</span>
-          <span className="absolute top-4 right-8 text-purple-200 text-sm">✦</span>
-          <Image
-            src="https://res.cloudinary.com/mview/image/upload/atlas/addclasspage3.webp"
-            alt="Upload illustration"
-            width={200}
-            height={120}
-            className="object-contain"
-            priority
-          />
-        </div>
+
+
+
+        
+
+      
 
         {/* ── Drop zone ── */}
         <div className=" mb-3">
@@ -111,7 +122,7 @@ export default function Screen3({ onNext, onBack, classId }: Props) {
         </div> */}
 
         {/* ── Upload options grid ── */}
-        <div className=" grid grid-cols-3 gap-3 mb-3">
+        <div className=" grid grid-cols-3 mt-3 gap-3 mb-3">
           {UPLOAD_OPTIONS.map(o => (
             <label key={o.label} className="flex flex-col bg-white border border-indigo-100 rounded-xl px-1 py-3 items-center gap-1 cursor-pointer group">
               <div className="w-12 h-12 bg-indigo-50 group-hover:bg-indigo-100 rounded-2xl flex items-center justify-center transition-all border border-indigo-100">
@@ -127,31 +138,40 @@ export default function Screen3({ onNext, onBack, classId }: Props) {
         </div>
 
         {/* ── Tips card ── */}
-        <div className=" mb-4">
-          <div className="bg-indigo-50/60 border border-indigo-100 rounded-2xl px-4 py-3 flex items-start gap-3">
-            <Image
-              src="https://res.cloudinary.com/mview/image/upload/atlas/addclasspage3_1.webp"
-              alt="Tips illustration"
-              width={48}
-              height={48}
-              className="object-contain flex-shrink-0"
-            />
-            <div>
-              <p className="text-xs font-extrabold text-gray-800 mb-1.5">Tips for best results</p>
-              {['Use clear, well-lit images', 'Capture all pages', 'PDFs work great too!'].map(t => (
-                <div key={t} className="flex items-center gap-1.5 mb-0.5">
-                  <CheckCircle2 className="w-3 h-3 text-indigo-600 flex-shrink-0" />
-                  <span className="text-[10px] text-gray-600">{t}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+      <div className="mt-2 mb-4">
+  <div className="relative overflow-hidden  min-h-[140px]">
+    <Image
+      src="https://res.cloudinary.com/mview/image/upload/atlas/addclasspage3_1.webp"
+      alt="Tips illustration"
+      fill
+      className="object-cover object-left"
+    />
+
+   
+
+    <div className="relative z-10 ml-auto w-[68%] p-4">
+      <p className="text-xs font-extrabold text-gray-800 mb-2">
+        Tips for best results
+      </p>
+
+      {[
+        "Use clear, well-lit images",
+        "Capture all pages",
+        "PDFs work great too!",
+      ].map((t) => (
+        <div key={t} className="flex items-center gap-2 mb-1">
+          <CheckCircle2 className="w-3 h-3 text-indigo-600" />
+          <span className="text-sm text-gray-700">{t}</span>
         </div>
+      ))}
+    </div>
+  </div>
+</div>
 
         {/* ── Privacy note ── */}
         <div className="flex items-center justify-center gap-1.5 pb-3">
-          <Lock className="w-3 h-3 text-gray-400" />
-          <p className="text-[10px] text-gray-400">We never share your data with anyone.</p>
+          <Lock className="w-5 h-5 text-gray-400" />
+          <p className="text-sm text-gray-400">We never share your data with anyone.</p>
         </div>
 
       </div>
