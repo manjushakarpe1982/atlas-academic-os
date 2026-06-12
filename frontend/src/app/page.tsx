@@ -111,16 +111,8 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Hero Image */}
-      <div className="relative w-full max-w-[260px] h-[220px] mt-8">
-        <Image
-          src="https://res.cloudinary.com/mview/image/upload/v1781153485/atlas/homepage1.png"
-          alt="Atlas hero"
-          fill
-          priority
-          className="object-contain"
-        />
-      </div>
+    
+   
     </div>
   </div>
 </section>

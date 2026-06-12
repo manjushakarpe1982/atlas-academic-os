@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Brain, Eye, EyeOff, HelpCircle, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { API_BASE, saveAuth } from "@/lib/api";
+import { createClient } from "@/lib/supabase";
+
 
 function GoogleIcon() {
   return (
@@ -34,8 +36,31 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [show, setShow] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading,       setLoading]       = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  /* ── Google sign-in ── */
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    setError('');
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) {
+        setError('Could not start Google sign-in. Please try again.');
+        setGoogleLoading(false);
+      }
+    } catch {
+      setError('Could not start Google sign-in. Please try again.');
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,11 +92,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogle = () => {
-    // TODO: connect Google OAuth
-    router.push("/classes");
   };
 
   return (
