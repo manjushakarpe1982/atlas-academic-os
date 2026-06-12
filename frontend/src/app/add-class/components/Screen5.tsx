@@ -36,7 +36,7 @@ export default function Screen5({ onNext, onBack, classId }: Props) {
 
   if (loading) return (
     <Phone step={4} total={10}>
-      <div className="flex items-center justify-center min-h-[480px]">
+      <div className="flex items-center justify-center ">
         <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
       </div>
     </Phone>
@@ -53,8 +53,8 @@ export default function Screen5({ onNext, onBack, classId }: Props) {
 
   return (
     <Phone step={4} total={10}>
-      <div className="flex flex-col min-h-[480px]">
-        <div className="px-5 py-4 flex-1 overflow-y-auto" style={{ maxHeight: 440 }}>
+      <div className="flex flex-col ">
+        <div className="px-5 py-4 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between mb-1">
             <h1 className="text-xl font-extrabold text-gray-900">Review what we found</h1>
             <span className="text-[10px] font-extrabold bg-indigo-600 text-white px-2 py-1 rounded-full">

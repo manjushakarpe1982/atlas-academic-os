@@ -63,7 +63,7 @@ export default function Screen4({ onNext, classId }: Props) {
 
   return (
     <Phone>
-      <div className="flex flex-col bg-white min-h-[560px]">
+      <div className="flex flex-col bg-white ">
 
         {/* ── Header row ── */}
         <div className="flex items-start justify-between  pt-1 pb-3">

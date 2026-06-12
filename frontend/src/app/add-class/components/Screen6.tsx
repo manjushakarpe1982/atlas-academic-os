@@ -35,8 +35,8 @@ export default function Screen6({ onNext, onBack, classId }: Props) {
 
   return (
     <Phone step={5} total={10}>
-      <div className="flex flex-col min-h-[480px]">
-        <div className="px-5 py-4 flex-1 overflow-y-auto" style={{ maxHeight: 440 }}>
+      <div className="flex flex-col ">
+        <div className="px-5 py-4 flex-1 overflow-y-auto" >
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-extrabold text-gray-900">Important Dates</h1>
             <button className="text-xs text-indigo-600 font-semibold">Edit All</button>
