@@ -1,5 +1,6 @@
-import TopHeader from '@/components/TopHeader';
-import BottomNav from '@/components/BottomNav';
+import BottomNav from "../_components/BottomNav";
+import TopHeader from "../_components/TopHeader";
+
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,3 +11,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   );
 }
+
+// $env:Path += ";C:\Program Files\nodejs\"
