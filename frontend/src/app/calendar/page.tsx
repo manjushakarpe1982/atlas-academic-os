@@ -78,12 +78,12 @@ export default function CalendarPage() {
   const showProgress = step <= 6;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex flex-col">
+    <div className="">
 
        <AppHeader right="both" />
 
       {/* ── SCREEN CONTENT ── */}
-      <main className={`flex-1 ${step === 6 ? '' : 'flex justify-center items-start px-4 pt-6 pb-48'}`}>
+      <main className={`flex-1 ${step === 6 ? '' : 'flex justify-center items-start px-4 pt-4 pb-12'}`}>
         {step === 1 && <CalScreen1 onNext={() => go(2)} onSkip={() => go(7)} />}
         {step === 2 && (
           <CalScreen2
@@ -113,7 +113,7 @@ export default function CalendarPage() {
 
       {/* ── FOOTER — hidden on step 6 (full page success) ── */}
       {step !== 6 && <footer className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="max-w-2xl mx-auto px-4 pt-3 pb-5">
+        <div className="max-w-2xl mx-auto px-4 pt-3 pb-3">
 
           {/* Segmented progress bar — only steps 1–6 */}
           {showProgress && (
@@ -127,7 +127,7 @@ export default function CalendarPage() {
                   />
                 ))}
               </div>
-              <p className="text-xs font-bold text-gray-400 text-center mb-3">
+              <p className="text-xs font-bold text-gray-400 text-center mb-1">
                 {step} / 6
               </p>
             </>
@@ -140,7 +140,7 @@ export default function CalendarPage() {
               {/* Left button */}
               {btn.left && (
                 <button onClick={handleLeft}
-                  className="flex-1 border-2 border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 font-bold py-3.5 rounded-2xl text-sm transition-all">
+                  className="flex-1 border-2 border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 font-bold py-2.5 rounded-xl text-sm transition-all">
                   {btn.left}
                 </button>
               )}
@@ -148,7 +148,7 @@ export default function CalendarPage() {
               {/* Right button */}
               <button onClick={handleRight}
                 disabled={step === 3 && !feedUrl.trim()}
-                className={`${btn.left ? 'flex-1' : 'w-full'} bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-2`}>
+                className={`${btn.left ? 'flex-1' : 'w-full'} bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2`}>
                 {btn.right}
                 {(step === 1 || step === 2 || step === 3) && <ArrowRight className="w-4 h-4" />}
               </button>

@@ -19,8 +19,8 @@ export default function CalScreen2({ onSelect, selected, onNotSure }: Props) {
   return (
     <Phone>
       <div className="flex flex-col px-5 pt-4 pb-4">
-        <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Choose your<br />school platform</h1>
-        <p className="text-sm text-gray-400 mb-5">We'll help you connect your school calendar securely.</p>
+        <h1 className="text-2xl text-center font-extrabold text-gray-900 mb-1">which school do you <br /> attend?</h1>
+        <p className="text-sm text-gray-400 mb-5 text-center">This helps Atlas connect to your school calendar and import your important dates.</p>
 
         <div className="space-y-3 mb-4">
           {PLATFORMS.map(p => (

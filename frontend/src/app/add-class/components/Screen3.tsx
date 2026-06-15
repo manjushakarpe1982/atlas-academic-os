@@ -107,7 +107,7 @@ export default function Screen3({ onNext, onBack, classId }: Props) {
         {/* ── Drop zone ── */}
         <div className=" mb-3">
           {uploading ? (
-            <div className="border-2 border-dashed border-indigo-300 rounded-2xl p-6 text-center bg-indigo-50">
+            <div className="border-2 border-dashed border-indigo-300 rounded-2xl p-6 text-center py-12 bg-indigo-50">
               <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
               <p className="text-sm text-indigo-600 font-semibold">
                 Uploading...
