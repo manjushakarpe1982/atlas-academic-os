@@ -30,6 +30,7 @@ import Screen9  from './components/Screen9';
 import Screen10 from './components/Screen10';
 import Screen11 from './components/Screen11';
 import Link from 'next/link';
+import AppHeader from '../_components/AppHeader';
 
 const TOTAL_STEPS = 10;
 
@@ -127,21 +128,7 @@ export default function AddClassPage() {
     <div className=" flex flex-col">
 
       {/* ── HEADER ── */}
-      <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-extrabold text-gray-900 text-base">Atlas</span>
-          </div>
-          <Link href="/help"
-            className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-            <HelpCircle className="w-4 h-4" />
-            Need Help?
-          </Link>
-        </div>
-      </header>
+      <AppHeader right="both" />
 
       {/* ── SCREEN ── */}
       <main className="flex-1 flex flex-col ">

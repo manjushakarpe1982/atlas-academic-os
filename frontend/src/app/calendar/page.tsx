@@ -19,6 +19,7 @@ import CalScreen5 from './components/CalScreen5';
 import CalScreen6 from './components/CalScreen6';
 import CalScreen7 from './components/CalScreen7';
 import CalScreen8 from './components/CalScreen8';
+import AppHeader from '../_components/AppHeader';
 
 type CalStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -79,22 +80,7 @@ export default function CalendarPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex flex-col">
 
-      {/* ── HEADER ── */}
-      <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-extrabold text-gray-900 text-base">Atlas</span>
-          </div>
-          <a href="/help"
-            className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-            <HelpCircle className="w-4 h-4" />
-            Need Help?
-          </a>
-        </div>
-      </header>
+       <AppHeader right="both" />
 
       {/* ── SCREEN CONTENT ── */}
       <main className={`flex-1 ${step === 6 ? '' : 'flex justify-center items-start px-4 pt-6 pb-48'}`}>

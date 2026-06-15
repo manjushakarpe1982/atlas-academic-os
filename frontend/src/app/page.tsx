@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Play, CheckCircle2, Target, Calendar, TrendingUp, Sparkles } from 'lucide-react';
 import UserAvatar from './_components/UserAvatar';
+import AppHeader from './_components/AppHeader';
 
 const HOW_IT_WORKS = [
   {
@@ -34,30 +35,8 @@ const WHY_ATLAS = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
-
-      {/* ── NAV ── */}
-      <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur border-b border-gray-100 shadow-sm">
-        <div className="max-w-md mx-auto px-5 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xs font-extrabold">A</span>
-            </div>
-            <span className="font-extrabold text-gray-900 text-lg">Atlas</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/auth/login"
-              className="text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors">
-              Sign In
-            </Link>
-            <Link href="/auth/signup"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm">
-              Get Started
-            </Link>
-             <UserAvatar />
-          </div>
-        </div>
-      </nav>
-
+ <AppHeader right="both" />
+   
       {/* ── HERO ── */}
       {/*
         Strategy: section height = image aspect ratio via paddingBottom trick.

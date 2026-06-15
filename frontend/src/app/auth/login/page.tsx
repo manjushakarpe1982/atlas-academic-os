@@ -6,6 +6,7 @@ import { Brain, Eye, EyeOff, HelpCircle, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { API_BASE, saveAuth } from "@/lib/api";
 import { createClient } from "@/lib/supabase";
+import AppHeader from "@/app/_components/AppHeader";
 
 
 function GoogleIcon() {
@@ -96,28 +97,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col ">
-      {/* ── FIXED HEADER ── */}
-      <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
-        <div className="px-5 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-extrabold text-gray-900 text-base">
-              Atlas
-            </span>
-          </div>
-          <Link
-            href="/help"
-        
-            className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
-          >
-            <HelpCircle className="w-4 h-4" />
-            Need Help?
-          </Link>
-        </div>
-      </header>
-
+      <AppHeader right="both" />
       {/* ── SCROLLABLE CONTENT ── */}
       <main className="flex-1 overflow-y-auto pb-28">
         {/* Hero image — full width, not cropped */}
