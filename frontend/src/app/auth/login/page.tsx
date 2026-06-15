@@ -8,7 +8,6 @@ import { API_BASE, saveAuth } from "@/lib/api";
 import { createClient } from "@/lib/supabase";
 import AppHeader from "@/app/_components/AppHeader";
 
-
 function GoogleIcon() {
   return (
     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -37,28 +36,28 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [show, setShow] = useState(false);
-  const [loading,       setLoading]       = useState(false);
+  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
   /* ── Google sign-in ── */
   const handleGoogle = async () => {
     setGoogleLoading(true);
-    setError('');
+    setError("");
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (error) {
-        setError('Could not start Google sign-in. Please try again.');
+        setError("Could not start Google sign-in. Please try again.");
         setGoogleLoading(false);
       }
     } catch {
-      setError('Could not start Google sign-in. Please try again.');
+      setError("Could not start Google sign-in. Please try again.");
       setGoogleLoading(false);
     }
   };
@@ -79,14 +78,27 @@ export default function LoginPage() {
         setError(data.detail || "Invalid email or password");
         return;
       }
-      // Save token + user, then route based on onboarding state
+     // Save token + user, then route based on onboarding state
       saveAuth(data.access_token, data.user);
       if (!data.user?.school) {
         router.push("/school-selection");
       } else if (!data.user?.acknowledged_at) {
         router.push("/acknowledgment");
       } else {
-        router.push("/add-class");
+        // Check if user has already added classes → go to dashboard
+        try {
+          const classRes = await fetch(`${API_BASE}/api/classes`, {
+            headers: { Authorization: `Bearer ${data.access_token}` }
+          });
+          const classData = await classRes.json();
+          if (classData.classes && classData.classes.length > 0) {
+            router.push("/dashboard");
+          } else {
+            router.push("/add-class");
+          }
+        } catch {
+          router.push("/add-class");
+        }
       }
     } catch {
       setError("Cannot reach server. Make sure the backend is running.");
@@ -101,12 +113,12 @@ export default function LoginPage() {
       {/* ── SCROLLABLE CONTENT ── */}
       <main className="flex-1 overflow-y-auto pb-28">
         {/* Hero image — full width, not cropped */}
-       
+
         <div className="px-5 pt-2">
-        <h1 className="text-2xl font-extrabold text-gray-900 mb-1 flex items-center gap-2">
-  Welcome back
-  <span className="text-3xl">👋</span>
-</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900 mb-1 flex items-center gap-2">
+            Welcome back
+            <span className="text-3xl">👋</span>
+          </h1>
           <p className="text-sm text-gray-400 mb-1">
             No account?{" "}
             <Link
@@ -117,17 +129,18 @@ export default function LoginPage() {
             </Link>
           </p>
 
-           <div className="relative w-full mb-4" style={{ paddingBottom: "65%" }}>
-          <Image
-            src="https://res.cloudinary.com/mview/image/upload/v1781155922/atlas/loginpage.png"
-            alt="Login illustration"
-            fill
-            className="object-cover object-center"
-            priority
-          />
-         
-        </div>
-
+          <div
+            className="relative w-full mb-4"
+            style={{ paddingBottom: "65%" }}
+          >
+            <Image
+              src="https://res.cloudinary.com/mview/image/upload/v1781155922/atlas/loginpage.png"
+              alt="Login illustration"
+              fill
+              className="object-cover object-center"
+              priority
+            />
+          </div>
 
           {/* Continue with Google */}
           <button
