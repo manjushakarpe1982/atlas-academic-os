@@ -3,7 +3,7 @@
 /**
  * page.tsx — Add Class orchestrator
  *
- * Steps (8 total — Screen2 and Screen6 removed):
+ * Steps 1–9 in proper sequence:
  *  1  Intro + class name input
  *  2  Upload syllabus
  *  3  AI Parsing (no buttons)
@@ -21,15 +21,15 @@ import { ArrowRight } from 'lucide-react';
 
 import { api, API_BASE, getToken } from '@/lib/api';
 
-import Screen1  from './components/Screen1';
-import Screen3  from './components/Screen3';
-import Screen4  from './components/Screen4';
-import Screen5  from './components/Screen5';
-import Screen7  from './components/Screen7';
-import Screen8  from './components/Screen8';
-import Screen9, { Screen9Handle } from './components/Screen9';
-import Screen10 from './components/Screen10';
-import Screen11 from './components/Screen11';
+import Screen1 from './components/Screen1';
+import Screen2 from './components/Screen2';
+import Screen3 from './components/Screen3';
+import Screen4 from './components/Screen4';
+import Screen5 from './components/Screen5';
+import Screen6 from './components/Screen6';
+import Screen7, { Screen7Handle } from './components/Screen7';
+import Screen8 from './components/Screen8';
+import Screen9 from './components/Screen9';
 import AppHeader from '../_components/AppHeader';
 
 const TOTAL_STEPS = 9;
@@ -55,7 +55,7 @@ export default function AddClassPage() {
   const [classId,   setClassId]   = useState<string | null>(null);
   const [error,     setError]     = useState('');
   const [loading,   setLoading]   = useState(false);
-  const screen9Ref = useRef<Screen9Handle>(null);
+  const screen7Ref = useRef<Screen7Handle>(null);
 
   const next = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
   const back = () => {
@@ -85,11 +85,11 @@ export default function AddClassPage() {
 
     // Step 7 right = "Save & Continue" → save grades first
     if (step === 7) {
-      screen9Ref.current?.saveAndContinue();
+      screen7Ref.current?.saveAndContinue();
       return;
     }
 
-    // Step 8 right = "Continue" → go to Screen11 (classes list)
+    // Step 8 right = "Continue" → go to Screen9 (classes list)
     // Step 9 right = "Continue →" → go to /calendar
     if (step === 9) {
       router.push('/calendar');
@@ -100,6 +100,7 @@ export default function AddClassPage() {
   };
 
   const handleLeft = () => {
+    if (step === 5) { setStep(7); return; }              // Skip textbook → jump to grades
     if (step === 9) { router.push('/dashboard'); return; }  // Go to Dashboard
     back();
   };
@@ -107,17 +108,16 @@ export default function AddClassPage() {
   const btn = BUTTONS[step];
 
   // Map step numbers to screen components
-  // Step 3 = Screen3 (was step 3 upload), etc. — we skip old Screen2
   const screens: Record<number, React.ReactNode> = {
-    1:  <Screen1  onNext={next} onBack={back} className={className} setClassName={setClassName} />,
-    2:  <Screen3  onNext={next} onBack={back} classId={classId} />,
-    3:  <Screen4  onNext={next} onBack={back} classId={classId} />,
-    4:  <Screen5  onNext={next} onBack={back} classId={classId} />,
-    5:  <Screen7  onNext={next} onBack={back} />,
-    6:  <Screen8  onNext={next} onBack={back} />,
-    7:  <Screen9  ref={screen9Ref} onNext={next} onBack={back} classId={classId} />,
-    8:  <Screen10 onNext={next} onBack={back} classId={classId} />,
-    9:  <Screen11 onAddAnother={() => { setStep(1); setClassName(''); setClassId(null); }} /> };
+    1: <Screen1 onNext={next} onBack={back} className={className} setClassName={setClassName} />,
+    2: <Screen2 onNext={next} onBack={back} classId={classId} />,
+    3: <Screen3 onNext={next} onBack={back} classId={classId} />,
+    4: <Screen4 onNext={next} onBack={back} classId={classId} />,
+    5: <Screen5 onNext={next} onBack={back} />,
+    6: <Screen6 onNext={next} onBack={back} />,
+    7: <Screen7 ref={screen7Ref} onNext={next} onBack={back} classId={classId} />,
+    8: <Screen8 onNext={next} onBack={back} classId={classId} />,
+    9: <Screen9 onAddAnother={() => { setStep(1); setClassName(''); setClassId(null); }} /> };
 
   return (
     <div className="min-h-screen flex flex-col">
