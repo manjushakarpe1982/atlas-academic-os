@@ -30,6 +30,14 @@ class LoginRequest(BaseModel):
 class SchoolRequest(BaseModel):
     school: str  # "arkansas" | "tamu" | "other"
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token:            str
+    password:         str
+    confirm_password: str
+
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
 def _user_response(user: dict, token: str) -> dict:
@@ -166,6 +174,161 @@ async def get_me(request: Request):
         raise HTTPException(404, "User not found")
 
     return result.data
+
+# ── POST /api/auth/forgot-password ────────────────────────────────────────
+
+@router.post("/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest):
+    if not req.email or "@" not in req.email:
+        raise HTTPException(400, "Valid email address required")
+
+    email = req.email.lower().strip()
+
+    # Look up user — always return 200 to prevent email enumeration
+    try:
+        result = supabase.table("users").select("id,email,full_name").eq("email", email).execute()
+    except Exception as e:
+        raise HTTPException(500, f"Database error: {e}")
+
+    if not result.data:
+        # Return success anyway — don't reveal if email exists
+        return {"message": "If an account exists for this email, a reset link has been sent."}
+
+    user = result.data[0]
+
+    # Generate secure token + expiry (1 hour)
+    reset_token  = secrets.token_urlsafe(32)
+    token_expiry = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+
+    try:
+        supabase.table("users").update({
+            "reset_token":        reset_token,
+            "reset_token_expiry": token_expiry,
+        }).eq("id", user["id"]).execute()
+    except Exception as e:
+        raise HTTPException(500, f"Database error: {e}")
+
+    # Build reset URL
+    from app.config import settings
+    from app.utils.email import send_password_reset_email
+
+    reset_url = f"{settings.frontend_url}/auth/reset-password?token={reset_token}"
+
+    # Send email — works in dev (prints URL) and production (sends via Resend)
+    full_name = user.get("full_name", "")
+    email_sent = send_password_reset_email(email, full_name, reset_url)
+
+    response = {"message": "If an account exists for this email, a reset link has been sent."}
+
+    # Only expose reset_url when no API key is set (dev mode)
+    if not settings.resend_api_key:
+        response["reset_url"] = reset_url
+        response["dev_note"]  = "Set RESEND_API_KEY in .env to send real emails"
+
+    return response
+
+
+# ── POST /api/auth/reset-password ─────────────────────────────────────────
+
+@router.post("/reset-password")
+async def reset_password(req: ResetPasswordRequest):
+    if not req.token:
+        raise HTTPException(400, "Reset token is required")
+    if req.password != req.confirm_password:
+        raise HTTPException(400, "Passwords do not match")
+    if len(req.password) < 8:
+        raise HTTPException(400, "Password must be at least 8 characters")
+    if not any(c.isupper() for c in req.password):
+        raise HTTPException(400, "Password must contain an uppercase letter")
+    if not any(c.isdigit() for c in req.password):
+        raise HTTPException(400, "Password must contain a number")
+
+    # Look up token
+    try:
+        result = supabase.table("users").select(
+            "id,email,reset_token,reset_token_expiry"
+        ).eq("reset_token", req.token).execute()
+    except Exception as e:
+        raise HTTPException(500, f"Database error: {e}")
+
+    if not result.data:
+        raise HTTPException(400, "Invalid or expired reset link. Please request a new one.")
+
+    user = result.data[0]
+
+    # Check expiry
+    expiry = user.get("reset_token_expiry")
+    if expiry and datetime.utcnow() > datetime.fromisoformat(expiry.replace("Z", "")):
+        raise HTTPException(400, "Reset link has expired. Please request a new one.")
+
+    # Update password and clear token
+    try:
+        supabase.table("users").update({
+            "password_hash":      hash_password(req.password),
+            "reset_token":        None,
+            "reset_token_expiry": None,
+        }).eq("id", user["id"]).execute()
+    except Exception as e:
+        raise HTTPException(500, f"Database error: {e}")
+
+    print(f"[ResetPassword] Password reset for: {user['email']}")
+    return {"message": "Password reset successfully. You can now sign in."}
+
+
+
+# ── PATCH /api/auth/me ────────────────────────────────────────────────────
+
+class UpdateProfileRequest(BaseModel):
+    full_name: Optional[str] = None
+    email:     Optional[str] = None
+    university:Optional[str] = None
+    major:     Optional[str] = None
+    year:      Optional[str] = None
+
+@router.patch("/me")
+async def update_me(req: UpdateProfileRequest, request: Request):
+    auth = request.headers.get("Authorization") or request.headers.get("authorization") or ""
+    if not auth:
+        raise HTTPException(401, "Authorization header missing")
+    try:
+        user_id = get_user_id(auth)
+    except Exception:
+        raise HTTPException(401, "Invalid or expired token")
+
+    updates: dict = {}
+    if req.full_name is not None:
+        if len(req.full_name.strip()) < 2:
+            raise HTTPException(400, "Name must be at least 2 characters")
+        updates["full_name"] = req.full_name.strip()
+    if req.email is not None:
+        if "@" not in req.email:
+            raise HTTPException(400, "Invalid email address")
+        updates["email"] = req.email.strip().lower()
+    if req.university is not None:
+        updates["university"] = req.university.strip()
+    if req.major is not None:
+        updates["major"] = req.major.strip()
+    if req.year is not None:
+        updates["year"] = req.year.strip()
+
+    if not updates:
+        raise HTTPException(400, "No fields to update")
+
+    try:
+        result = supabase.table("users").update(updates).eq("id", user_id).execute()
+        if not result.data:
+            raise HTTPException(500, "Update failed")
+        user = result.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Database error: {e}")
+
+    return {
+        "message":   "Profile updated successfully",
+        "full_name": user.get("full_name"),
+        "email":     user.get("email"),
+    }
 
 @router.get("/health")
 async def health():
