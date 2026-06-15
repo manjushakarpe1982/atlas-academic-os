@@ -1,63 +1,105 @@
 'use client';
-import { ChevronRight, LogOut } from 'lucide-react';
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ChevronRight, LogOut, Bell } from 'lucide-react';
+import { getUser, clearAuth } from '@/lib/api';
 
 const SETTINGS = [
-  { label: 'Account Settings',      icon: '👤' },
-  { label: 'School Settings',       icon: '🏫' },
-  { label: 'Calendar Sync',         icon: '📅', badge: 'Connected' },
-  { label: 'Notification Settings', icon: '🔔' },
-  { label: 'Study Reminders',       icon: '⏰' },
-  { label: 'Dark Mode',             icon: '🌙', toggle: true },
-  { label: 'Help & Support',        icon: '❓' },
-  { label: 'Privacy Policy',        icon: '🔒' },
+  { label: 'Account Settings',       sub: 'Personal information',       icon: '👤', href: '/dashboard/profile/account-settings'       },
+  { label: 'School Settings',        sub: 'Connected school & LMS',     icon: '🏫', href: '/dashboard/profile/school-settings'        },
+  { label: 'Calendar Sync',          sub: 'Manage calendar connection', icon: '📅', href: '/dashboard/profile/calendar-sync'          },
+  { label: 'Notification Settings',  sub: 'Manage your notifications',  icon: '🔔', href: '/dashboard/profile/notification-settings'  },
+  { label: 'Study Reminders',        sub: 'Set study goals & reminders',icon: '⏰', href: '/dashboard/profile/study-reminders'        },
+  { label: 'Dark Mode',              sub: 'App UI preferences',         icon: '🌙', href: '/dashboard/profile/dark-mode', toggle: true },
+  { label: 'Help & Support',         sub: 'Get help and contact us',    icon: '❓', href: '/dashboard/profile/help-support'           },
+  { label: 'Privacy Policy',         sub: 'How we protect your data',   icon: '🔒', href: '/dashboard/profile/privacy-policy'         },
 ];
 
 export default function ProfilePage() {
+  const router  = useRouter();
+  const [showLogout, setShowLogout] = useState(false);
+  const user = getUser();
+
+  const handleLogout = () => {
+    clearAuth();
+    router.push('/auth/login');
+  };
+
   return (
     <div className="px-4 py-4">
-      {/* Profile card */}
+
+      {/* ── Profile card ── */}
       <div className="bg-indigo-600 rounded-3xl p-5 mb-5 text-white">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center">
-            <span className="text-3xl">👩‍🎓</span>
+          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-3xl">
+            👩‍🎓
           </div>
-          <div>
-            <p className="text-lg font-extrabold">Pooja Sharma</p>
-            <p className="text-indigo-200 text-sm">pooja.sharma@email.com</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-lg font-extrabold truncate">{user?.full_name || 'Pooja Sharma'}</p>
+            <p className="text-indigo-200 text-sm truncate">{user?.email || 'pooja@student.edu'}</p>
+            <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full mt-1 inline-block">Student</span>
           </div>
+          <ChevronRight className="w-5 h-5 text-white/60" />
         </div>
-        <button className="w-full bg-white/20 hover:bg-white/30 text-white font-bold py-2.5 rounded-2xl text-sm transition-all">
+        <Link href="/dashboard/profile/account-settings"
+          className="block w-full bg-white/20 hover:bg-white/30 text-white font-bold py-2.5 rounded-2xl text-sm text-center transition-all">
           Edit Profile
-        </button>
+        </Link>
       </div>
 
-      {/* Settings list */}
+      {/* ── Settings list ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
         {SETTINGS.map((s, i) => (
-          <div key={s.label}
-            className={`flex items-center gap-3 px-4 py-3.5 ${
+          <Link key={s.label} href={s.href}
+            className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-all ${
               i < SETTINGS.length - 1 ? 'border-b border-gray-50' : ''
-            } hover:bg-gray-50 transition-all cursor-pointer`}>
-            <span className="text-lg w-8 text-center">{s.icon}</span>
-            <p className="flex-1 text-sm font-semibold text-gray-800">{s.label}</p>
-            {s.badge && (
-              <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">{s.badge}</span>
-            )}
+            }`}>
+            <span className="text-xl w-8 text-center">{s.icon}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-800">{s.label}</p>
+              <p className="text-xs text-gray-400">{s.sub}</p>
+            </div>
             {s.toggle ? (
-              <div className="w-10 h-5 bg-gray-200 rounded-full relative">
+              <div className="w-10 h-5 bg-gray-200 rounded-full relative flex-shrink-0">
                 <div className="w-4 h-4 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm" />
               </div>
             ) : (
-              <ChevronRight className="w-4 h-4 text-gray-300" />
+              <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
             )}
-          </div>
+          </Link>
         ))}
       </div>
 
-      {/* Logout */}
-      <button className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 font-bold py-3.5 rounded-2xl text-sm border border-red-100 hover:bg-red-100 transition-all">
+      {/* ── Logout ── */}
+      <button onClick={() => setShowLogout(true)}
+        className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 font-bold py-3.5 rounded-2xl text-sm border border-red-100 hover:bg-red-100 transition-all">
         <LogOut className="w-4 h-4" /> Log Out
       </button>
+
+      {/* ── Logout confirmation modal ── */}
+      {showLogout && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowLogout(false)} />
+          <div className="relative bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center text-2xl">🚪</div>
+            </div>
+            <h2 className="text-lg font-extrabold text-gray-900 text-center mb-1">Log out from Atlas?</h2>
+            <p className="text-sm text-gray-500 text-center mb-5">You can sign in again anytime.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowLogout(false)}
+                className="flex-1 border-2 border-gray-200 text-gray-700 font-bold py-3 rounded-2xl text-sm hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={handleLogout}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-2xl text-sm shadow-md">
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
