@@ -1,215 +1,202 @@
 'use client';
-import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Play, CheckCircle2, Target, Calendar, TrendingUp, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, Play, Target, Calendar, TrendingUp, Sparkles, ChevronRight } from 'lucide-react';
 
-const HOW_IT_WORKS = [
-  {
-    num: '1', color: 'bg-indigo-600', icon: '📄',
-    title: 'Upload Syllabus',
-    desc:  'Upload your syllabus. Atlas extracts what matters automatically.',
-  },
-  {
-    num: '2', color: 'bg-green-500', icon: '📊',
-    title: 'Add Your Grades',
-    desc:  'Enter your grades or upload a screenshot. Atlas calculates what impacts your grade most.',
-  },
-  {
-    num: '3', color: 'bg-orange-500', icon: '📅',
-    title: 'Get Your Plan',
-    desc:  'Get a weekly study plan ranked by grade impact. Focus on what improves your grades fastest.',
-  },
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { getToken, getUser } from '@/lib/api';
+import AppHeader from './_components/AppHeader';
+import { Button } from '@/components/ui/button';
+
+
+const HOW_STEPS = [
+  { num: 1, color: 'bg-indigo-600', icon: '📄', title: 'Upload Syllabus',     desc: 'Upload your syllabus. Atlas detects what matters automatically.' },
+  { num: 2, color: 'bg-green-500',  icon: '📊', title: 'Add Your Grades',     desc: 'Enter grades or upload a screenshot. Atlas calculates what impacts your grade most.' },
+  { num: 3, color: 'bg-orange-500', icon: '📅', title: 'Get Smart Study Plan',desc: 'Atlas creates a personalized study plan based on importance and deadlines.' },
+  { num: 4, color: 'bg-red-500',    icon: '🎯', title: 'Study Smarter',       desc: 'Focus on what matters most and improve your grades.' },
 ];
 
-const WHY_ATLAS = [
-  { icon: Target,     color: 'bg-indigo-300 text-indigo-600', title: 'Focus on What Matters',  desc: 'Study high-impact topics first.'                   },
-  { icon: Calendar,   color: 'bg-orange-300 text-orange-600', title: 'Never Miss a Deadline',  desc: 'All assignments, quizzes, and exams in one place.' },
-  { icon: TrendingUp, color: 'bg-green-300 text-green-600',   title: 'Track Progress',         desc: 'See your grades improve over time.'                },
-  { icon: Sparkles,   color: 'bg-yellow-300 text-yellow-600', title: 'AI Study Materials',     desc: 'Practice questions, flashcards, and summaries.'    },
+const WHY_FEATURES = [
+  { icon: Target,     color: 'bg-indigo-100 text-indigo-600', title: 'Focus on What Matters',  desc: 'Study high-impact topics first.'                        },
+  { icon: Calendar,   color: 'bg-red-100 text-red-500',       title: 'Never Miss a Deadline',  desc: 'All assignments, quizzes, and exams in one place.'      },
+  { icon: TrendingUp, color: 'bg-green-100 text-green-600',   title: 'Track Progress',         desc: 'See your grades improve over time.'                     },
+  { icon: Sparkles,   color: 'bg-yellow-100 text-yellow-600', title: 'AI Study Materials',     desc: 'Practice questions, flashcards, and summaries.'         },
 ];
 
-
+const PREVIEW_ROWS = [
+  { subject: 'Biology • Chapter 5',  tag: 'High Impact',   tagColor: 'text-red-500' },
+  { subject: 'Maths • Chapter 5',    tag: 'Medium Impact', tagColor: 'text-amber-500' },
+  { subject: 'Chemistry • Chapter 4',tag: 'Due Soon',      tagColor: 'text-indigo-500' },
+];
 
 export default function LandingPage() {
+   const router = useRouter();
+
+
+  const handleGetStarted = () => {
+    const token = getToken();
+    if (!token) { router.push('/auth/signup'); return; }
+
+    const user = getUser();
+    if (!user?.school)         { router.push('/school-selection'); return; }
+    if (!user?.acknowledged_at){ router.push('/acknowledgment');   return; }
+    router.push('/dashboard');
+  };
   return (
     <div className="min-h-screen bg-white">
 
-      {/* ── NAV ── */}
-      <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur border-b border-gray-100 shadow-sm">
-        <div className="max-w-md mx-auto px-5 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xs font-extrabold">A</span>
-            </div>
-            <span className="font-extrabold text-gray-900 text-lg">Atlas</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/auth/login"
-              className="text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors">
-              Sign In
-            </Link>
-            <Link href="/auth/signup"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm">
-              Get Started
-            </Link>
+      <AppHeader right="both" />
+
+      {/* ── HERO — bg image full visible, text overlaps left side ── */}
+      <section className="relative w-full overflow-hidden" style={{ minHeight: 260 }}>
+
+        {/* Background image — full show, no crop */}
+        <Image
+          src="https://res.cloudinary.com/mview/image/upload/atlas/newhomepage.webp"
+          alt="Atlas hero background"
+          width={480}
+          height={720}
+          className="w-full h-auto block"
+          style={{ objectFit: 'contain', objectPosition: 'top right' }}
+          priority
+        />
+
+     
+        {/* Text — absolutely positioned over image, left side */}
+        <div className="absolute inset-0 flex flex-col justify-center px-3 ">
+          <h1 className="text-2xl font-extrabold text-gray-900 leading-tight ">
+            Smarter Study.
+          </h1>
+          <h1 className="text-3xl font-extrabold text-indigo-600 leading-tight mb-2">
+            Better Grades.
+          </h1>
+          <p className="text-sm text-gray-600 leading-relaxed  max-w-[190px]">
+            Atlas analyses your syllabus, grades, and deadlines to tell you{' '}
+            <span className="font-bold text-gray-900">what</span> to study and <span className="font-bold text-gray-900">when</span> to study it.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-row gap-2.5 ">
+            <Button onClick={handleGetStarted}
+              className="flex items-center justify-center  bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-5 px-2 rounded-xl text-sm shadow-lg shadow-indigo-200 transition-all">
+              Get Started Free <ArrowRight className="w-4 h-4" />
+            </Button>
+            <button
+              className="flex items-center justify-center  border-2 border-gray-300 text-gray-700 font-bold py-2 px-2  rounded-xl text-sm hover:border-indigo-400 hover:text-indigo-600 transition-all bg-white/80">
+              <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                <Play className="w-2.5 h-2.5 text-indigo-600 ml-0.5" />
+              </span>
+              See How It Works
+            </button>
           </div>
         </div>
-      </nav>
 
-      {/* ── HERO ── */}
-      {/*
-        Strategy: section height = image aspect ratio via paddingBottom trick.
-        Image fills the section with object-contain so nothing is cropped.
-        Text is absolutely positioned on top with a left-side gradient for readability.
-      */}
-        <section className="bg-[#F8F9FF] overflow-hidden pt-6">
-  <div className="px-5">
+      </section>
 
-    {/* Badge */}
-    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold mb-5">
-      <CheckCircle2 className="w-4 h-4" />
-      Built for College Students
-    </div>
-
-    {/* Content */}
-    <div className="flex flex-col items-center text-center">
-
-      {/* Text */}
-      <div className="max-w-[320px]">
-        <h1 className="text-[44px] leading-[0.95] font-extrabold text-gray-900">
-          Smarter Study.
-        </h1>
-
-        <h1 className="text-[44px] leading-[0.95] font-extrabold text-indigo-600 mb-4">
-          Better Grades.
-        </h1>
-
-        <p className="text-[17px] text-gray-600 leading-7 mb-6">
-          Atlas analyzes your syllabus, grades, and deadlines to tell you exactly{" "}
-          <span className="font-semibold text-gray-900">
-            what to study
-          </span>{" "}
-          and{" "}
-          <span className="font-semibold text-gray-900">
-            when to study it.
-          </span>
-        </p>
-
-        {/* Buttons */}
-        <div className="flex flex-col gap-3 w-full">
-          <Link
-            href="/auth/signup"
-            className="h-14 rounded-2xl bg-indigo-600 text-white font-bold text-base flex items-center justify-center shadow-lg"
-          >
-            Get Started Free →
-          </Link>
-
-          <button className="h-14 rounded-2xl border border-gray-200 bg-white text-gray-800 font-semibold flex items-center justify-center gap-2">
-            <Play className="w-4 h-4" />
-            See How It Works
-          </button>
+      {/* ── HOW ATLAS WORKS ── */}
+      <section className="py-5 px-5 bg-white">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex-1 h-px bg-gray-300" />
+          <h2 className="text-xl font-extrabold text-gray-900 whitespace-nowrap">How Atlas Works</h2>
+          <div className="flex-1 h-px bg-gray-300" />
         </div>
-      </div>
 
-    
-   
-    </div>
-  </div>
-</section>
-
-      {/* ── HOW ATLAS WORKS — column layout ── */}
-      <section id="how-it-works" className="py-5 px-5 bg-gray-100">
-        <div className="">
-          <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-3">
-            How Atlas Works
-          </h2>
-
-          {/* COLUMN — one step per row */}
-          <div className="flex flex-col ">
-            {HOW_IT_WORKS.map((step, i) => (
-              <div key={step.title}>
-                <div className="flex items-start gap-4 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                  {/* Icon + number */}
-                  <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                    <div className={`w-5 h-5 ${step.color} rounded-full flex items-center justify-center`}>
-                      <span className="text-white text-[10px] font-extrabold">{step.num}</span>
-                    </div>
-                    <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl border border-gray-100">
-                      {step.icon}
-                    </div>
-                    
-                  </div>
-                  {/* Text */}
-                  <div className="flex-1 pt-1">
-                    <p className="text-base font-extrabold text-gray-900 mb-1">{step.title}</p>
-                    <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
-                  </div>
+        <div className="space-y-3">
+          {HOW_STEPS.map(s => (
+            <div key={s.num}
+              className="flex items-center gap-4 bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+              {/* Number + Icon */}
+              <div className="relative flex-shrink-0">
+                <div className="w-12 h-12 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center text-2xl">
+                  {s.icon}
                 </div>
-                {/* Connector arrow between steps */}
-                {i < HOW_IT_WORKS.length - 1 && (
-                  <div className="flex justify-center my-1">
-                    <div className="w-0.5 h-5 bg-gray-300 rounded-full" />
-                  </div>
-                )}
+                <div className={`absolute -top-1.5 -left-1.5 w-5 h-5 ${s.color} rounded-full flex items-center justify-center`}>
+                  <span className="text-white text-[10px] font-extrabold">{s.num}</span>
+                </div>
               </div>
-            ))}
-          </div>
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-extrabold text-gray-900">{s.title}</p>
+                <p className="text-sm text-gray-500 leading-relaxed mt-0.5">{s.desc}</p>
+              </div>
+             
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ── WHY STUDENTS CHOOSE ATLAS ── */}
-      <section id="features" className="py-4 px-5 bg-white">
-        <div className="max-w-lg mx-auto">
-          <h2 className="text-2xl font-extrabold text-gray-900 text-center mb-4">
-            Why Students Choose Atlas
-          </h2>
-          <div className="grid grid-cols-1 gap-4">
-            {WHY_ATLAS.map(f => (
-            <div key={f.title} className="bg-gray-50 rounded-2xl p-2 border border-gray-100">
-  <div className="flex items-start gap-4">
+      <section className="py-3 px-5 bg-gray-50">
+        <h2 className="text-xl font-extrabold text-gray-900 text-center mb-5">Why Students Choose Atlas</h2>
+        <div className="grid grid-cols-1 gap-3">
+          {WHY_FEATURES.map(f => (
+           <div key={f.title} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+  <div className="flex items-start gap-3">
     {/* Icon */}
-    <div className={`w-11 h-11 ${f.color} rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5`}>
-      <f.icon className="w-5 h-5 text-white" />
+    <div className={`w-9 h-9 ${f.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+      <f.icon className="w-4 h-4" />
     </div>
 
-    {/* Heading + Description */}
-    <div className="flex-1">
-      <h3 className="text-base font-extrabold text-gray-900 mb-1">
-        {f.title}
-      </h3>
-      <p className="text-sm text-gray-500 leading-relaxed">
-        {f.desc}
-      </p>
+    {/* Text content */}
+    <div className="flex-1 min-w-0">
+      <p className="text-base font-extrabold text-gray-900 mb-0.5">{f.title}</p>
+      <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
     </div>
   </div>
 </div>
-            ))}
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* ── CTA BANNER ── */}
-      <section className="py-5 px-3 bg-gradient-to-br from-indigo-400 to-indigo-500">
-        <div className="max-w-md mx-auto text-center">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-5 h-5 text-white" />
+      {/* ── READY TO STUDY SMARTER CTA ── */}
+      <section className="py-8 px-5 bg-indigo-500 mx-4 my-5 rounded-xl">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-extrabold text-white leading-tight mb-1">
+              Ready to Study<br />Smarter?
+            </h2>
+            <p className="text-indigo-200 text-xs leading-relaxed">
+              Set up your semester<br />in under 10 minutes.
+            </p>
           </div>
-          <h2 className="text-2xl font-extrabold text-white mb-2">Ready to Study Smarter?</h2>
-          <p className="text-sm text-indigo-200 mb-6">Set up your semester in under 10 minutes.</p>
-          <Link href="/auth/signup"
-            className="inline-flex items-center gap-2 bg-white text-indigo-600 font-extrabold py-3.5 px-8 rounded-2xl text-sm shadow-lg hover:bg-indigo-50 transition-all">
-            Get Started Free <ArrowRight className="w-4 h-4" />
-          </Link>
-         
+          {/* Mini preview card */}
+          <div className="bg-white rounded-2xl p-3 w-36 flex-shrink-0 shadow-lg">
+            <p className="text-[9px] font-extrabold text-gray-500 mb-2">This Week&apos;s Plan</p>
+            <div className="space-y-1.5 mb-2">
+              {PREVIEW_ROWS.map(r => (
+                <div key={r.subject} className="flex items-center justify-between gap-1">
+                  <p className="text-[9px] text-gray-700 truncate flex-1">{r.subject}</p>
+                  <span className={`text-[8px] font-bold flex-shrink-0 ${r.tagColor}`}>{r.tag}</span>
+                </div>
+              ))}
+            </div>
+            <div className="pt-1.5 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-[9px] font-bold text-gray-500">Overall Progress</p>
+              </div>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-indigo-600 rounded-full w-3/4" />
+              </div>
+              <p className="text-[9px] text-indigo-600 font-bold mt-0.5 text-right">75%</p>
+            </div>
+          </div>
         </div>
+
+        <Button onClick={handleGetStarted}
+          className="flex items-center justify-center gap-2 bg-white text-indigo-600 font-extrabold py-5 px-6 rounded-2xl text-sm shadow-md hover:bg-indigo-50 transition-all">
+          Get Started Free <ArrowRight className="w-4 h-4" />
+        </Button>
+
+        <p className="text-center text-indigo-300 text-[10px] mt-3 flex items-center justify-center gap-1">
+          🔒 Your data is encrypted and private.
+        </p>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-gray-900 py-6 px-5 text-center">
-        
-        <p className="text-base text-gray-400">
-          © 2026 Atlas Academic OS · University of Arkansas &amp; Texas A&amp;M Beta
-        </p>
+      <footer className="bg-gray-900 py-5 px-5 text-center">
+      
+        <p className="text-xs text-gray-400">© 2026 Atlas Academic OS · University of Arkansas & Texas A&M Beta</p>
       </footer>
 
     </div>

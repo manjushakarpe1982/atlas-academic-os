@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Building2, ArrowLeft, HelpCircle } from 'lucide-react';
 import { api, getUser, getToken } from '@/lib/api';
+import Link from 'next/link';
+import AppHeader from '../_components/AppHeader';
 
 const SCHOOLS = [
   { id: 'arkansas', name: 'University of Arkansas', lms: 'Blackboard Learn', abbr: 'UA', color: 'bg-red-600'  },
@@ -53,21 +55,7 @@ export default function SchoolSelectionPage() {
     <div className="min-h-screen bg-white flex flex-col">
 
       {/* ── HEADER ── */}
-      <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
-        <div className="px-5 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-extrabold text-gray-900 text-base">Atlas</span>
-          </div>
-          {/* User avatar — first letter of name */}
-          <div className="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center shadow-sm">
-            <span className="text-white text-sm font-extrabold">{userInitial}</span>
-          </div>
-        </div>
-      </header>
-
+   <AppHeader right="avatar" />
       {/* ── CONTENT ── */}
       <main className="flex-1 px-5 pt-8 pb-32">
         <h1 className="text-2xl font-extrabold text-gray-900 mb-1">
@@ -125,10 +113,10 @@ export default function SchoolSelectionPage() {
             className="flex items-center gap-2 text-base font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <a href="#" onClick={e => e.preventDefault()}
+          <Link href="/help?from=/school-selection"
             className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
             <HelpCircle className="w-4 h-4" /> Need Help?
-          </a>
+          </Link>
         </div>
       </footer>
 

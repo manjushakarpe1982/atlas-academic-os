@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Brain, Eye, EyeOff, Check, X, HelpCircle, ArrowLeft } from 'lucide-react';
 import { API_BASE, saveAuth } from '@/lib/api';
+import AppHeader from '@/app/_components/AppHeader';
 
 function GoogleIcon() {
   return (
@@ -82,22 +83,7 @@ export default function SignupPage() {
     <div className="min-h-screen bg-white flex flex-col">
 
       {/* ── HEADER ── */}
-      <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
-        <div className="px-5 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-extrabold text-gray-900 text-base">Atlas</span>
-          </div>
-          <a href="#" onClick={e => e.preventDefault()}
-            className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-            <HelpCircle className="w-4 h-4" />
-            Need Help?
-          </a>
-        </div>
-      </header>
-
+    <AppHeader right="both" />
       {/* ── CONTENT ── */}
       <main className="flex-1 overflow-y-auto px-5 pt-6 pb-28">
         <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Create account</h1>
