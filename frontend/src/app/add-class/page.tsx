@@ -43,8 +43,8 @@ const BUTTONS: Record<number, BtnCfg> = {
   6:  { left: 'Skip for now', right: 'Continue'                },
   7:  { left: null,           right: 'Yes, Add This Book'      },
   8:  { left: 'Skip for now', right: 'Save & Continue'         },
-  9:  { left: 'Add Another',  right: 'Continue →'              },
-  10: { left: null,           right: ''         },
+  9:  { left: 'Skip',         right: 'Go to Dashboard'         },
+
 };
 
 export default function AddClassPage() {
