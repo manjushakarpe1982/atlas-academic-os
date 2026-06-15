@@ -85,7 +85,7 @@ export default function LoginPage() {
       } else if (!data.user?.acknowledged_at) {
         router.push("/acknowledgment");
       } else {
-        router.push("/classes");
+        router.push("/add-class");
       }
     } catch {
       setError("Cannot reach server. Make sure the backend is running.");
