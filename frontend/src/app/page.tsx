@@ -2,7 +2,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Play, Target, Calendar, TrendingUp, Sparkles, ChevronRight } from 'lucide-react';
+
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { getToken, getUser } from '@/lib/api';
 import AppHeader from './_components/AppHeader';
+import { Button } from '@/components/ui/button';
 
 
 const HOW_STEPS = [
@@ -26,6 +31,18 @@ const PREVIEW_ROWS = [
 ];
 
 export default function LandingPage() {
+   const router = useRouter();
+
+
+  const handleGetStarted = () => {
+    const token = getToken();
+    if (!token) { router.push('/auth/signup'); return; }
+
+    const user = getUser();
+    if (!user?.school)         { router.push('/school-selection'); return; }
+    if (!user?.acknowledged_at){ router.push('/acknowledgment');   return; }
+    router.push('/dashboard');
+  };
   return (
     <div className="min-h-screen bg-white">
 
@@ -61,10 +78,10 @@ export default function LandingPage() {
 
           {/* CTA Buttons */}
           <div className="flex flex-row gap-2.5 ">
-            <Link href="/auth/signup"
-              className="flex items-center justify-center  bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-2 rounded-xl text-sm shadow-lg shadow-indigo-200 transition-all">
+            <Button onClick={handleGetStarted}
+              className="flex items-center justify-center  bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-5 px-2 rounded-xl text-sm shadow-lg shadow-indigo-200 transition-all">
               Get Started Free <ArrowRight className="w-4 h-4" />
-            </Link>
+            </Button>
             <button
               className="flex items-center justify-center  border-2 border-gray-300 text-gray-700 font-bold py-2 px-2  rounded-xl text-sm hover:border-indigo-400 hover:text-indigo-600 transition-all bg-white/80">
               <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
@@ -166,10 +183,10 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <Link href="/auth/signup"
-          className="flex items-center justify-center gap-2 bg-white text-indigo-600 font-extrabold py-3.5 px-6 rounded-2xl text-sm shadow-md hover:bg-indigo-50 transition-all">
+        <Button onClick={handleGetStarted}
+          className="flex items-center justify-center gap-2 bg-white text-indigo-600 font-extrabold py-5 px-6 rounded-2xl text-sm shadow-md hover:bg-indigo-50 transition-all">
           Get Started Free <ArrowRight className="w-4 h-4" />
-        </Link>
+        </Button>
 
         <p className="text-center text-indigo-300 text-[10px] mt-3 flex items-center justify-center gap-1">
           🔒 Your data is encrypted and private.
