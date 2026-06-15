@@ -443,6 +443,15 @@ async def confirm_class(class_id: str, request: Request):
     supabase.table("files").update({"status": "done"}).eq("id", fid).execute()
     return {"class_id": class_id, "status": "confirmed"}
 
+# ── GET /api/classes/{id} ─────────────────────────────────────────────────
+
+@router.get("/{class_id}")
+async def get_class_by_id(class_id: str, request: Request):
+    user_id = _get_user(request)
+    cls = _get_class(class_id, user_id)
+    return cls
+
+
 # ── Models ────────────────────────────────────────────────────────────────
 
 class GradeEntry(BaseModel):

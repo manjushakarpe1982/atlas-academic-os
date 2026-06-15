@@ -18,6 +18,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
+
 import { api, API_BASE, getToken } from '@/lib/api';
 
 import Screen1  from './components/Screen1';
@@ -28,9 +29,10 @@ import Screen7  from './components/Screen7';
 import Screen8  from './components/Screen8';
 import Screen9, { Screen9Handle } from './components/Screen9';
 import Screen10 from './components/Screen10';
+import Screen11 from './components/Screen11';
 import AppHeader from '../_components/AppHeader';
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 9;
 
 type BtnCfg = { left: string | null; right: string | null };
 const BUTTONS: Record<number, BtnCfg> = {
@@ -41,7 +43,8 @@ const BUTTONS: Record<number, BtnCfg> = {
   5:  { left: 'Skip for now', right: 'Continue'                },
   6:  { left: null,           right: 'Yes, Add This Book'      },
   7:  { left: 'Skip for now', right: 'Save & Continue'         },
-  8:  { left: 'Skip',         right: 'Go to Dashboard'         } };
+  8:  { left: null,           right: 'Continue'                },
+  9:  { left: 'Go to Dashboard', right: 'Continue →'             } };
 
 export default function AddClassPage() {
   const router = useRouter();
@@ -86,7 +89,8 @@ export default function AddClassPage() {
       return;
     }
 
-    // Step 8 right = "Go to Dashboard" → connect calendar first
+    // Step 8 right = "Continue" → go to Screen11 (classes list)
+    // Step 9 right = "Continue →" → go to /calendar
     if (step === 9) {
       router.push('/calendar');
       return;
@@ -96,7 +100,7 @@ export default function AddClassPage() {
   };
 
   const handleLeft = () => {
-    if (step === 9) { router.push('/dashboard'); return; }  // Skip → dashboard
+    if (step === 9) { router.push('/dashboard'); return; }  // Go to Dashboard
     back();
   };
 
@@ -112,7 +116,8 @@ export default function AddClassPage() {
     5:  <Screen7  onNext={next} onBack={back} />,
     6:  <Screen8  onNext={next} onBack={back} />,
     7:  <Screen9  ref={screen9Ref} onNext={next} onBack={back} classId={classId} />,
-    8:  <Screen10 onNext={next} onBack={back} /> };
+    8:  <Screen10 onNext={next} onBack={back} classId={classId} />,
+    9:  <Screen11 onAddAnother={() => { setStep(1); setClassName(''); setClassId(null); }} /> };
 
   return (
     <div className="min-h-screen flex flex-col">
