@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Play, CheckCircle2, Target, Calendar, TrendingUp, Sparkles } from 'lucide-react';
+import UserAvatar from './_components/UserAvatar';
 
 const HOW_IT_WORKS = [
   {
@@ -52,6 +53,7 @@ export default function LandingPage() {
               className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm">
               Get Started
             </Link>
+             <UserAvatar />
           </div>
         </div>
       </nav>
