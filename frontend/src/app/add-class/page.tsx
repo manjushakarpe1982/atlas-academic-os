@@ -2,17 +2,16 @@
 /**
  * page.tsx — Add Class orchestrator
  *
- * Steps (10 total — Screen2 removed, class name moved to Screen1):
+ * Steps (9 total — Screen2 and Screen6 removed):
  *  1  Intro + class name input
  *  2  Upload syllabus
  *  3  AI Parsing (no buttons)
  *  4  Review course info + grade weights
- *  5  Important dates + topics
- *  6  Add textbook
- *  7  Textbook found
- *  8  Enter grades
- *  9  Success
- *  10 Your classes list
+ *  5  Textbook (combined with old Screen 6)
+ *  6  Enter grades
+ *  7  Success
+ *  8  Your classes list
+ *  9  (Skipped - now at 8)
  */
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -23,7 +22,6 @@ import Screen1  from './components/Screen1';
 import Screen3  from './components/Screen3';
 import Screen4  from './components/Screen4';
 import Screen5  from './components/Screen5';
-import Screen6  from './components/Screen6';
 import Screen7  from './components/Screen7';
 import Screen8  from './components/Screen8';
 import Screen9  from './components/Screen9';
@@ -32,7 +30,7 @@ import Screen11 from './components/Screen11';
 import Link from 'next/link';
 import AppHeader from '../_components/AppHeader';
 
-const TOTAL_STEPS = 10;
+const TOTAL_STEPS = 9;
 
 type BtnCfg = { left: string | null; right: string | null };
 const BUTTONS: Record<number, BtnCfg> = {
@@ -41,12 +39,14 @@ const BUTTONS: Record<number, BtnCfg> = {
   3:  { left: null,           right: null                      }, // AI parsing — no buttons
   4:  { left: 'Back',         right: 'Continue'                },
   5:  { left: null,           right: 'Everything Looks Good ✓' },
-  6:  { left: 'Skip for now', right: 'Continue'                },
-  7:  { left: null,           right: 'Yes, Add This Book'      },
-  8:  { left: 'Skip for now', right: 'Save & Continue'         },
-  9:  { left: 'Skip',         right: 'Go to Dashboard'         },
+  6:  { left: null,           right: 'Yes, Add This Book'      },
+  7:  { left: 'Skip for now', right: 'Save & Continue'         },
+  8:  { left: 'Skip',         right: 'Go to Dashboard'         },
 
 };
+
+// Steps that cannot be skipped (must go through normally)
+const BLOCKING_STEPS = [3]; // AI parsing auto-advances
 
 export default function AddClassPage() {
   const router = useRouter();
@@ -59,9 +59,31 @@ export default function AddClassPage() {
   const [loading,   setLoading]   = useState(false);
 
   const next = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
+  
   const back = () => {
     if (step === 1) { router.push('/classes'); return; }
     setStep(s => Math.max(s - 1, 1));
+  };
+
+  // Navigate to specific step via progress bar click
+  const goToStep = (targetStep: number) => {
+    // Cannot skip blocking steps
+    if (BLOCKING_STEPS.includes(targetStep)) {
+      return; // Ignore click on auto-advancing steps
+    }
+
+    // Can only go back or stay at current step
+    if (targetStep >= step) {
+      return; // Cannot skip ahead
+    }
+
+    // Going back to step 1 resets form
+    if (targetStep === 1) {
+      setClassName('');
+      setClassId(null);
+    }
+
+    setStep(targetStep);
   };
 
   // ── Right button handler — API calls happen here ──────────────────────
@@ -110,18 +132,17 @@ export default function AddClassPage() {
   const btn = BUTTONS[step];
 
   // Map step numbers to screen components
-  // Step 3 = Screen3 (was step 3 upload), etc. — we skip old Screen2
+  // Removed Screen6 — its data is now in Screen5
   const screens: Record<number, React.ReactNode> = {
     1:  <Screen1  onNext={next} onBack={back} className={className} setClassName={setClassName} />,
     2:  <Screen3  onNext={next} onBack={back} classId={classId} />,
     3:  <Screen4  onNext={next} onBack={back} classId={classId} />,
     4:  <Screen5  onNext={next} onBack={back} classId={classId} />,
-    5:  <Screen6  onNext={next} onBack={back} classId={classId} />,
-    6:  <Screen7  onNext={next} onBack={back} />,
-    7:  <Screen8  onNext={next} onBack={back} />,
-    8:  <Screen9  onNext={next} onBack={back} classId={classId} />,
-    9:  <Screen10 onNext={next} onBack={back} />,
-    10: <Screen11 onAddAnother={() => { setStep(1); setClassName(''); setClassId(null); }} />,
+    5:  <Screen7  onNext={next} onBack={back} />,
+    6:  <Screen8  onNext={next} onBack={back} />,
+    7:  <Screen9  onNext={next} onBack={back} classId={classId} />,
+    8:  <Screen10 onNext={next} onBack={back} />,
+    9:  <Screen11 onAddAnother={() => { setStep(1); setClassName(''); setClassId(null); }} />,
   };
 
   return (
@@ -148,15 +169,38 @@ export default function AddClassPage() {
       <footer className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         <div className="max-w-2xl mx-auto px-4 pt-3 pb-5">
 
-          {/* Segmented progress bar */}
+          {/* Clickable progress bar */}
           <div className="flex items-center gap-1.5 mb-1.5">
-            {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-              <div key={i}
-                className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                  i < step ? 'bg-indigo-600' : 'bg-gray-200'
-                }`}
-              />
-            ))}
+            {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
+              const stepNum = i + 1;
+              const isCompleted = i < step;
+              const isCurrent = i === step - 1;
+              const canClick = stepNum < step && !BLOCKING_STEPS.includes(stepNum);
+
+              return (
+                <button
+                  key={i}
+                  onClick={() => goToStep(stepNum)}
+                  disabled={!canClick}
+                  title={
+                    canClick
+                      ? `Go back to step ${stepNum}`
+                      : isCurrent
+                        ? `Current step ${stepNum}`
+                        : BLOCKING_STEPS.includes(stepNum)
+                          ? 'Cannot skip this step'
+                          : 'Cannot skip ahead'
+                  }
+                  className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                    isCompleted
+                      ? 'bg-indigo-600 cursor-pointer hover:bg-indigo-700'
+                      : isCurrent
+                        ? 'bg-indigo-400 cursor-default'
+                        : 'bg-gray-200 cursor-not-allowed'
+                  }`}
+                />
+              );
+            })}
           </div>
 
           {/* Step number */}
