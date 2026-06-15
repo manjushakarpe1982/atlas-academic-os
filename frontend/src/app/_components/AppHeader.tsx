@@ -1,4 +1,5 @@
 'use client';
+import { usePathname } from 'next/navigation';
 /**
  * AppHeader — shared header for all non-dashboard pages.
  *
@@ -18,6 +19,7 @@ type RightSlot = 'help' | 'avatar' | 'both' | 'none';
 interface Props { right?: RightSlot; }
 
 export default function AppHeader({ right = 'help' }: Props) {
+  const pathname = usePathname();
   return (
     <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-md mx-auto px-5 h-14 flex items-center justify-between">
@@ -33,7 +35,7 @@ export default function AppHeader({ right = 'help' }: Props) {
         {/* ── Right slot ── */}
         <div className="flex items-center gap-3">
           {(right === 'help' || right === 'both') && (
-            <Link href="/help"
+            <Link href={`/help?from=${pathname}`}
               className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
               <HelpCircle className="w-4 h-4" />
               Need Help?

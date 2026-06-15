@@ -113,7 +113,7 @@ export default function SchoolSelectionPage() {
             className="flex items-center gap-2 text-base font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <Link href="/help"
+          <Link href="/help?from=/school-selection"
             className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
             <HelpCircle className="w-4 h-4" /> Need Help?
           </Link>
