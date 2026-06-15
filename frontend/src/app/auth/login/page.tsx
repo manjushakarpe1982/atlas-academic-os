@@ -107,14 +107,14 @@ export default function LoginPage() {
               Atlas
             </span>
           </div>
-          <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
+          <Link
+            href="/help"
+        
             className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
           >
             <HelpCircle className="w-4 h-4" />
             Need Help?
-          </a>
+          </Link>
         </div>
       </header>
 

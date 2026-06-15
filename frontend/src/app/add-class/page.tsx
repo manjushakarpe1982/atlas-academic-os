@@ -29,6 +29,7 @@ import Screen8  from './components/Screen8';
 import Screen9  from './components/Screen9';
 import Screen10 from './components/Screen10';
 import Screen11 from './components/Screen11';
+import Link from 'next/link';
 
 const TOTAL_STEPS = 10;
 
@@ -134,11 +135,11 @@ export default function AddClassPage() {
             </div>
             <span className="font-extrabold text-gray-900 text-base">Atlas</span>
           </div>
-          <a href="#" onClick={e => e.preventDefault()}
+          <Link href="/help"
             className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
             <HelpCircle className="w-4 h-4" />
             Need Help?
-          </a>
+          </Link>
         </div>
       </header>
 

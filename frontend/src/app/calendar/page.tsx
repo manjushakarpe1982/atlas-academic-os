@@ -17,6 +17,7 @@ import CalScreen5 from './components/CalScreen5';
 import CalScreen6 from './components/CalScreen6';
 import CalScreen7 from './components/CalScreen7';
 import CalScreen8 from './components/CalScreen8';
+import Link from 'next/link';
 
 type CalStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -82,11 +83,11 @@ export default function CalendarPage() {
             </div>
             <span className="font-extrabold text-gray-900 text-base">Atlas</span>
           </div>
-          <a href="#" onClick={e => e.preventDefault()}
+          <Link href="/help"
             className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
             <HelpCircle className="w-4 h-4" />
             Need Help?
-          </a>
+          </Link>
         </div>
       </header>
 
