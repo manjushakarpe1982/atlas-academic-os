@@ -69,36 +69,36 @@ export default function UserAvatar() {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-10 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+        <div className="absolute right-0 top-10 w-48 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
           {/* User info */}
-          <div className="px-4 py-3 border-b border-gray-50">
+          <div className="px-4 py-3 border-b border-gray-100">
             <p className="text-sm font-extrabold text-gray-900 truncate">
               {user.full_name || 'Student'}
             </p>
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
+            <p className="text-sm text-gray-400 truncate">{user.email}</p>
           </div>
 
           {/* Menu items */}
-          <div className="py-1">
-            <Link href="/dashboard/profile"
+          <div className="">
+            <Link href="/dashboard/profile/account-settings"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 transition-colors font-medium">
               <User className="w-4 h-4 text-gray-400" />
               My Profile
             </Link>
             <Link href="/dashboard/profile"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 transition-colors font-medium">
               <Settings className="w-4 h-4 text-gray-400" />
               Settings
             </Link>
           </div>
 
           {/* Logout */}
-          <div className="border-t border-gray-50 py-1">
+          <div className="border-t border-gray-100 ">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-semibold">
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-base text-red-600 hover:bg-red-50 transition-colors font-semibold">
               <LogOut className="w-4 h-4" />
               Log Out
             </button>
