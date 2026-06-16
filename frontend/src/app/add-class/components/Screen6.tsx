@@ -8,7 +8,7 @@ import { MOCK_TEXTBOOK } from './mockData';
 export default function Screen8({ onNext, onBack }: ScreenProps) {
   return (
     <Phone step={4} total={5}>
-      <div className=" py-4">
+      <div className="flex flex-col  bg-white overflow-hidden">
        
 
         <h1 className="text-2xl font-extrabold text-gray-900 mb-1">We found your textbook!</h1>
