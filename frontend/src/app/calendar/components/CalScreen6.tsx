@@ -104,59 +104,37 @@ export default function CalScreen6({ onNext }: Props) {
         </div>
 
         {/* Import summary card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-2 py-4 mb-5">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-50">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                 <CheckCircle2 className="w-3 h-3 text-white" />
               </div>
-              <p className="text-sm font-bold text-gray-800">Successfully imported</p>
+              <p className="text-xl font-bold text-gray-800">Successfully imported</p>
             </div>
             {loading && <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />}
           </div>
 
           {/* Stats — real data */}
-          <div className="grid grid-cols-4 gap-2 mb-4">
-            {STATS.map(s => (
-              <div key={s.label} className="flex flex-col items-center text-center">
-                <span className="text-xl mb-1">{s.icon}</span>
-                <p className={`text-lg font-extrabold ${s.highlight ? 'text-indigo-600' : 'text-gray-900'}`}>
-                  {loading ? '—' : s.value}
-                </p>
-                <p className="text-[10px] font-bold text-gray-700 leading-tight">{s.label}</p>
-                <p className={`text-[9px] leading-tight ${s.highlight ? 'text-indigo-500 font-semibold' : 'text-gray-400'}`}>
-                  {s.sub}
-                </p>
-              </div>
-            ))}
-          </div>
+        <div className="grid grid-cols-4 gap-1 mb-4 divide-x divide-gray-200">
+  {STATS.map((s, index) => (
+    <div 
+      key={s.label} 
+      className={`flex flex-col items-center text-center px-3 first:pl-0 last:pr-0`}
+    >
+      <span className="text-xl bg-indigo-50 rounded-full w-10 h-10 flex items-center justify-center mb-1">{s.icon}</span>
+      <p className={`text-lg font-extrabold ${s.highlight ? 'text-indigo-600' : 'text-gray-900'}`}>
+        {loading ? '—' : s.value}
+      </p>
+      <p className="text-[12px] font-bold text-gray-700 leading-tight">{s.label}</p>
+      <p className={`text-[10px] leading-tight ${s.highlight ? 'text-indigo-500 font-semibold' : 'text-gray-400'}`}>
+        {s.sub}
+      </p>
+    </div>
+  ))}
+</div>
 
-          {/* Real upcoming events list */}
-          {!loading && events.length > 0 && (
-            <div className="mb-3">
-              <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">
-                Upcoming Events
-              </p>
-              <div className="space-y-1.5">
-                {events.slice(0, 4).map(ev => (
-                  <div key={ev.id} className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-3 py-2">
-                    <span className="text-sm flex-shrink-0">
-                      {CAT_ICON[ev.category?.toLowerCase()] || '📅'}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-800 truncate">{ev.title}</p>
-                      <p className="text-[10px] text-gray-400">{formatDate(ev.start_date)}</p>
-                    </div>
-                  </div>
-                ))}
-                {events.length > 4 && (
-                  <p className="text-[10px] text-indigo-500 font-semibold text-center pt-1">
-                    +{events.length - 4} more events imported
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
+          
 
           {/* No events fallback */}
           {!loading && events.length === 0 && (
@@ -167,8 +145,8 @@ export default function CalScreen6({ onNext }: Props) {
 
           {/* Sync note */}
           <div className="flex items-start gap-2 bg-indigo-50 rounded-xl px-3 py-2.5">
-            <span className="text-sm mt-0.5">✨</span>
-            <p className="text-xs text-indigo-700 leading-relaxed">
+            <span className="text-base mt-0.5">✨</span>
+            <p className="text-sm text-indigo-700 leading-relaxed">
               We&apos;ll keep your calendar in sync and notify you about upcoming deadlines.
             </p>
           </div>
@@ -185,8 +163,8 @@ export default function CalScreen6({ onNext }: Props) {
                   <step.icon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-bold text-gray-900">{step.title}</p>
-                  <p className="text-sm text-gray-400 leading-relaxed mt-0.5">{step.sub}</p>
+                  <p className="text-[15px] font-bold text-gray-900">{step.title}</p>
+                  <p className="text-[13px] text-gray-400 leading-relaxed mt-0.5">{step.sub}</p>
                 </div>
                 <div className="w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <ChevronRight className="w-4 h-4 text-white" />

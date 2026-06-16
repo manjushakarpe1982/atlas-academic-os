@@ -22,7 +22,7 @@ export default function CalScreen3({ onHowTo, platform, url, setUrl }: Props) {
       <div className="flex flex-col bg-white min-h-[560px]">
 
         {/* ── Hero row: headline left + image right ── */}
-        <div className="flex items-start justify-between px-5 pt-5 pb-3">
+        <div className="flex items-start justify-between  pt-5 pb-3">
           <div className="flex-1">
             <h1 className="text-[20px] font-extrabold text-gray-900 leading-tight mb-1">
               Paste your calendar
@@ -50,7 +50,7 @@ export default function CalScreen3({ onHowTo, platform, url, setUrl }: Props) {
         </div>
 
         {/* ── Security note ── */}
-        <div className="mx-5 mb-4">
+        <div className=" mb-4">
           <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
             <Shield className="w-5 h-5 text-indigo-600 flex-shrink-0" />
             <div>
@@ -61,7 +61,7 @@ export default function CalScreen3({ onHowTo, platform, url, setUrl }: Props) {
         </div>
 
         {/* ── URL input ── */}
-        <div className="px-5 mb-3">
+        <div className=" mb-3">
           <label className="text-base font-bold text-gray-700 mb-2 block">Calendar Feed URL</label>
           <div className="flex items-center gap-2 border-2 border-gray-300 focus-within:border-indigo-500 rounded-xl px-3 py-3 transition-all bg-white">
             <Link2 className="w-5 h-5 text-gray-500 flex-shrink-0" />
@@ -83,7 +83,7 @@ export default function CalScreen3({ onHowTo, platform, url, setUrl }: Props) {
         </button>
 
         {/* ── Browser preview card ── */}
-        <div className="mx-5">
+        <div className="mb-4">
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl overflow-hidden">
             {/* Browser chrome */}
             <div className="bg-white border-b border-gray-100 px-3 py-2 flex items-center gap-1.5">

@@ -8,6 +8,7 @@ GET  /api/auth/me       Get current user profile (requires token)
 """
 import secrets
 from datetime import datetime, timedelta
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from app.utils.supabase_client import supabase
