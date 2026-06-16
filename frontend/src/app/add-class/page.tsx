@@ -128,15 +128,24 @@ export default function AddClassPage() {
       {/* ── SCREEN ── */}
       <main className="flex-1 flex flex-col pb-48">
         {/* Back Arrow Button */}
+       {step > 1 && (
         <div className="max-w-2xl mx-auto w-full px-4 pt-3 pb-0">
-          <button
-            onClick={back}
-            className="flex items-center gap-1 text-gray-600 hover:text-indigo-600 transition-colors p-1"
-            title="Go back"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+          <div className="flex items-center justify-between">
+            <button
+              onClick={back}
+              className="flex items-center gap-1 text-gray-600 hover:text-indigo-600 transition-colors p-1"
+              title="Go back"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            {/* Optional text for Steps 5, 6, 7 */}
+            {(step === 5 || step === 6 || step === 7) && (
+              <span className="text-xs bg-indigo-600 px-2 py-1 rounded-full font-semibold text-white">Optional</span>
+            )}
+          </div>
         </div>
+        )}
+
 
         {error && (
           <div className="max-w-2xl mx-auto w-full px-4 pt-3">
