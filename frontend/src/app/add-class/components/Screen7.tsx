@@ -72,35 +72,44 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
   };
 
   const saveAndContinue = async () => {
-    if (!classId) {
-      onNext();
-      return;
-    }
+    if (!classId) { onNext(); return; }
     setSaving(true);
-    setSaveMsg("");
+    setSaveMsg('');
     try {
-      setGrades((prev) => prev.map((g) => ({ ...g, editing: false })));
+      setGrades(prev => prev.map(g => ({ ...g, editing: false })));
       const payload = grades
-        .filter((g) => g.assessment.trim() && g.total > 0)
-        .map((g) => ({
+        .filter(g => g.assessment.trim() && g.total > 0)
+        .map(g => ({
           assessment: g.assessment,
-          score: g.score,
-          total: g.total,
+          category: 'Exam',
+          score: Math.round(g.score),
+          total: Math.round(g.total),
         }));
-      await api(`/api/classes/${classId}/grades`, {
-        method: "POST",
+      
+      if (payload.length === 0) {
+        setSaveMsg('ℹ️ No grades to save');
+        setTimeout(() => onNext(), 600);
+        return;
+      }
+
+      const response = await api(`/api/classes/${classId}/grades`, {
+        method: 'POST',
         body: { grades: payload },
       });
       setSaveMsg(`✅ ${payload.length} grade(s) saved!`);
       setTimeout(() => onNext(), 600);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Save failed";
+      let msg = 'Save failed';
+      if (e instanceof Error) {
+        msg = e.message;
+      } else if (typeof e === 'object' && e !== null) {
+        msg = JSON.stringify(e);
+      }
       setSaveMsg(`❌ ${msg}`);
     } finally {
       setSaving(false);
     }
   };
-
   useImperativeHandle(ref, () => ({ saveAndContinue }));
 
   return (
@@ -129,7 +138,7 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
           </div>
 
           {/* TABS */}
-          <div className="flex bg-gray-100 p-1.5 rounded-xl w-fit mb-4 shadow-inner">
+          <div className="flex bg-gray-100 p-1.5 rounded w-fit mb-4 shadow-inner">
             {[
               { id: "manual" as Tab, label: "Manual Entry" },
               { id: "photo" as Tab, label: "Upload Photo" },
@@ -138,7 +147,7 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`px-2 py-1.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2
+                className={`px-3 py-1.5 rounded-xl text-[13px] font-semibold transition-all duration-300 flex items-center gap-3
         ${
           tab === t.id
             ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30" // ← Blue background + White text
@@ -159,7 +168,7 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
               <div className="space-y-3">
                 {/* Empty State or Grades List */}
                 {grades.length === 0 ? (
-                  <div className="text-center py-10 p-4  bg-indigo-50 border border-indigo-200 rounded-xl shadow-xl shadow-gray-100/80">
+                  <div className="text-center py-10 p-4  bg-indigo-50 border border-indigo-100 rounded-xl shadow-xl shadow-gray-100/80">
                     <div className="mx-auto w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-3xl flex items-center justify-center mb-6 shadow-inner">
                       <span className="text-5xl">📚</span>
                     </div>
@@ -181,18 +190,18 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
                 ) : (
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center mb-2 gap-2">
                         <span>📋</span>
-                        <p className="text-xs font-bold text-gray-900">
+                        <p className="text-lg font-bold text-gray-900">
                           Your Grades
                         </p>
                       </div>
                     </div>
-                    <div className="space-y-2 mb-3">
+                    <div className="space-y-2 mb-4">
                       {grades.map((g) => (
                         <div
                           key={g.id}
-                          className={`flex items-start gap-3 p-3 rounded-lg border relative ${g.editing ? "bg-indigo-50 border-indigo-200" : "bg-white border-gray-200"}`}
+                          className={`flex items-start gap-3 p-3 rounded border relative ${g.editing ? "bg-indigo-50 border-indigo-200" : "bg-white border-gray-200"}`}
                         >
                           {/* X button - top right when editing */}
                           {g.editing && (
@@ -202,7 +211,7 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
                                   prev.filter((item) => item.id !== g.id),
                                 )
                               }
-                              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors text-xl leading-none font-bold"
+                              className="absolute top-12 right-3 w-6 h-6  bg-red-100 rounded text-red-500 transition-colors text-xl leading-none font-bold"
                             >
                               ✕
                             </button>
@@ -296,6 +305,13 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
                         </div>
                       ))}
                     </div>
+                     <button
+                  onClick={addGrade}
+                  className="w-full flex items-center justify-center mt-3 gap-2 bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700"
+                >
+                  <Plus className="w-4 h-4" />{" "}
+                  {grades.length > 0 ? "Add Another Grade" : "Add Grade"}
+                </button>
                   </div>
                 )}
 
@@ -313,34 +329,7 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
                   </p>
                 </div>
 
-                {/* Review Section */}
-                {grades.length > 0 && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <p className="text-xs font-bold text-green-900 mb-2 flex items-center gap-2">
-                      ✓ Review Extracted Grades
-                    </p>
-                    <div className="space-y-1">
-                      {grades.map((g) => (
-                        <div
-                          key={g.id}
-                          className="flex items-center gap-2 text-xs"
-                        >
-                          <input
-                            type="checkbox"
-                            defaultChecked
-                            className="w-4 h-4"
-                          />
-                          <span className="font-bold text-gray-900">
-                            {g.assessment}
-                          </span>
-                          <span className="text-gray-600 ml-auto">
-                            {g.score}/{g.total}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+               
               </div>
             )}
 
