@@ -38,7 +38,7 @@ export default function Screen10({ classId }: Props) {
 
   return (
     <Phone>
-      <div className=" py-6 flex flex-col">
+      <div className=" py-3 flex flex-col">
         {/* Success Icon with decorative elements */}
         <div className="relative flex justify-center mb-4">
           {/* Decorative sparkles */}
