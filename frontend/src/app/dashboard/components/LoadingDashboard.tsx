@@ -1,13 +1,61 @@
-"use client";
-import Image from "next/image";
+'use client';
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
-interface Props {
-  isVisible?: boolean;
+interface Props { isVisible?: boolean; }
+
+type StepState = 'pending' | 'loading' | 'completed';
+
+interface Step {
+  id: number;
+  icon: string;
+  title: string;
+  subtitle: string;
+  state: StepState;
 }
 
 export default function LoadingDashboard({ isVisible = true }: Props) {
   if (!isVisible) return null;
 
+  const [steps, setSteps] = useState<Step[]>([
+    { id: 1, icon: '📚', title: 'Loading your classes', subtitle: 'Getting your class info', state: 'loading' },
+    { id: 2, icon: '📅', title: 'Fetching deadlines', subtitle: 'Syncing your calendar', state: 'pending' },
+    { id: 3, icon: '⏱️', title: 'Calculating progress', subtitle: 'Analyzing your data', state: 'pending' },
+    { id: 4, icon: '✨', title: 'Personalizing recommendations', subtitle: 'Creating your study plan', state: 'pending' },
+  ]);
+
+  const [progress, setProgress] = useState(0);
+
+  // Animate steps with delays
+  useEffect(() => {
+   const STEP_DURATION = 6000;
+
+  const timings = [1, 2, 3, 4].map((stepId, index) => ({
+    stepId,
+    startDelay: index * STEP_DURATION,
+    duration: STEP_DURATION,
+  }));
+
+    timings.forEach(timing => {
+      // Start loading
+      setTimeout(() => {
+        setSteps(prev => prev.map(s => s.id === timing.stepId ? { ...s, state: 'loading' } : s));
+      }, timing.startDelay);
+
+      // Complete step
+      setTimeout(() => {
+        setSteps(prev => prev.map(s => s.id === timing.stepId ? { ...s, state: 'completed' } : s));
+      }, timing.startDelay + timing.duration);
+    });
+  }, []);
+
+  // Update progress bar
+  useEffect(() => {
+    const progressInterval = setInterval(() => {
+      setProgress(prev => (prev >= 95 ? 95 : prev + 1));
+    }, 150);
+    return () => clearInterval(progressInterval);
+  }, []);
   return (
     <div className="px-5 py-3 flex flex-col  bg-white">
       {/* HEADER ANIMATION */}
@@ -47,75 +95,39 @@ export default function LoadingDashboard({ isVisible = true }: Props) {
       </p>
 
       {/* PROGRESS BAR */}
-      <div className="flex items-center gap-3 mb-6">
+     <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-indigo-600 rounded-full"
-            style={{ width: "65%" }}
-          ></div>
+          <div className="h-full bg-indigo-600 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
         </div>
-        <span className="text-xs font-bold text-gray-600">65%</span>
+        <span className="text-xs font-bold text-gray-600 min-w-fit">{progress}%</span>
       </div>
 
-      {/* TASK LIST */}
+          {/* TASK LIST */}
       <div className="space-y-5 mb-6">
-        {/* Task 1 - Complete */}
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span>📚</span>
+        {steps.map(step => (
+          <div key={step.id} className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span>{step.icon}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-900">{step.title}</p>
+              <p className="text-sm text-gray-500">{step.subtitle}</p>
+            </div>
+            <div className="flex-shrink-0">
+              {step.state === 'completed' && (
+                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              )}
+              {step.state === 'loading' && (
+                <div className="w-5 h-5 rounded-full border-2 border-transparent border-t-indigo-600 animate-spin"></div>
+              )}
+              {step.state === 'pending' && (
+                <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+              )}
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-900">
-              Loading your classes
-            </p>
-            <p className="text-sm text-gray-500">Getting your class info</p>
-          </div>
-          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-xs">✓</span>
-          </div>
-        </div>
-
-        {/* Task 2 - In Progress */}
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span>📅</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-900">
-              Fetching deadlines
-            </p>
-            <p className="text-sm text-gray-500">Syncing your calendar</p>
-          </div>
-          <div className="w-5 h-5 rounded-full border-2 border-transparent border-t-indigo-600 animate-spin flex-shrink-0"></div>
-        </div>
-
-        {/* Task 3 - Pending */}
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span>⏱️</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-900">
-              Calculating progress
-            </p>
-            <p className="text-sm text-gray-500">Analyzing your data</p>
-          </div>
-          <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0"></div>
-        </div>
-
-        {/* Task 4 - Pending */}
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span>✨</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-900">
-              Personalizing recommendations
-            </p>
-            <p className="text-sm text-gray-500">Creating your study plan</p>
-          </div>
-          <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0"></div>
-        </div>
+        ))}
       </div>
 
       {/* ALMOST THERE SECTION */}
