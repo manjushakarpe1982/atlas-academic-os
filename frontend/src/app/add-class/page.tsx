@@ -145,7 +145,7 @@ export default function AddClassPage() {
             </div>
           </div>
         )}
-        <div className="flex justify-center px-4 pt-4 pb-4">
+        <div className="flex justify-center px-4 pt-1 pb-4">
           {screens[step]}
         </div>
       </main>
