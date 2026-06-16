@@ -76,7 +76,7 @@ export default function Screen3({ onNext, onBack, classId }: Props) {
 
   return (
     <Phone>
-      <div className="flex flex-col bg-white overflow-y-auto h-screen">
+      <div className="flex flex-col bg-white overflow-y-auto">
         <div className="flex items-start justify-between  pt-1 pb-3">
           <div className="flex-1">
             <h1 className="text-2xl font-extrabold text-gray-900 leading-tight mb-1">
