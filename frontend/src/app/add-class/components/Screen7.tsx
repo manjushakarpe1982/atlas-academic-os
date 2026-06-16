@@ -1,7 +1,7 @@
 "use client";
 import { useState, useImperativeHandle, forwardRef } from "react";
 import Image from "next/image";
-import { Plus, Trash2, Check, Loader2 } from "lucide-react";
+import { Plus, Trash2, Check, Loader2, Upload } from "lucide-react";
 import { api } from "@/lib/api";
 import { Phone } from "./shared";
 
@@ -72,37 +72,40 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
   };
 
   const saveAndContinue = async () => {
-    if (!classId) { onNext(); return; }
+    if (!classId) {
+      onNext();
+      return;
+    }
     setSaving(true);
-    setSaveMsg('');
+    setSaveMsg("");
     try {
-      setGrades(prev => prev.map(g => ({ ...g, editing: false })));
+      setGrades((prev) => prev.map((g) => ({ ...g, editing: false })));
       const payload = grades
-        .filter(g => g.assessment.trim() && g.total > 0)
-        .map(g => ({
+        .filter((g) => g.assessment.trim() && g.total > 0)
+        .map((g) => ({
           assessment: g.assessment,
-          category: 'Exam',
+          category: "Exam",
           score: Math.round(g.score),
           total: Math.round(g.total),
         }));
-      
+
       if (payload.length === 0) {
-        setSaveMsg('ℹ️ No grades to save');
+        setSaveMsg("ℹ️ No grades to save");
         setTimeout(() => onNext(), 600);
         return;
       }
 
       const response = await api(`/api/classes/${classId}/grades`, {
-        method: 'POST',
+        method: "POST",
         body: { grades: payload },
       });
       setSaveMsg(`✅ ${payload.length} grade(s) saved!`);
       setTimeout(() => onNext(), 600);
     } catch (e: unknown) {
-      let msg = 'Save failed';
+      let msg = "Save failed";
       if (e instanceof Error) {
         msg = e.message;
-      } else if (typeof e === 'object' && e !== null) {
+      } else if (typeof e === "object" && e !== null) {
         msg = JSON.stringify(e);
       }
       setSaveMsg(`❌ ${msg}`);
@@ -179,13 +182,13 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
                     <p className="text-gray-500 text-[15px] leading-relaxed">
                       Add your grades manually or upload a photo to get started
                     </p>
-                     <button
-                  onClick={addGrade}
-                  className="w-full flex items-center justify-center mt-3 gap-2 bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700"
-                >
-                  <Plus className="w-4 h-4" />{" "}
-                  {grades.length > 0 ? "Add Another Grade" : "Add Grade"}
-                </button>
+                    <button
+                      onClick={addGrade}
+                      className="w-full flex items-center justify-center mt-3 gap-2 bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700"
+                    >
+                      <Plus className="w-4 h-4" />{" "}
+                      {grades.length > 0 ? "Add Another Grade" : "Add Grade"}
+                    </button>
                   </div>
                 ) : (
                   <div>
@@ -305,56 +308,97 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
                         </div>
                       ))}
                     </div>
-                     <button
-                  onClick={addGrade}
-                  className="w-full flex items-center justify-center mt-3 gap-2 bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700"
-                >
-                  <Plus className="w-4 h-4" />{" "}
-                  {grades.length > 0 ? "Add Another Grade" : "Add Grade"}
-                </button>
+                    <button
+                      onClick={addGrade}
+                      className="w-full flex items-center justify-center mt-3 gap-2 bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700"
+                    >
+                      <Plus className="w-4 h-4" />{" "}
+                      {grades.length > 0 ? "Add Another Grade" : "Add Grade"}
+                    </button>
                   </div>
                 )}
 
+                {grades.length > 0 ? (
+                  <div className="bg-gradient-to-br from-violet-50 mt-6 to-fuchsia-50 border border-violet-100 rounded-xl p-3 shadow-sm">
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="w-9 h-9 bg-white shadow flex items-center justify-center rounded-2xl text-xl">
+                        ✨
+                      </div>
+                      <h3 className="text-xl font-bold text-violet-700 mt-1">
+                        Tips
+                      </h3>
+                    </div>
+
+                    <ul className="space-y-2">
+                      <li className="flex gap-3">
+                        <div className="mt-0.5">
+                          <Check className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <span className="text-[14px] leading-relaxed text-gray-700">
+                          Add quizzes, exams, homework, labs, etc.
+                        </span>
+                      </li>
+
+                      <li className="flex gap-3">
+                        <div className="mt-0.5">
+                          <Check className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <span className="text-[14px] leading-relaxed text-gray-700">
+                          Enter scores as you see them
+                        </span>
+                      </li>
+
+                      <li className="flex gap-3">
+                        <div className="mt-0.5">
+                          <Check className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <span className="text-[14px] leading-relaxed text-gray-700">
+                          You can edit or delete anytime
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                    <p className="text-base font-bold text-gray-900 mb-2 flex items-center gap-1">
+                      <span>❓</span>Why add grades?
+                    </p>
+                    <p className="text-sm text-gray-700 leading-snug">
+                      Your grades help Atlas prioritize what to study and how
+                      much time to spend.
+                    </p>
+                  </div>
+                )}
                 {/* Add Grade Button */}
-               
 
                 {/* Why Add Grades - YELLOW */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-                  <p className="text-base font-bold text-gray-900 mb-2 flex items-center gap-1">
-                    <span>❓</span>Why add grades?
-                  </p>
-                  <p className="text-sm text-gray-700 leading-snug">
-                    Your grades help Atlas prioritize what to study and how much
-                    time to spend.
-                  </p>
-                </div>
-
-               
               </div>
             )}
 
             {/* UPLOAD PHOTO */}
             {tab === "photo" && (
-              <div className="space-y-3">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+              <div className="space-y-5">
+                <div className="border-2 border-dashed border-indigo-400 bg-gray-50 rounded-xl  text-center flex flex-col items-center justify-center min-h-[300px]">
                   <span className="text-4xl block mb-2">📷</span>
-                  <p className="text-sm font-bold text-gray-900">
+
+                  <p className="text-lg font-semibold text-gray-900 mb-2">
                     Upload a photo of your gradebook
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Take a clear photo of your grade report
+
+                  <p className="text-sm text-gray-500 max-w-[260px] mb-5">
+                    Take a clear photo of your grade report and upload it here
                   </p>
+
+                  <button className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3.5 rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-200">
+                    📷 Choose Photo
+                  </button>
                 </div>
 
-                <button className="w-full flex items-center justify-center gap-2 border-2 border-indigo-600 text-indigo-600 py-2.5 rounded-lg font-bold text-sm hover:bg-indigo-50">
-                  📷 Choose Photo
-                </button>
-
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <p className="text-xs font-bold text-gray-900 mb-2 flex items-center gap-2">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl  p-3">
+                  <p className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
                     <span>📷</span> Photo Tips
                   </p>
-                  <ul className="text-xs text-gray-700 space-y-1">
+                  <ul className="text-sm text-gray-700 space-y-1">
                     <li className="flex items-start gap-2">
                       <span className="text-green-600 mt-0.5">✅</span>{" "}
                       <span>Make sure all text is clear and readable</span>
@@ -374,26 +418,33 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
 
             {/* SCREENSHOT */}
             {tab === "screenshot" && (
-              <div className="space-y-3">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
-                  <span className="text-4xl block mb-2">📸</span>
-                  <p className="text-sm font-bold text-gray-900">
+              <div className="flex flex-col items-center text-center space-y-5">
+                <Image
+                  src="https://res.cloudinary.com/mview/image/upload/v1781596631/atlas/entergradescrenshot.png"
+                  alt="Grade"
+                  width={350}
+                  height={300}
+                  className="object-contain w-full max-w-[280px] rounded-2xl shadow-md"
+                  priority
+                />
+
+                <div>
+                  <p className="text-lg font-semibold text-gray-900 mb-1">
                     Upload Gradebook Screenshot
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 max-w-[260px]">
                     Take a screenshot of your online gradebook
                   </p>
                 </div>
 
-                <button className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-indigo-700">
-                  📥 Upload Screenshot
+                <button className="w-full max-w-[260px] flex items-center justify-center gap-2 bg-indigo-600 text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-indigo-700 transition-all active:scale-[0.97]">
+                  <Upload className="w-5 h-5" />
+                  Upload Screenshot
                 </button>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-900">
-                    🔒 Your data is private and secure
-                  </p>
-                </div>
+                <p className="text-xs text-blue-700 flex items-center gap-1.5">
+                  🔒 Your data is private and secure
+                </p>
               </div>
             )}
           </div>
