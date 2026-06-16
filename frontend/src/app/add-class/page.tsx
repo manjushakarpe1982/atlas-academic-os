@@ -1,8 +1,9 @@
 'use client';
+
 /**
  * page.tsx — Add Class orchestrator
  *
- * Steps (10 total — Screen2 removed, class name moved to Screen1):
+ * Steps 1–9 in proper sequence:
  *  1  Intro + class name input
  *  2  Upload syllabus
  *  3  AI Parsing (no buttons)
@@ -14,39 +15,36 @@
  *  9  Success
  *  10 Your classes list
  */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, HelpCircle, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+
 import { api, API_BASE, getToken } from '@/lib/api';
 
-import Screen1  from './components/Screen1';
-import Screen3  from './components/Screen3';
-import Screen4  from './components/Screen4';
-import Screen5  from './components/Screen5';
-import Screen6  from './components/Screen6';
-import Screen7  from './components/Screen7';
-import Screen8  from './components/Screen8';
-import Screen9  from './components/Screen9';
-import Screen10 from './components/Screen10';
-import Screen11 from './components/Screen11';
-import Link from 'next/link';
+import Screen1 from './components/Screen1';
+import Screen2 from './components/Screen2';
+import Screen3 from './components/Screen3';
+import Screen4 from './components/Screen4';
+import Screen5 from './components/Screen5';
+import Screen6 from './components/Screen6';
+import Screen7, { Screen7Handle } from './components/Screen7';
+import Screen8 from './components/Screen8';
+import Screen9 from './components/Screen9';
 import AppHeader from '../_components/AppHeader';
 
-const TOTAL_STEPS = 10;
+const TOTAL_STEPS = 9;
 
 type BtnCfg = { left: string | null; right: string | null };
 const BUTTONS: Record<number, BtnCfg> = {
   1:  { left: null,           right: 'Continue'                },
   2:  { left: 'Back',         right: 'Continue'                },
   3:  { left: null,           right: null                      }, // AI parsing — no buttons
-  4:  { left: 'Back',         right: 'Continue'                },
-  5:  { left: null,           right: 'Everything Looks Good ✓' },
-  6:  { left: 'Skip for now', right: 'Continue'                },
-  7:  { left: null,           right: 'Yes, Add This Book'      },
-  8:  { left: 'Skip for now', right: 'Save & Continue'         },
-  9:  { left: 'Skip',         right: 'Go to Dashboard'         },
-
-};
+  4:  { left: 'Back',         right: 'Everything Looks Good ✓' },
+  5:  { left: 'Skip for now', right: 'Continue'                },
+  6:  { left: null,           right: 'Yes, Add This Book'      },
+  7:  { left: 'Skip for now', right: 'Save & Continue'         },
+  8:  { left: null,           right: 'Continue'                },
+  9:  { left: 'Go to Dashboard', right: 'Continue →'             } };
 
 export default function AddClassPage() {
   const router = useRouter();
@@ -57,6 +55,7 @@ export default function AddClassPage() {
   const [classId,   setClassId]   = useState<string | null>(null);
   const [error,     setError]     = useState('');
   const [loading,   setLoading]   = useState(false);
+  const screen7Ref = useRef<Screen7Handle>(null);
 
   const next = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
   const back = () => {
@@ -75,8 +74,7 @@ export default function AddClassPage() {
       try {
         const cls = await api<{ id: string }>('/api/classes', {
           method: 'POST',
-          body:   { name: className.trim(), term: 'Fall 2026' },
-        });
+          body:   { name: className.trim(), term: 'Fall 2026' } });
         setClassId(cls.id);
         next();
       } catch (e: unknown) {
@@ -85,17 +83,16 @@ export default function AddClassPage() {
       return;
     }
 
-    // Step 9 → Add Another class (reset)
-    if (step === 9) {
-      setStep(1);
-      setClassName('');
-      setClassId(null);
+    // Step 7 right = "Save & Continue" → save grades first
+    if (step === 7) {
+      screen7Ref.current?.saveAndContinue();
       return;
     }
 
-    // Step 10 → Go to dashboard
-    if (step === 10) {
-      router.push('/dashboard');
+    // Step 8 right = "Continue" → go to Screen9 (classes list)
+    // Step 9 right = "Continue →" → go to /calendar
+    if (step === 9) {
+      router.push('/calendar');
       return;
     }
 
@@ -103,35 +100,33 @@ export default function AddClassPage() {
   };
 
   const handleLeft = () => {
-    if (step === 9) { setStep(1); setClassName(''); setClassId(null); return; }
+    if (step === 5) { setStep(7); return; }              // Skip textbook → jump to grades
+    if (step === 9) { router.push('/dashboard'); return; }  // Go to Dashboard
     back();
   };
 
   const btn = BUTTONS[step];
 
   // Map step numbers to screen components
-  // Step 3 = Screen3 (was step 3 upload), etc. — we skip old Screen2
   const screens: Record<number, React.ReactNode> = {
-    1:  <Screen1  onNext={next} onBack={back} className={className} setClassName={setClassName} />,
-    2:  <Screen3  onNext={next} onBack={back} classId={classId} />,
-    3:  <Screen4  onNext={next} onBack={back} classId={classId} />,
-    4:  <Screen5  onNext={next} onBack={back} classId={classId} />,
-    5:  <Screen6  onNext={next} onBack={back} classId={classId} />,
-    6:  <Screen7  onNext={next} onBack={back} />,
-    7:  <Screen8  onNext={next} onBack={back} />,
-    8:  <Screen9  onNext={next} onBack={back} classId={classId} />,
-    9:  <Screen10 onNext={next} onBack={back} />,
-    10: <Screen11 onAddAnother={() => { setStep(1); setClassName(''); setClassId(null); }} />,
-  };
+    1: <Screen1 onNext={next} onBack={back} className={className} setClassName={setClassName} />,
+    2: <Screen2 onNext={next} onBack={back} classId={classId} />,
+    3: <Screen3 onNext={next} onBack={back} classId={classId} />,
+    4: <Screen4 onNext={next} onBack={back} classId={classId} />,
+    5: <Screen5 onNext={next} onBack={back} />,
+    6: <Screen6 onNext={next} onBack={back} />,
+    7: <Screen7 ref={screen7Ref} onNext={next} onBack={back} classId={classId} />,
+    8: <Screen8 onNext={next} onBack={back} classId={classId} />,
+    9: <Screen9 onAddAnother={() => { setStep(1); setClassName(''); setClassId(null); }} /> };
 
   return (
-    <div className=" flex flex-col">
+    <div className="min-h-screen flex flex-col">
 
       {/* ── HEADER ── */}
       <AppHeader right="both" />
 
       {/* ── SCREEN ── */}
-      <main className="flex-1 flex flex-col ">
+      <main className="flex-1 flex flex-col pb-48">
         {error && (
           <div className="max-w-2xl mx-auto w-full px-4 pt-3">
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm font-medium">

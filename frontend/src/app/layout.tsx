@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Lexend_Deca } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from '@/context/ThemeContext';
 
 const lexendDeca = Lexend_Deca({
   subsets: ['latin'],
@@ -16,9 +17,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={lexendDeca.variable}>
+    <html lang="en" suppressHydrationWarning className={lexendDeca.variable}>
       <body className={lexendDeca.className}>
-        {children}
+        <ThemeProvider>
+          <div id="atlas-root">
+            {children}
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

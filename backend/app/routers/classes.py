@@ -442,3 +442,77 @@ async def confirm_class(class_id: str, request: Request):
 
     supabase.table("files").update({"status": "done"}).eq("id", fid).execute()
     return {"class_id": class_id, "status": "confirmed"}
+
+# ── GET /api/classes/{id} ─────────────────────────────────────────────────
+
+@router.get("/{class_id}")
+async def get_class_by_id(class_id: str, request: Request):
+    user_id = _get_user(request)
+    cls = _get_class(class_id, user_id)
+    return cls
+
+
+# ── Models ────────────────────────────────────────────────────────────────
+
+class GradeEntry(BaseModel):
+    assessment: str
+    category:   str
+    score:      float
+    total:      float
+
+class SaveGradesRequest(BaseModel):
+    grades: list[GradeEntry]
+
+
+# ── POST /api/classes/{id}/grades ─────────────────────────────────────────
+
+@router.post("/{class_id}/grades")
+async def save_grades(class_id: str, req: SaveGradesRequest, request: Request):
+    """Save student-entered grades for a class. Replaces existing manual grades."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    if not req.grades:
+        return {"saved": 0}
+
+    # Delete existing manual grades for this class
+    supabase.table("grades").delete() \
+        .eq("class_id", class_id) \
+        .eq("user_id", user_id) \
+        .eq("source", "manual") \
+        .execute()
+
+    # Insert new grades
+    saved = 0
+    for g in req.grades:
+        if g.assessment.strip() and g.total > 0:
+            supabase.table("grades").insert({
+                "user_id":    user_id,
+                "class_id":   class_id,
+                "category":   g.category,
+                "title":      g.assessment.strip(),
+                "score":      g.score,
+                "max_score":  g.total,
+                "source":     "manual",
+            }).execute()
+            saved += 1
+
+    return {"saved": saved, "message": f"{saved} grade(s) saved successfully."}
+
+
+# ── GET /api/classes/{id}/grades ──────────────────────────────────────────
+
+@router.get("/{class_id}/grades")
+async def get_grades(class_id: str, request: Request):
+    """Get all saved grades for a class."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    result = supabase.table("grades") \
+        .select("*") \
+        .eq("class_id", class_id) \
+        .eq("user_id", user_id) \
+        .order("created_at") \
+        .execute()
+
+    return {"grades": result.data or []}
