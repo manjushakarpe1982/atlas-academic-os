@@ -49,15 +49,15 @@ export default function ProfilePage() {
       </div>
 
       {/* ── Settings list ── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
         {SETTINGS.map((s, i) => (
           <Link key={s.label} href={s.href}
             className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-all ${
               i < SETTINGS.length - 1 ? 'border-b border-gray-50' : ''
             }`}>
-            <span className="text-xl w-8 text-center">{s.icon}</span>
+            <span className="text-xl w-9 text-center">{s.icon}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-800">{s.label}</p>
+              <p className="text-[15px] font-bold text-gray-800">{s.label}</p>
               <p className="text-xs text-gray-400">{s.sub}</p>
             </div>
             {s.toggle ? (
@@ -65,7 +65,7 @@ export default function ProfilePage() {
                 <div className="w-4 h-4 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm" />
               </div>
             ) : (
-              <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+              <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
             )}
           </Link>
         ))}
@@ -73,8 +73,8 @@ export default function ProfilePage() {
 
       {/* ── Logout ── */}
       <button onClick={() => setShowLogout(true)}
-        className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 font-bold py-3.5 rounded-2xl text-sm border border-red-100 hover:bg-red-100 transition-all">
-        <LogOut className="w-4 h-4" /> Log Out
+        className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 font-bold py-3 rounded-xl text-base border border-red-100 hover:bg-red-100 transition-all">
+        <LogOut className="w-5 h-5" /> Log Out
       </button>
 
       {/* ── Logout confirmation modal ── */}

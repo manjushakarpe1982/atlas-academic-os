@@ -29,13 +29,13 @@ export default function DarkModePage() {
                            'from-white to-gray-800';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <BackHeader title="Dark Mode" />
 
       <div className="px-4 py-5 space-y-4">
 
         {/* Live preview */}
-        <div className={`bg-gradient-to-br ${previewBg} rounded-3xl p-6 text-center transition-all duration-500 border border-gray-100 shadow-sm`}>
+        <div className={`bg-gradient-to-br ${previewBg} rounded-xl p-4 text-center transition-all duration-500 border border-gray-100 shadow-sm`}>
           <div className="text-5xl mb-3">
             {pending === 'dark' ? '🌙' : pending === 'light' ? '☀️' : '💻'}
           </div>
@@ -71,7 +71,7 @@ export default function DarkModePage() {
         <div className="space-y-2.5">
           {THEMES.map(t => (
             <button key={t.id} onClick={() => setPending(t.id)}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${
+              className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
                 pending === t.id
                   ? 'border-indigo-600 bg-indigo-50 shadow-sm'
                   : 'border-gray-200 bg-white hover:border-indigo-200 hover:bg-gray-50'
@@ -84,8 +84,8 @@ export default function DarkModePage() {
                 {t.icon}
               </div>
               <div className="flex-1 text-left">
-                <p className="text-sm font-extrabold text-gray-900">{t.label}</p>
-                <p className="text-xs text-gray-400">{t.sub}</p>
+                <p className="text-base font-bold text-gray-900">{t.label}</p>
+                <p className="text-sm text-gray-400">{t.sub}</p>
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                 pending === t.id ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300'
@@ -98,8 +98,8 @@ export default function DarkModePage() {
 
         {/* Current status */}
         <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
-          <p className="text-xs text-indigo-700">
-            Currently active: <strong>{THEMES.find(t => t.id === theme)?.label}</strong>
+          <p className="text-sm text-indigo-700">
+            Currently Active: <strong>{THEMES.find(t => t.id === theme)?.label}</strong>
             {pending !== theme && <span className="text-indigo-500"> · Click Apply to switch to {THEMES.find(t => t.id === pending)?.label}</span>}
           </p>
         </div>
@@ -107,7 +107,7 @@ export default function DarkModePage() {
         {/* Apply button */}
         <button onClick={handleApply}
           disabled={pending === theme && !applied}
-          className={`w-full flex items-center justify-center gap-2 font-bold py-3.5 rounded-2xl text-sm shadow-md transition-all ${
+          className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl text-base shadow-md transition-all ${
             applied
               ? 'bg-green-500 text-white'
               : pending === theme
