@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Trash2, Info, CheckCircle2 } from 'lucide-react';
 import BackHeader from '../../BackHeader';
+import Image from 'next/image';
 
 interface UploadedFile {
   id: string;
@@ -101,16 +102,26 @@ export default function DeleteFilesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <BackHeader title="Manage Uploaded Files" />
 
-      <div className="px-4 py-6 space-y-4">
+      <div className="px-4 mt-2">
+
+        <Image
+
+          src="https://res.cloudinary.com/mview/image/upload/v1781703504/atlas/privacypage2.png"
+          alt="Privacy Data Illustration"
+          width={300}
+          height={200}
+          className="mx-auto"
+        />
         {/* Subtitle */}
-        <p className="text-sm text-gray-600">View and delete your uploaded files.</p>
+        <p className="text-lg text-center font-bold text-gray-800 mb-1">Manage your uploaded files</p>
+        <p className="text-sm text-center text-gray-600">View and delete your uploaded files.</p>
 
         {/* File Count */}
         {files.length > 0 && (
-          <div className="text-sm font-bold text-indigo-600">
+          <div className="text-sm font-bold text-indigo-600 mt-4 mb-2">
             {files.length} File{files.length !== 1 ? 's' : ''}
           </div>
         )}
@@ -121,7 +132,7 @@ export default function DeleteFilesPage() {
             {files.map((file) => (
               <div
                 key={file.id}
-                className="bg-white border-2 border-gray-200 rounded-2xl p-4 flex items-start gap-4 hover:border-gray-300 transition-all"
+                className="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-4 hover:border-gray-300 transition-all"
               >
                 {/* File Icon */}
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${file.color}`}>
@@ -133,7 +144,7 @@ export default function DeleteFilesPage() {
                   <p className="font-bold text-gray-900 truncate">{file.name}</p>
                   <p className="text-xs text-gray-600 mt-1">{file.className}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Uploaded on {file.uploadDate} • {file.fileSize}
+                    Uploaded on {file.uploadDate} <br /> • {file.fileSize}
                   </p>
                 </div>
 
@@ -156,7 +167,7 @@ export default function DeleteFilesPage() {
 
         {/* Deleted File Toast */}
         {deletedFile && (
-          <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex mt-3 items-start gap-3 animate-in fade-in">
             <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-green-900 font-medium">
               File deleted successfully
@@ -169,7 +180,7 @@ export default function DeleteFilesPage() {
           <button
             onClick={handleDeleteAll}
             disabled={deletingAll}
-            className="w-full border-2 border-red-600 text-red-600 font-bold py-3 rounded-2xl hover:bg-red-50 transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-6"
+            className="w-full border border-red-600 text-red-600 font-bold py-3 rounded-lg hover:bg-red-50 transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-6"
           >
             <Trash2 className="w-5 h-5" />
             {deletingAll ? 'Deleting all files...' : 'Delete All Uploaded Files'}
@@ -177,7 +188,7 @@ export default function DeleteFilesPage() {
         )}
 
         {/* Info Box */}
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 flex gap-3 mt-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3 mt-6">
           <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-blue-900 leading-relaxed">
             Deleting a file will remove it from Atlas. It won't delete your course data.
