@@ -13,7 +13,7 @@ const SETTINGS = [
   { label: 'Study Reminders',        sub: 'Set study goals & reminders',icon: '⏰', href: '/dashboard/profile/study-reminders'        },
   { label: 'Dark Mode',              sub: 'App UI preferences',         icon: '🌙', href: '/dashboard/profile/dark-mode', toggle: true },
   { label: 'Help & Support',         sub: 'Get help and contact us',    icon: '❓', href: '/dashboard/profile/help-support'           },
-  { label: 'Privacy Policy',         sub: 'How we protect your data',   icon: '🔒', href: '/dashboard/profile/privacy-policy'         },
+  { label: 'Privacy & Data',         sub: 'Manage your privacy settings', icon: '🔒', href: '/dashboard/profile/privacy-data'         },
 ];
 
 export default function ProfilePage() {
