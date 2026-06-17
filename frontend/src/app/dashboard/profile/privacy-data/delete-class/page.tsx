@@ -131,12 +131,12 @@ export default function DeleteClassDataPage() {
 
   // Main Delete Class Data Page + Modal Overlay
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <BackHeader title="Delete Class Data" />
 
       <div className="px-4 py-6 space-y-4">
         {/* Subtitle */}
-        <p className="text-sm text-gray-600">Choose a class to delete its data.</p>
+        <p className="text-lg text-gray-700 font-semibold">Choose a class to delete its data.</p>
 
         {/* Classes List */}
         <div className="space-y-2">
@@ -144,10 +144,12 @@ export default function DeleteClassDataPage() {
             <button
               key={cls.id}
               onClick={() => handleSelectClass(cls.id)}
-              className="w-full bg-white border-2 border-gray-200 rounded-2xl p-4 hover:border-indigo-300 transition-all flex items-center gap-4 group"
+              className="w-full bg-white border border-gray-200 rounded-lg p-3 hover:border-indigo-300 transition-all flex items-center gap-4 group"
             >
               {/* Icon */}
-              <div className="text-3xl">{cls.icon}</div>
+              <div className={`w-10 h-10 rounded-full flex items-center  justify-center flex-shrink-0 ${cls.color}`}>
+              <div className="text-lg">{cls.icon}</div>
+                </div>
 
               {/* Class Info */}
               <div className="flex-1 text-left">
@@ -160,13 +162,13 @@ export default function DeleteClassDataPage() {
               </div>
 
               {/* Chevron */}
-              <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0 group-hover:text-indigo-600 transition-colors" />
+              <ChevronRight className="w-6 h-6 text-gray-500 flex-shrink-0 group-hover:text-indigo-600 transition-colors" />
             </button>
           ))}
         </div>
 
         {/* Info Box */}
-        <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-4 flex gap-3 mt-6">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex gap-3 mt-6">
           <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-orange-900 leading-relaxed">
             This will delete all data of the selected class, including grades, notes, assignments, and files.
@@ -190,7 +192,7 @@ export default function DeleteClassDataPage() {
             </button>
 
             {/* Icon */}
-            <div className="flex justify-center pt-4">
+            <div className="flex justify-center ">
               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
                 <Trash2 className="w-8 h-8 text-orange-600" />
               </div>
@@ -205,20 +207,20 @@ export default function DeleteClassDataPage() {
             </div>
 
             {/* What will be deleted */}
-            <div className="space-y-2">
-              {DELETE_ITEMS.map((item) => (
-                <div key={item} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-orange-500 flex-shrink-0"></div>
-                  <p className="text-sm text-gray-700">{item}</p>
-                </div>
-              ))}
-            </div>
+            <div className="space-y-3 bg-orange-50 border border-orange-200 rounded-xl p-4">
+    {DELETE_ITEMS.map((item) => (
+      <div key={item} className="flex  items-center gap-3">
+        <CheckCircle2 className="w-5 h-5 text-orange-500 flex-shrink-0" />
+        <span className="text-sm text-gray-700">{item}</span>
+      </div>
+    ))}
+  </div>
 
             {/* Delete Button */}
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-all disabled:opacity-70 mt-4"
+              className="w-full bg-red-600 text-white font-bold py-2.5 rounded-lg hover:bg-red-700 transition-all disabled:opacity-70 mt-4"
             >
               {deleting ? 'Deleting...' : 'Delete Class'}
             </button>
@@ -229,7 +231,7 @@ export default function DeleteClassDataPage() {
                 setShowConfirm(false);
                 setSelectedClassId(null);
               }}
-              className="w-full bg-gray-200 text-gray-900 font-bold py-3 rounded-xl hover:bg-gray-300 transition-all"
+              className="w-full bg-gray-200 text-gray-900 font-bold py-2.5 rounded-lg hover:bg-gray-300 transition-all"
             >
               Cancel
             </button>
