@@ -65,14 +65,14 @@ export default function AccountSettingsPage() {
   };
 
   const inputCls = `
-    w-full px-4 py-3 text-sm font-semibold text-gray-900
-    bg-white border-2 border-gray-200 rounded-xl outline-none
+    w-full px-4 py-2.5 text-sm font-semibold text-gray-900
+    bg-white border-2 border-gray-300 rounded-xl outline-none
     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100
     hover:border-indigo-300 transition-all placeholder:text-gray-300
   `;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <BackHeader title="Account Settings" />
 
       <div className="px-4 py-5 space-y-5">
@@ -94,16 +94,16 @@ export default function AccountSettingsPage() {
         <div className="space-y-3">
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-extrabold text-gray-600 mb-1.5 uppercase tracking-wide">
-              <User className="w-3 h-3" /> Full Name
+            <label className="flex items-center gap-1.5 text-sm font-bold text-gray-600 mb-1.5 ">
+              <User className="w-4 h-4" /> Full Name
             </label>
             <input type="text" value={name} onChange={e => setName(e.target.value)}
               placeholder="Enter your full name" className={inputCls} />
           </div>
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-extrabold text-gray-600 mb-1.5 uppercase tracking-wide">
-              <Mail className="w-3 h-3" /> Email Address
+            <label className="flex items-center gap-1.5 text-sm font-bold text-gray-600 mb-1.5 ">
+              <Mail className="w-4 h-4" /> Email Address
               <span className="text-gray-400 font-normal normal-case tracking-normal ml-1">(Cannot be changed)</span>
             </label>
             <input type="email" value={email} disabled
@@ -111,16 +111,16 @@ export default function AccountSettingsPage() {
           </div>
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-extrabold text-gray-600 mb-1.5 uppercase tracking-wide">
-              <Building2 className="w-3 h-3" /> University
+            <label className="flex items-center gap-1.5 text-sm font-bold text-gray-600 mb-1.5 ">
+              <Building2 className="w-4 h-4" /> University
             </label>
             <input type="text" value={uni} onChange={e => setUni(e.target.value)}
               placeholder="Your university name" className={inputCls} />
           </div>
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-extrabold text-gray-600 mb-1.5 uppercase tracking-wide">
-              <BookOpen className="w-3 h-3" /> Major
+            <label className="flex items-center gap-1.5 text-sm font-bold text-gray-600 mb-1.5 ">
+              <BookOpen className="w-4 h-4" /> Major
               <span className="text-gray-400 font-normal normal-case tracking-normal">(Optional)</span>
             </label>
             <input type="text" value={major} onChange={e => setMajor(e.target.value)}
@@ -128,8 +128,8 @@ export default function AccountSettingsPage() {
           </div>
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-extrabold text-gray-600 mb-1.5 uppercase tracking-wide">
-              <GraduationCap className="w-3 h-3" /> Academic Year
+            <label className="flex items-center gap-1.5 text-sm font-bold text-gray-600 mb-1.5 ">
+              <GraduationCap className="w-4 h-4" /> Academic Year
             </label>
             <select value={year} onChange={e => setYear(e.target.value)}
               className={inputCls + ' cursor-pointer'}>
@@ -154,7 +154,7 @@ export default function AccountSettingsPage() {
 
         {/* Save button */}
         <button onClick={handleSave} disabled={saving}
-          className={`w-full flex items-center justify-center gap-2 font-bold py-3.5 rounded-2xl text-sm shadow-md transition-all disabled:opacity-70 ${
+          className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl text-base shadow-md transition-all disabled:opacity-70 ${
             saved ? 'bg-green-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
           }`}>
           {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> :
@@ -163,8 +163,8 @@ export default function AccountSettingsPage() {
         </button>
 
         {/* Change Password */}
-        <button className="w-full flex items-center justify-center gap-2 border-2 border-gray-200 hover:border-indigo-300 text-gray-700 hover:text-indigo-600 font-bold py-3 rounded-2xl text-sm transition-all">
-          <Lock className="w-4 h-4" /> Change Password
+        <button className="w-full flex items-center justify-center gap-2 border-2 border-gray-200 hover:border-indigo-300 text-gray-700 hover:text-indigo-600 font-bold py-3 rounded-xl text-base transition-all">
+          <Lock className="w-5 h-5" /> Change Password
         </button>
 
       </div>
