@@ -76,7 +76,7 @@ export default function DeleteAccountPage() {
 
   // Main Delete Account Page + Modal Overlay
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <BackHeader title="Delete Account" />
 
       <div className="px-4 py-6 space-y-6">
@@ -95,15 +95,16 @@ export default function DeleteAccountPage() {
 
         {/* What will be deleted */}
         <div>
-          <h2 className="font-bold text-gray-900 mb-3">This will permanently delete:</h2>
-          <div className="space-y-2">
+          
+          <div className="space-y-2 items-center gap-3 bg-white border-2 border-gray-200 rounded-xl p-3">
+            <h2 className="font-bold text-gray-900 mb-3">This will permanently delete:</h2>
             {[
               'Your account',
               'All your data',
               'All uploaded files',
               'All preferences and settings',
             ].map((item) => (
-              <div key={item} className="flex items-center gap-3 bg-white border-2 border-gray-200 rounded-xl p-3">
+              <div key={item} className="">
                 <div className="w-5 h-5 rounded-full bg-red-600 flex-shrink-0"></div>
                 <p className="text-sm font-medium text-gray-900">{item}</p>
               </div>
@@ -112,8 +113,8 @@ export default function DeleteAccountPage() {
         </div>
 
         {/* Warning */}
-        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex gap-3">
+          <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-red-900 leading-relaxed">
             This action cannot be undone. Make sure you have exported any important data before deleting your account.
           </p>
@@ -122,7 +123,7 @@ export default function DeleteAccountPage() {
         {/* Delete Button */}
         <button
           onClick={() => setShowConfirm(true)}
-          className="w-full bg-red-600 text-white font-bold py-3.5 rounded-2xl hover:bg-red-700 transition-all"
+          className="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-all"
         >
           Delete Account
         </button>
@@ -131,7 +132,7 @@ export default function DeleteAccountPage() {
       {/* Confirmation Modal Overlay */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl border-2 border-gray-200 p-8 max-w-sm w-full space-y-4 text-center animate-in fade-in">
+          <div className="bg-white rounded-xl border-2 border-gray-200 p-8 max-w-sm w-full space-y-4 text-center animate-in fade-in">
             {/* Icon */}
             <div className="flex justify-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
@@ -141,21 +142,21 @@ export default function DeleteAccountPage() {
 
             {/* Title & Description */}
             <div className="space-y-2">
-              <h2 className="font-bold text-gray-900 text-lg">Delete your account?</h2>
+              <h2 className="font-bold text-gray-900 text-xl">Delete your account?</h2>
               <p className="text-sm text-gray-600">
                 This will permanently delete your account and all associated data. This action cannot be undone.
               </p>
             </div>
 
             {/* Confirmation Input */}
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <p className="text-sm text-gray-600 font-medium">Type DELETE to confirm</p>
               <input
                 type="text"
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
                 placeholder="Type DELETE"
-                className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-center font-bold text-gray-900 placeholder-gray-400 focus:border-red-500 focus:outline-none transition-colors"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-center font-bold text-gray-900 placeholder-gray-400 focus:border-red-500 focus:outline-none transition-colors"
               />
             </div>
 
@@ -163,7 +164,7 @@ export default function DeleteAccountPage() {
             <button
               onClick={handleDelete}
               disabled={confirmText !== 'DELETE' || deleting}
-              className="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-red-600 text-white font-bold py-2.5 rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {deleting ? 'Deleting...' : 'DELETE'}
             </button>
@@ -174,7 +175,7 @@ export default function DeleteAccountPage() {
                 setShowConfirm(false);
                 setConfirmText('');
               }}
-              className="w-full bg-gray-200 text-gray-900 font-bold py-3 rounded-xl hover:bg-gray-300 transition-all"
+              className="w-full bg-gray-200 text-gray-900 font-bold py-2.5 rounded-xl hover:bg-gray-300 transition-all"
             >
               Cancel
             </button>

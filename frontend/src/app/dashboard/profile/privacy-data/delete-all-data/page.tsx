@@ -157,7 +157,7 @@ export default function DeleteAllDataPage() {
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
                 placeholder="Type DELETE"
-                className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-center font-bold text-gray-900 placeholder-gray-400 focus:border-red-500 focus:outline-none transition-colors"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-center font-bold text-gray-900 placeholder-gray-400 focus:border-red-500 focus:outline-none transition-colors"
               />
             </div>
 
@@ -165,7 +165,7 @@ export default function DeleteAllDataPage() {
             <button
               onClick={handleDelete}
               disabled={confirmText !== 'DELETE' || deleting}
-              className="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-red-600 text-white font-bold py-2.5 rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {deleting ? 'Deleting...' : 'Yes, Delete Everything'}
             </button>
@@ -176,7 +176,7 @@ export default function DeleteAllDataPage() {
                 setShowConfirm(false);
                 setConfirmText('');
               }}
-              className="w-full bg-gray-200 text-gray-900 font-bold py-3 rounded-xl hover:bg-gray-300 transition-all"
+              className="w-full bg-gray-200 text-gray-900 font-bold py-2.5 rounded-xl hover:bg-gray-300 transition-all"
             >
               Cancel
             </button>
