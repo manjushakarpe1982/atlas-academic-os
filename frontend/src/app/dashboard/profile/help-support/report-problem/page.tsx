@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react';
 import { Cloud, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import BackHeader from '../../BackHeader';
+import Image from 'next/image';
 
 const SEVERITY_OPTIONS = [
   { id: 'low', label: 'Low', color: 'text-green-600 border-green-300 bg-green-50' },
@@ -67,18 +68,16 @@ export default function ReportProblemPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <BackHeader title="Report a Problem" />
 
-      <div className="px-4 py-6 space-y-5">
+      <div className="px-4 py-3 ">
         {/* Header */}
-        <div className="flex flex-col items-center text-center space-y-3">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-red-600" />
-          </div>
+        <div className="flex flex-col items-center text-center mb-6">
+          <Image src="https://res.cloudinary.com/mview/image/upload/v1781689309/atlas/supportpage4.png" alt="Report Problem" width={300} height={100} className="mb-2" />
           <div>
             <h1 className="text-xl font-bold text-gray-900">Something not working?</h1>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-gray-600 mt-1">
               Let us know what happened so we can fix it as soon as possible.
             </p>
           </div>
@@ -101,23 +100,23 @@ export default function ReportProblemPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Description */}
           <div>
-            <label className="text-sm font-bold text-gray-900 block mb-2">
+            <label className="text-base font-bold text-gray-800 block mb-2">
               What went wrong?
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Please describe the issue in detail..."
-              required
+            
               rows={4}
-              className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl outline-none focus:border-indigo-500 bg-white resize-none placeholder:text-gray-400"
+              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl outline-none focus:border-indigo-500 bg-white resize-none placeholder:text-gray-400"
             />
-            <p className="text-xs text-gray-400 mt-2 text-right">{description.length}/500</p>
+            <p className="text-sm text-gray-400 mt-2 text-right">{description.length}/500</p>
           </div>
 
           {/* Screenshot Upload */}
           <div>
-            <label className="text-sm font-bold text-gray-900 block mb-2">
+            <label className="text-base font-bold text-gray-800 block mb-2">
               Upload Screenshot <span className="font-normal text-gray-500">(optional)</span>
             </label>
             
@@ -131,7 +130,7 @@ export default function ReportProblemPage() {
                 <button
                   type="button"
                   onClick={handleRemoveScreenshot}
-                  className="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-semibold hover:bg-red-700"
+                  className="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded-xl text-xs font-semibold hover:bg-red-700"
                 >
                   Remove
                 </button>
@@ -140,11 +139,11 @@ export default function ReportProblemPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-purple-300 rounded-xl p-6 flex flex-col items-center justify-center hover:bg-purple-50 transition-all"
+                className="w-full border-2 border-dashed border-purple-300 rounded-xl py-10 p-6 flex flex-col items-center justify-center hover:bg-purple-50 transition-all"
               >
-                <Cloud className="w-8 h-8 text-purple-400 mb-2" />
-                <p className="text-sm font-semibold text-purple-600">Tap to upload</p>
-                <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
+                <Cloud className="w-10 h-10 text-purple-400 mb-2" />
+                <p className="text-base font-semibold text-purple-600">Tap to upload</p>
+                <p className="text-sm text-gray-500 mt-1">PNG, JPG up to 10MB</p>
               </button>
             )}
             
@@ -159,14 +158,14 @@ export default function ReportProblemPage() {
 
           {/* Severity */}
           <div>
-            <label className="text-sm font-bold text-gray-900 block mb-3">Severity</label>
+            <label className="text-base font-bold text-gray-900 block mb-2">Severity</label>
             <div className="flex gap-2">
               {SEVERITY_OPTIONS.map((sev) => (
                 <button
                   key={sev.id}
                   type="button"
                   onClick={() => setSeverity(sev.id)}
-                  className={`flex-1 py-2 rounded-lg font-semibold text-sm border-2 transition-all ${
+                  className={`flex-1 py-2 rounded-xl font-semibold text-[15px] border-2 transition-all ${
                     severity === sev.id
                       ? `${sev.color} border-current`
                       : `${sev.color} border-transparent`
@@ -182,7 +181,7 @@ export default function ReportProblemPage() {
           <button
             type="submit"
             disabled={sending}
-            className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-2xl hover:bg-indigo-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+            className="w-full bg-indigo-600 text-white text-base font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
           >
             {sending ? (
               <>
