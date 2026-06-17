@@ -100,24 +100,24 @@ export default function FAQPage() {
   const categories = ['All', 'General', 'Account', 'Study Plan'];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <BackHeader title="FAQ" />
 
-      <div className="px-4 py-6 space-y-4">
+      <div className="px-4 py-6 ">
         {/* Search */}
-        <div className="relative">
+        <div className="relative mb-5">
           <Search className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Search for help..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-indigo-500 bg-white"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl outline-none focus:border-indigo-500 bg-white"
           />
         </div>
 
         {/* Category Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-6 custom-scroll">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -125,7 +125,7 @@ export default function FAQPage() {
                 setSelectedCategory(cat);
                 setSearchTerm('');
               }}
-              className={`px-4 py-2 rounded-full font-semibold text-sm transition-all flex-shrink-0 ${
+              className={`px-4 py-1.5 rounded-xl font-semibold text-sm transition-all flex-shrink-0 ${
                 selectedCategory === cat
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300'
@@ -137,7 +137,7 @@ export default function FAQPage() {
         </div>
 
         {/* FAQ Items */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           {filtered.length > 0 ? (
             filtered.map((item, idx) => {
               const itemId = `${selectedCategory}-${idx}`;
@@ -147,14 +147,14 @@ export default function FAQPage() {
                 <button
                   key={itemId}
                   onClick={() => setExpandedId(isExpanded ? null : itemId)}
-                  className="w-full text-left bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-indigo-300 transition-all"
+                  className="w-full text-left bg-white border border-gray-200 rounded-xl p-3.5 hover:border-indigo-300 transition-all"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="font-semibold text-gray-900 text-sm flex-1">
                       {item.q}
                     </h3>
                     <ChevronDown
-                      className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${
+                      className={`w-5 h-5 text-gray-500 flex-shrink-0 transition-transform ${
                         isExpanded ? 'rotate-180' : ''
                       }`}
                     />
@@ -176,13 +176,13 @@ export default function FAQPage() {
         </div>
 
         {/* Still Need Help */}
-        <div className="mt-8 bg-white rounded-2xl border-2 border-gray-200 p-5 flex items-start gap-3">
+        <div className="mt-8 bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-3">
           <HelpCircle className="w-6 h-6 text-indigo-600 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-bold text-gray-900">Still have questions?</h3>
+            <h3 className="font-bold text-gray-800">Still have questions?</h3>
             <button
               onClick={() => router.push('/dashboard/profile/help-support/contact-support')}
-              className="text-indigo-600 font-semibold text-sm mt-1 flex items-center gap-1"
+              className="text-indigo-600 font-semibold text-sm  flex items-center gap-1"
             >
               Contact our support team. →
             </button>
