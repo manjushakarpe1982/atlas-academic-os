@@ -95,7 +95,7 @@ export default function ContactSupportPage() {
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`p-2 rounded-xl flex flex-col items-center gap-2 transition-all border ${
+                  className={`p-2 rounded-lg flex flex-col items-center gap-2 transition-all border ${
                     selectedCategory === cat.id
                       ? "border-indigo-500 bg-indigo-50"
                       : "border-gray-200 hover:border-gray-300 hover:bg-gray-100"
@@ -121,7 +121,7 @@ export default function ContactSupportPage() {
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Enter subject"
             
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-indigo-500 bg-white text-sm placeholder:text-gray-400"
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 bg-white text-sm placeholder:text-gray-400"
             />
           </div>
 
@@ -136,7 +136,7 @@ export default function ContactSupportPage() {
               placeholder="Type your message..."
              
               rows={4}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-indigo-500 bg-white text-sm placeholder:text-gray-400 resize-none"
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 bg-white text-sm placeholder:text-gray-400 resize-none"
             />
             <p className="text-xs text-gray-400 mt-2 text-right">
               {message.length}/500
@@ -147,7 +147,7 @@ export default function ContactSupportPage() {
           <button
             type="submit"
             disabled={sending}
-            className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-2xl hover:bg-indigo-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
           >
             {sending ? (
               <>
