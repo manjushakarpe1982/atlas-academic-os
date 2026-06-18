@@ -72,7 +72,7 @@ export default function ProfilePage() {
 
       {/* ── Logout ── */}
       <button onClick={() => setShowLogout(true)}
-        className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 font-bold py-3 rounded-xl text-base border border-red-100 hover:bg-red-100 transition-all">
+        className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 font-bold py-2.5 rounded-xl text-base border border-red-100 hover:bg-red-100 transition-all">
         <LogOut className="w-5 h-5" /> Log Out
       </button>
 
