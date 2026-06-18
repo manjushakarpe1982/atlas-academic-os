@@ -80,19 +80,21 @@ export default function ProfilePage() {
       {showLogout && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowLogout(false)} />
-          <div className="relative bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl">
-            <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center text-2xl">🚪</div>
-            </div>
+          <div className="relative bg-white rounded-xl p-6 w-full max-w-xs shadow-2xl">
+           <div className="flex justify-center mb-4">
+  <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center">
+    <LogOut className="w-7 h-7 text-red-600" />
+  </div>
+</div>
             <h2 className="text-lg font-extrabold text-gray-900 text-center mb-1">Log out from Atlas?</h2>
             <p className="text-sm text-gray-500 text-center mb-5">You can sign in again anytime.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowLogout(false)}
-                className="flex-1 border-2 border-gray-200 text-gray-700 font-bold py-3 rounded-2xl text-sm hover:bg-gray-50">
+                className="flex-1 border border-gray-200 text-gray-700 font-bold py-2 rounded-lg text-base hover:bg-gray-50">
                 Cancel
               </button>
               <button onClick={handleLogout}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-2xl text-sm shadow-md">
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-lg text-base shadow-md">
                 Log Out
               </button>
             </div>
