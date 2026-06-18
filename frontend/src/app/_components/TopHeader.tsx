@@ -14,9 +14,9 @@ const MENU_ITEMS = [
   { href: '/dashboard/study-plan',   icon: Target,        label: '7. Study Plan'        },
   { href: '/dashboard/calendar',     icon: Calendar,      label: '8. Calendar'          },
   { href: '/dashboard/grades',       icon: BarChart3,     label: '9. Grade Details'     },
-  { href: '/dashboard/notifications',icon: Bell,          label: '10. Notifications'    },
+ 
   { href: '/dashboard/ai',           icon: Brain,         label: '11. AI Study Help'    },
-  { href: '/dashboard/profile',      icon: User,          label: '12. Profile / Settings'},
+ 
 ];
 
 interface Props { title?: string; showBack?: boolean; }
