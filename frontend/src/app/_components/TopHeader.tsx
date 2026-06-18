@@ -7,7 +7,7 @@ import { X, Home, BookOpen, Target, Calendar, User, Bell, ClipboardList, BarChar
 const MENU_ITEMS = [
   { href: '/dashboard',              icon: Home,          label: '1. Home (Dashboard)'  },
   { href: '/dashboard/classes',      icon: BookOpen,      label: '2. Classes'           },
-  { href: '/dashboard/class-detail', icon: ClipboardList, label: '3. Class Detail'      },
+ 
   { href: '/dashboard/assignments',  icon: ClipboardList, label: '4. Assignments'       },
   { href: '/dashboard/quizzes',      icon: BarChart3,     label: '5. Quizzes'           },
   { href: '/dashboard/materials',    icon: BookOpen,      label: '6. Study Materials'   },
