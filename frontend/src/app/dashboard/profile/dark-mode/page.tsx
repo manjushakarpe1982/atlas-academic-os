@@ -35,7 +35,7 @@ export default function DarkModePage() {
       <div className="px-4 py-5 space-y-4">
 
         {/* Live preview */}
-        <div className={`bg-gradient-to-br ${previewBg} rounded-xl p-4 text-center transition-all duration-500 border border-gray-100 shadow-sm`}>
+        <div className={`bg-gradient-to-br ${previewBg} rounded-xl p-4 text-center transition-all duration-500 border border-gray-200 shadow-sm`}>
           <div className="text-5xl mb-3">
             {pending === 'dark' ? '🌙' : pending === 'light' ? '☀️' : '💻'}
           </div>
@@ -71,7 +71,7 @@ export default function DarkModePage() {
         <div className="space-y-2.5">
           {THEMES.map(t => (
             <button key={t.id} onClick={() => setPending(t.id)}
-              className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
+              className={`w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${
                 pending === t.id
                   ? 'border-indigo-600 bg-indigo-50 shadow-sm'
                   : 'border-gray-200 bg-white hover:border-indigo-200 hover:bg-gray-50'
@@ -97,7 +97,7 @@ export default function DarkModePage() {
         </div>
 
         {/* Current status */}
-        <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+        <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3">
           <p className="text-sm text-indigo-700">
             Currently Active: <strong>{THEMES.find(t => t.id === theme)?.label}</strong>
             {pending !== theme && <span className="text-indigo-500"> · Click Apply to switch to {THEMES.find(t => t.id === pending)?.label}</span>}
@@ -107,7 +107,7 @@ export default function DarkModePage() {
         {/* Apply button */}
         <button onClick={handleApply}
           disabled={pending === theme && !applied}
-          className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl text-base shadow-md transition-all ${
+          className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-lg text-base shadow-md transition-all ${
             applied
               ? 'bg-green-500 text-white'
               : pending === theme
