@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import BackHeader from '../../BackHeader';
+import Image from 'next/image';
 
 export default function DeleteAllDataPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function DeleteAllDataPage() {
   // Success Screen
   if (deleted) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="">
         <BackHeader title="Delete All Data" />
 
         <div className="px-4 py-6 flex flex-col items-center justify-center space-y-6">
@@ -48,7 +49,7 @@ export default function DeleteAllDataPage() {
           </div>
 
           {/* Success Message */}
-          <div className="w-full bg-green-50 border-2 border-green-200 rounded-2xl p-4 flex items-start gap-3">
+          <div className="w-full bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
             <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-green-900 font-medium">
               All your data has been deleted
@@ -65,7 +66,7 @@ export default function DeleteAllDataPage() {
           {/* Go Back Button */}
           <button
             onClick={handleGoBack}
-            className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-2xl hover:bg-indigo-700 transition-all"
+            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-all"
           >
             Done
           </button>
@@ -76,15 +77,19 @@ export default function DeleteAllDataPage() {
 
   // Main Delete All Data Page + Modal Overlay
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <BackHeader title="Delete All Data" />
 
-      <div className="px-4 py-6 space-y-6">
+      <div className="px-4 py-4 space-y-6">
         {/* Header Icon */}
-        <div className="flex flex-col items-center text-center space-y-3">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-            <span className="text-3xl">💾</span>
-          </div>
+        <div className="flex flex-col items-center text-center ">
+          <Image
+            src="https://res.cloudinary.com/mview/image/upload/v1781776004/atlas/deletealldatapage.png"
+            alt="Delete All Data"
+            width={300}
+            height={200}
+            className=""
+          />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Delete All Data</h1>
             <p className="text-sm text-gray-600 mt-2">
@@ -96,7 +101,7 @@ export default function DeleteAllDataPage() {
         {/* What will be removed */}
         <div>
         
-          <div className="space-y-1 bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="space-y-1 bg-white border border-red-200 rounded-lg p-3">
               <h2 className="font-bold text-gray-900 mb-3">This will remove:</h2>
             {[
               'All classes and syllabus',

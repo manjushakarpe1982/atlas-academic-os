@@ -48,7 +48,7 @@ export default function DeleteAccountPage() {
           </div>
 
           {/* Success Message */}
-          <div className="w-full bg-green-50 border-2 border-green-200 rounded-2xl p-4 flex items-start gap-3">
+          <div className="w-full bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-3">
             <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-green-900 font-medium">
               Your account has been deleted
@@ -65,7 +65,7 @@ export default function DeleteAccountPage() {
           {/* Go to Home Button */}
           <button
             onClick={handleGoHome}
-            className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-2xl hover:bg-indigo-700 transition-all"
+            className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all"
           >
             Go to Home
           </button>
@@ -96,7 +96,7 @@ export default function DeleteAccountPage() {
         {/* What will be deleted */}
         <div>
           
-          <div className="space-y-2 items-center gap-3 bg-white border-2 border-gray-200 rounded-xl p-3">
+          <div className="space-y-1 bg-white border border-red-200 rounded-lg p-3">
             <h2 className="font-bold text-gray-900 mb-3">This will permanently delete:</h2>
             {[
               'Your account',
@@ -104,8 +104,8 @@ export default function DeleteAccountPage() {
               'All uploaded files',
               'All preferences and settings',
             ].map((item) => (
-              <div key={item} className="">
-                <div className="w-5 h-5 rounded-full bg-red-600 flex-shrink-0"></div>
+             <div key={item} className="flex items-center gap-1  p-1">
+                <CheckCircle2 className="w-5 h-5 text-red-500 flex-shrink-0" />
                 <p className="text-sm font-medium text-gray-900">{item}</p>
               </div>
             ))}

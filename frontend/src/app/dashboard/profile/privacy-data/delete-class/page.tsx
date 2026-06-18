@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ChevronRight, AlertCircle, Trash2, X, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import BackHeader from '../../BackHeader';
+import Image from 'next/image';
 
 interface ClassData {
   id: string;
@@ -134,9 +135,16 @@ export default function DeleteClassDataPage() {
     <div className="">
       <BackHeader title="Delete Class Data" />
 
-      <div className="px-4 py-6 space-y-4">
+      <div className="px-4 py-4 space-y-4">
+        <Image
+          src="https://res.cloudinary.com/mview/image/upload/v1781775690/atlas/classdetelepage.png"
+          alt="Delete Class Data"
+          width={400}
+          height={400}
+          className=""
+        />
         {/* Subtitle */}
-        <p className="text-lg text-gray-700 font-semibold">Choose a class to delete its data.</p>
+        <p className="text-lg text-center text-gray-700 font-semibold">Choose a class to delete its data.</p>
 
         {/* Classes List */}
         <div className="space-y-2">
