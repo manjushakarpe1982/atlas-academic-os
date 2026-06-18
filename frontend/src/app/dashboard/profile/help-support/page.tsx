@@ -86,7 +86,7 @@ export default function HelpSupportPage() {
             <button
               key={section.id}
               onClick={() => handleNavigate(section)}
-              className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+              className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
                 section.comingSoon
                   ? `${section.bgColor} border-transparent hover:border-gray-300 active:scale-95`
                   : `${section.bgColor} border-transparent hover:border-gray-300 active:scale-95`
