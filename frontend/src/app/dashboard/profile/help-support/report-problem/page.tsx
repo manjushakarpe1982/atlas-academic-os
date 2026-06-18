@@ -129,7 +129,7 @@ export default function ReportProblemPage() {
                 placeholder="Please describe the issue in detail..."
                 rows={4}
                 maxLength={500}
-                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl outline-none focus:border-indigo-500 bg-white resize-none placeholder:text-gray-400 pr-20"
+                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-500 bg-white resize-none placeholder:text-gray-400 pr-20"
               />
 
               {/* Character count inside the box */}
@@ -197,7 +197,7 @@ export default function ReportProblemPage() {
                   key={sev.id}
                   type="button"
                   onClick={() => setSeverity(sev.id)}
-                  className={`flex-1 py-2 rounded-xl font-semibold text-[15px] border-2 transition-all ${
+                  className={`flex-1 py-1.5 rounded-lg font-semibold text-[13px] border transition-all ${
                     severity === sev.id
                       ? `${sev.color} border-current`
                       : `${sev.color} border-transparent`
@@ -213,7 +213,7 @@ export default function ReportProblemPage() {
           <button
             type="submit"
             disabled={sending}
-            className="w-full bg-indigo-600 text-white text-base font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+            className="w-full bg-indigo-600 text-white text-base font-bold py-3 rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
           >
             {sending ? (
               <>
