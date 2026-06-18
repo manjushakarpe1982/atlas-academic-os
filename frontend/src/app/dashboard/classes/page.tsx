@@ -1,47 +1,144 @@
 'use client';
-import Link from 'next/link';
-import { Plus, Calendar } from 'lucide-react';
-import { CLASSES } from '../components/mockData';
-import TopHeader from '@/components/TopHeader';
+import { useRouter } from 'next/navigation';
+import { ChevronRight, BookOpen } from 'lucide-react';
+
+interface Class {
+  id: string;
+  name: string;
+  code: string;
+  professor: string;
+  semester: string;
+  credits: number;
+  color: string;
+  icon: string;
+}
+
+// Sample class data
+const CLASSES: Class[] = [
+  {
+    id: 'math251',
+    name: 'Calculus II',
+    code: 'MATH 251',
+    professor: 'Dr. Sarah Johnson',
+    semester: 'Fall 2024',
+    credits: 4,
+    color: 'bg-blue-50',
+    icon: '📐',
+  },
+  {
+    id: 'bio1107',
+    name: 'Biology I',
+    code: 'BIO 1107',
+    professor: 'Dr. Michael Chen',
+    semester: 'Fall 2024',
+    credits: 4,
+    color: 'bg-green-50',
+    icon: '🧬',
+  },
+  {
+    id: 'chem101',
+    name: 'General Chemistry',
+    code: 'CHEM 101',
+    professor: 'Dr. Emily Rodriguez',
+    semester: 'Fall 2024',
+    credits: 4,
+    color: 'bg-purple-50',
+    icon: '⚗️',
+  },
+  {
+    id: 'phys201',
+    name: 'Physics I',
+    code: 'PHYS 201',
+    professor: 'Dr. James Wilson',
+    semester: 'Fall 2024',
+    credits: 4,
+    color: 'bg-orange-50',
+    icon: '⚛️',
+  },
+  {
+    id: 'english101',
+    name: 'English Composition',
+    code: 'ENG 101',
+    professor: 'Dr. Jessica Miller',
+    semester: 'Fall 2024',
+    credits: 3,
+    color: 'bg-pink-50',
+    icon: '📚',
+  },
+];
 
 export default function ClassesPage() {
+  const router = useRouter();
+
+  const handleClassClick = (classId: string) => {
+    router.push(`/dashboard/classes/${classId}`);
+  };
+
   return (
-    <div className="px-4 py-4">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-extrabold text-gray-900">Your Classes</h1>
-        <Link href="/add-class"
-          className="flex items-center gap-1.5 bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded-xl">
-          <Plus className="w-3.5 h-3.5" /> Add Class
-        </Link>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
+        <h1 className="text-lg font-bold text-gray-900">My Classes</h1>
+        <p className="text-sm text-gray-600 mt-1">{CLASSES.length} classes this semester</p>
       </div>
 
-      <div className="space-y-3">
-        {CLASSES.map(c => (
-          <Link key={c.id} href={`/dashboard/class-detail`}
-            className="block bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all">
-            <div className="flex items-center gap-3 mb-3">
-              <div className={`w-11 h-11 ${c.color} rounded-2xl flex items-center justify-center text-white font-extrabold text-sm`}>
-                {c.icon}
+      {/* Classes List */}
+      <div className="px-4 py-6 space-y-3">
+        {CLASSES.map((classItem) => (
+          <button
+            key={classItem.id}
+            onClick={() => handleClassClick(classItem.id)}
+            className={`w-full ${classItem.color} border-2 border-gray-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all text-left`}
+          >
+            <div className="flex items-start justify-between">
+              {/* Left Section - Class Info */}
+              <div className="flex items-start gap-4 flex-1">
+                {/* Icon */}
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200">
+                  <span className="text-2xl">{classItem.icon}</span>
+                </div>
+
+                {/* Class Details */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-gray-500 uppercase">
+                    {classItem.code}
+                  </p>
+                  <h3 className="text-lg font-bold text-gray-900 mt-1">
+                    {classItem.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-600">
+                    <span>👨‍🏫 {classItem.professor}</span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="text-xs bg-white px-2 py-1 rounded-full border border-gray-200">
+                      {classItem.semester}
+                    </span>
+                    <span className="text-xs bg-white px-2 py-1 rounded-full border border-gray-200">
+                      {classItem.credits} Credits
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="font-extrabold text-gray-900">{c.name}</p>
-                <p className="text-xs text-gray-400">{c.sub}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xl font-extrabold text-gray-900">{c.grade}%</p>
+
+              {/* Right Section - Chevron */}
+              <div className="flex items-center justify-center w-6 h-6 flex-shrink-0 ml-2">
+                <ChevronRight className="w-5 h-5 text-gray-400" />
               </div>
             </div>
-            {/* Progress bar */}
-            <div className="w-full h-1.5 bg-gray-100 rounded-full mb-2">
-              <div className={`h-full ${c.color} rounded-full`} style={{ width: `${c.grade}%` }} />
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <Calendar className="w-3 h-3" />
-              <span>{c.next}</span>
-            </div>
-          </Link>
+          </button>
         ))}
       </div>
+
+      {/* Empty State (if no classes) */}
+      {CLASSES.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <BookOpen className="w-16 h-16 text-gray-300 mb-4" />
+          <p className="text-lg font-bold text-gray-900 mb-2">No Classes Yet</p>
+          <p className="text-sm text-gray-600 text-center">
+            Add your first class to get started with Atlas
+          </p>
+        </div>
+      )}
     </div>
   );
 }
