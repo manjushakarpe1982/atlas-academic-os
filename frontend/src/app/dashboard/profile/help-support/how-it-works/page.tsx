@@ -68,7 +68,7 @@ export default function HowItWorksPage() {
                 {feature.icon}
               </div>
               <div className="flex-1 text-left">
-                <h3 className="font-bold text-gray-900">{feature.title}</h3>
+                <h3 className="font-bold text-gray-800">{feature.title}</h3>
                 <p className="text-sm text-gray-600 mt-1">{feature.description}</p>
               </div>
             </div>
