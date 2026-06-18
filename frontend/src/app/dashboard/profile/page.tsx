@@ -10,7 +10,6 @@ const SETTINGS = [
   { label: 'School Settings',        sub: 'Connected school & LMS',     icon: '🏫', href: '/dashboard/profile/school-settings'        },
   { label: 'Calendar Sync',          sub: 'Manage calendar connection', icon: '📅', href: '/dashboard/profile/calendar-sync'          },
   { label: 'Notification Settings',  sub: 'Manage your notifications',  icon: '🔔', href: '/dashboard/profile/notification-settings'  },
-  { label: 'Study Reminders',        sub: 'Set study goals & reminders',icon: '⏰', href: '/dashboard/profile/study-reminders'        },
   { label: 'Dark Mode',              sub: 'App UI preferences',         icon: '🌙', href: '/dashboard/profile/dark-mode', toggle: true },
   { label: 'Help & Support',         sub: 'Get help and contact us',    icon: '❓', href: '/dashboard/profile/help-support'           },
   { label: 'Privacy & Data',         sub: 'Manage your privacy settings', icon: '🔒', href: '/dashboard/profile/privacy-data'         },
