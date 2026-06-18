@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Trash2, Info, CheckCircle2 } from 'lucide-react';
+import { Trash2, Info, CheckCircle2, FileText } from 'lucide-react';
 import BackHeader from '../../BackHeader';
 import Image from 'next/image';
 
@@ -135,13 +135,13 @@ export default function DeleteFilesPage() {
                 className="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-4 hover:border-gray-300 transition-all"
               >
                 {/* File Icon */}
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${file.color}`}>
-                  <span className="text-2xl">📄</span>
-                </div>
+               <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${file.color}`}>
+  <FileText className="w-6 h-6 text-gray-700" />
+</div>
 
                 {/* File Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 truncate">{file.name}</p>
+                  <p className="font-bold text-gray-800 truncate">{file.name}</p>
                   <p className="text-xs text-gray-600 mt-1">{file.className}</p>
                   <p className="text-xs text-gray-500 mt-1">
                     Uploaded on {file.uploadDate} <br /> • {file.fileSize}
