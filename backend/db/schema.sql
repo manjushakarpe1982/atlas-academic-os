@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     reset_token        TEXT,
     reset_token_expiry TIMESTAMPTZ,
     deleted_at         TIMESTAMPTZ,
+    profile_picture_url TEXT,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

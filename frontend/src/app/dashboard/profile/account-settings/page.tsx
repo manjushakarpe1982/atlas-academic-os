@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { User, Mail, Building2, BookOpen, GraduationCap, Edit3, CheckCircle2, Lock, Camera, Loader2, AlertCircle } from 'lucide-react';
 import BackHeader from '../BackHeader';
 import { getUser, saveAuth, getToken, API_BASE } from '@/lib/api';
@@ -8,6 +8,7 @@ const YEARS = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate', 'PhD'];
 
 export default function AccountSettingsPage() {
   const user = getUser();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name,    setName]    = useState(user?.full_name  || '');
   const [email,   setEmail]   = useState(user?.email      || '');
@@ -18,8 +19,75 @@ export default function AccountSettingsPage() {
   const [saving,  setSaving]  = useState(false);
   const [saved,   setSaved]   = useState(false);
   const [error,   setError]   = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState(user?.profile_picture_url || '');
 
   const initial = name?.[0]?.toUpperCase() || email?.[0]?.toUpperCase() || 'S';
+
+  // Handle photo upload
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be less than 5MB');
+      return;
+    }
+
+    setError('');
+    setUploadingPhoto(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`${API_BASE}/api/auth/me/profile-picture`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${getToken()}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.detail || 'Failed to upload photo');
+        return;
+      }
+
+      // Update photo URL
+      const newPhotoUrl = data.profile_picture_url || data.url;
+      setPhotoUrl(newPhotoUrl);
+
+      // Update localStorage
+      if (user) {
+        saveAuth(getToken() || '', {
+          ...user,
+          profile_picture_url: newPhotoUrl,
+        });
+      }
+
+      // Show success
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setError('Failed to upload photo. Please try again.');
+      console.error('Photo upload error:', err);
+    } finally {
+      setUploadingPhoto(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   const handleSave = async () => {
     setError('');
@@ -66,13 +134,13 @@ export default function AccountSettingsPage() {
 
   const inputCls = `
     w-full px-4 py-3 text-sm font-semibold text-gray-900
-    bg-white border-2 border-gray-200 rounded-xl outline-none
+    bg-white border-2 border-gray-200 rounded-lg outline-none
     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100
     hover:border-indigo-300 transition-all placeholder:text-gray-300
   `;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <BackHeader title="Account Settings" />
 
       <div className="px-4 py-5 space-y-5">
@@ -80,13 +148,36 @@ export default function AccountSettingsPage() {
         {/* Avatar */}
         <div className="flex flex-col items-center py-2">
           <div className="relative mb-3">
-            <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-extrabold shadow-lg">
-              {initial}
-            </div>
-            <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-white border-2 border-indigo-600 rounded-full flex items-center justify-center shadow-sm hover:bg-indigo-50 transition-all">
-              <Camera className="w-3.5 h-3.5 text-indigo-600" />
+            {photoUrl ? (
+              <img 
+                src={photoUrl} 
+                alt="Profile" 
+                className="w-20 h-20 bg-indigo-600 rounded-full object-cover shadow-lg"
+              />
+            ) : (
+              <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-extrabold shadow-lg">
+                {initial}
+              </div>
+            )}
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              className="absolute -bottom-1 -right-1 w-7 h-7 bg-white border-2 border-indigo-600 rounded-full flex items-center justify-center shadow-sm hover:bg-indigo-50 transition-all disabled:opacity-50"
+            >
+              {uploadingPhoto ? (
+                <Loader2 className="w-3.5 h-3.5 text-indigo-600 animate-spin" />
+              ) : (
+                <Camera className="w-3.5 h-3.5 text-indigo-600" />
+              )}
             </button>
           </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoUpload}
+            className="hidden"
+          />
           <p className="text-xs text-gray-400">Tap the camera to change photo</p>
         </div>
 
@@ -94,16 +185,16 @@ export default function AccountSettingsPage() {
         <div className="space-y-3">
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-extrabold text-gray-600 mb-1.5 uppercase tracking-wide">
-              <User className="w-3 h-3" /> Full Name
+            <label className="flex items-center gap-1.5 text-sm font-bold text-gray-600 mb-1.5 ">
+              <User className="w-4 h-4" /> Full Name
             </label>
             <input type="text" value={name} onChange={e => setName(e.target.value)}
               placeholder="Enter your full name" className={inputCls} />
           </div>
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-extrabold text-gray-600 mb-1.5 uppercase tracking-wide">
-              <Mail className="w-3 h-3" /> Email Address
+            <label className="flex items-center gap-1.5 text-sm font-bold text-gray-600 mb-1.5 ">
+              <Mail className="w-4 h-4" /> Email Address
               <span className="text-gray-400 font-normal normal-case tracking-normal ml-1">(Cannot be changed)</span>
             </label>
             <input type="email" value={email} disabled
@@ -111,16 +202,16 @@ export default function AccountSettingsPage() {
           </div>
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-extrabold text-gray-600 mb-1.5 uppercase tracking-wide">
-              <Building2 className="w-3 h-3" /> University
+            <label className="flex items-center gap-1.5 text-sm font-bold text-gray-600 mb-1.5 ">
+              <Building2 className="w-4 h-4" /> University
             </label>
             <input type="text" value={uni} onChange={e => setUni(e.target.value)}
               placeholder="Your university name" className={inputCls} />
           </div>
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-extrabold text-gray-600 mb-1.5 uppercase tracking-wide">
-              <BookOpen className="w-3 h-3" /> Major
+            <label className="flex items-center gap-1.5 text-sm font-bold text-gray-600 mb-1.5 ">
+              <BookOpen className="w-4 h-4" /> Major
               <span className="text-gray-400 font-normal normal-case tracking-normal">(Optional)</span>
             </label>
             <input type="text" value={major} onChange={e => setMajor(e.target.value)}
@@ -128,8 +219,8 @@ export default function AccountSettingsPage() {
           </div>
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-extrabold text-gray-600 mb-1.5 uppercase tracking-wide">
-              <GraduationCap className="w-3 h-3" /> Academic Year
+            <label className="flex items-center gap-1.5 text-sm font-bold text-gray-600 mb-1.5 ">
+              <GraduationCap className="w-4 h-4" /> Academic Year
             </label>
             <select value={year} onChange={e => setYear(e.target.value)}
               className={inputCls + ' cursor-pointer'}>
@@ -154,7 +245,7 @@ export default function AccountSettingsPage() {
 
         {/* Save button */}
         <button onClick={handleSave} disabled={saving}
-          className={`w-full flex items-center justify-center gap-2 font-bold py-3.5 rounded-2xl text-sm shadow-md transition-all disabled:opacity-70 ${
+          className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl text-base shadow-md transition-all disabled:opacity-70 ${
             saved ? 'bg-green-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
           }`}>
           {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> :
@@ -163,7 +254,7 @@ export default function AccountSettingsPage() {
         </button>
 
         {/* Change Password */}
-        <button className="w-full flex items-center justify-center gap-2 border-2 border-gray-200 hover:border-indigo-300 text-gray-700 hover:text-indigo-600 font-bold py-3 rounded-2xl text-sm transition-all">
+        <button className="w-full flex items-center justify-center gap-2 border-2 border-gray-200 hover:border-indigo-300 text-gray-700 hover:text-indigo-600 font-bold py-3 rounded-xl text-base transition-all">
           <Lock className="w-4 h-4" /> Change Password
         </button>
 

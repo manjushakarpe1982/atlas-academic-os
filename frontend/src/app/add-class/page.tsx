@@ -17,7 +17,7 @@
  */
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft } from 'lucide-react';
 
 import { api, API_BASE, getToken } from '@/lib/api';
 
@@ -127,6 +127,26 @@ export default function AddClassPage() {
 
       {/* ── SCREEN ── */}
       <main className="flex-1 flex flex-col pb-48">
+        {/* Back Arrow Button */}
+       {step > 1 && (
+        <div className="max-w-2xl mx-auto w-full px-4 pt-3 pb-0">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={back}
+              className="flex items-center gap-1 text-gray-600 hover:text-indigo-600 transition-colors p-1"
+              title="Go back"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            {/* Optional text for Steps 5, 6, 7 */}
+            {(step === 5 || step === 6 || step === 7) && (
+              <span className="text-xs bg-indigo-600 px-2 py-1 rounded-full font-semibold text-white">Optional</span>
+            )}
+          </div>
+        </div>
+        )}
+
+
         {error && (
           <div className="max-w-2xl mx-auto w-full px-4 pt-3">
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm font-medium">
@@ -134,7 +154,7 @@ export default function AddClassPage() {
             </div>
           </div>
         )}
-        <div className="flex justify-center px-4 pt-4 pb-4">
+        <div className="flex justify-center px-4 pt-1 pb-4">
           {screens[step]}
         </div>
       </main>

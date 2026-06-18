@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, Circle, ChevronRight, ArrowRight, Brain, Loader2 } from 'lucide-react';
 import { getUser, api } from '@/lib/api';
+import LoadingDashboard from './components/LoadingDashboard';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface ClassSummary {
@@ -62,14 +63,7 @@ export default function DashboardHome() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-        <p className="text-sm text-gray-400">Loading your dashboard...</p>
-      </div>
-    </div>
-  );
+  if (loading) return <LoadingDashboard isVisible={true} />;
 
   if (error) return (
     <div className="px-4 py-8 text-center">

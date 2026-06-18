@@ -169,7 +169,7 @@ async def get_me(request: Request):
 
     try:
         result = supabase.table("users").select(
-            "id,email,full_name,school,acknowledged_at,created_at"
+            "id,email,full_name,school,acknowledged_at,created_at,profile_picture_url"
         ).eq("id", user_id).single().execute()
     except Exception:
         raise HTTPException(404, "User not found")
@@ -334,3 +334,63 @@ async def update_me(req: UpdateProfileRequest, request: Request):
 @router.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# ── POST /api/auth/me/profile-picture ────────────────────────────────────
+import os
+from fastapi import File, UploadFile
+
+@router.post("/me/profile-picture")
+async def upload_profile_picture(file: UploadFile = File(...), request: Request = None):
+    """Upload user profile picture"""
+    auth = request.headers.get("Authorization") or request.headers.get("authorization") or ""
+    if not auth:
+        raise HTTPException(401, "Authorization header missing")
+    try:
+        user_id = get_user_id(auth)
+    except Exception:
+        raise HTTPException(401, "Invalid or expired token")
+
+    # Validate file type
+    allowed_types = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(400, "Invalid file type. Only JPEG, PNG, GIF, WebP allowed.")
+
+    # Validate file size (5MB max)
+    file_content = await file.read()
+    if len(file_content) > 5 * 1024 * 1024:
+        raise HTTPException(400, "File too large. Maximum 5MB allowed.")
+
+    # Upload to Supabase Storage
+    try:
+        bucket_name = "profile-pictures"
+        file_path = f"{user_id}/{file.filename}"
+        
+        # Upload file
+        supabase.storage.from_(bucket_name).upload(
+            file_path,
+            file_content,
+            {"content-type": file.content_type},
+        )
+        
+        # Get public URL
+        profile_picture_url = supabase.storage.from_(bucket_name).get_public_url(file_path)
+        
+        # Update user in database
+        result = supabase.table("users").update({
+            "profile_picture_url": profile_picture_url
+        }).eq("id", user_id).execute()
+        
+        if not result.data:
+            raise HTTPException(500, "Failed to update profile picture")
+        
+        return {
+            "message": "Profile picture updated successfully",
+            "profile_picture_url": profile_picture_url
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ProfilePictureUpload] Error: {e}")
+        raise HTTPException(500, f"Upload failed: {str(e)}")

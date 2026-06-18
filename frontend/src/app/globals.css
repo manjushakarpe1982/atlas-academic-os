@@ -4,6 +4,29 @@
 
 @layer base {
   :root {
+    /* ✅ ADDED: Border Radius */
+    --radius: 0.5rem;
+    
+    /* ✅ ADDED: Color Variables */
+    --border: #e5e7eb;
+    --input: #f3f4f6;
+    --ring: #534AB7;
+    --background: #ffffff;
+    --foreground: #0f172a;
+    --primary: #534AB7;
+    --primary-foreground: #ffffff;
+    --secondary: #64748b;
+    --secondary-foreground: #ffffff;
+    --destructive: #ef4444;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #f97316;
+    --accent-foreground: #ffffff;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    
     font-family: var(--font-lexend-deca), 'Lexend Deca', system-ui, sans-serif;
   }
 
