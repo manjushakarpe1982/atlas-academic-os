@@ -125,10 +125,10 @@ export default function FAQPage() {
                 setSelectedCategory(cat);
                 setSearchTerm('');
               }}
-              className={`px-4 py-1.5 rounded-xl font-semibold text-sm transition-all flex-shrink-0 ${
+              className={`px-4 py-1.5 rounded-lg font-semibold text-sm transition-all flex-shrink-0 ${
                 selectedCategory === cat
                   ? 'bg-indigo-600 text-white'
-                  : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:border-gray-300'
               }`}
             >
               {cat}
@@ -147,7 +147,7 @@ export default function FAQPage() {
                 <button
                   key={itemId}
                   onClick={() => setExpandedId(isExpanded ? null : itemId)}
-                  className="w-full text-left bg-white border border-gray-200 rounded-xl p-3.5 hover:border-indigo-300 transition-all"
+                  className="w-full text-left bg-white border border-gray-200 rounded-lg p-3.5 hover:border-indigo-300 transition-all"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="font-semibold text-gray-900 text-sm flex-1">
@@ -176,7 +176,7 @@ export default function FAQPage() {
         </div>
 
         {/* Still Need Help */}
-        <div className="mt-8 bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-3">
+        <div className="mt-8 bg-indigo-50 rounded-lg border border-indigo-200 p-4 flex items-start gap-3">
           <HelpCircle className="w-6 h-6 text-indigo-600 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <h3 className="font-bold text-gray-800">Still have questions?</h3>
