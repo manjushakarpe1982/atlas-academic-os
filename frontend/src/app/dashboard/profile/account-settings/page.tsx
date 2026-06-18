@@ -134,7 +134,7 @@ export default function AccountSettingsPage() {
 
   const inputCls = `
     w-full px-4 py-3 text-sm font-semibold text-gray-900
-    bg-white border-2 border-gray-200 rounded-xl outline-none
+    bg-white border-2 border-gray-200 rounded-lg outline-none
     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100
     hover:border-indigo-300 transition-all placeholder:text-gray-300
   `;

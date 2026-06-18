@@ -95,8 +95,9 @@ export default function DeleteAllDataPage() {
 
         {/* What will be removed */}
         <div>
-          <h2 className="font-bold text-gray-900 mb-3">This will remove:</h2>
-          <div className="space-y-2">
+        
+          <div className="space-y-1 bg-red-50 border border-red-200 rounded-lg p-3">
+              <h2 className="font-bold text-gray-900 mb-3">This will remove:</h2>
             {[
               'All classes and syllabus',
               'All grades and progress',
@@ -105,8 +106,8 @@ export default function DeleteAllDataPage() {
               'All uploaded files',
               'All app preferences',
             ].map((item) => (
-              <div key={item} className="flex items-center gap-3 bg-white border-2 border-gray-200 rounded-xl p-3">
-                <div className="w-5 h-5 rounded-full bg-red-600 flex-shrink-0"></div>
+              <div key={item} className="flex items-center gap-1  p-1">
+                <CheckCircle2 className="w-5 h-5 text-red-500 flex-shrink-0" />
                 <p className="text-sm font-medium text-gray-900">{item}</p>
               </div>
             ))}
