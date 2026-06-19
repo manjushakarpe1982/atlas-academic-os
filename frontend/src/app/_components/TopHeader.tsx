@@ -130,3 +130,48 @@ export default function TopHeader({ title, showBack }: Props) {
     </>
   );
 }
+
+
+// /dashboard/profile/help-support/report-problem
+
+// please create this page function  create api and form validations 
+
+// If a report-problem request is created, will it be visible in the supabase ? I need to know because I want to understand when a student has submitted a request.
+
+
+// /dashboard/profile/help-support/feature-request
+
+// please create this page function  create api and form validations 
+
+// If a feature-request request is created, will it be visible in the supabase ? I need to know because I want to understand when a student has submitted a request.
+
+
+
+
+
+// Remove the dynamic data that is currently coming on the dashboard chat page. I have shared an image for reference.
+//  For now, I want to create a static UI exactly like the image. Please update the dashboard home page so that it looks the same as the image provided.
+
+
+
+
+// If a school is being selected for the first time, then the selected school should be displayed on the calendar
+//  screen before the "Add Class" section. It should be visible on the second calendar screen as well.
+
+
+
+// The login icon should be displayed in the top header section of the dashboard page.
+
+// click the notifaction bell icon on header sections nor redireti to notification page click one open notifiation panel not any page 
+
+// /dashboard/profile/privacy-data/export-data this page show class list remove static data add api dynamic data 
+
+
+// /dashboard/profile/privacy-data/delete-files this page show uploaded files remove static data add api dynamic data list of files and delete option for each file.
+
+// /dashboard/profile/privacy-data/delete-class  this page show class list remove static data add api dynamic data
+
+// /dashboard/profile this page logout button click should redirect to login page and clear all the local storage data and cookies student logout to the  wbsite
+
+
+// click on atlas icon redidirect to the home page 

@@ -175,7 +175,7 @@ export default function AddClassPage() {
           </div>
 
           {/* Step number */}
-          <p className="text-xs font-bold text-gray-400 text-center mb-3">
+          <p className="text-xs font-bold text-gray-400 text-center mb-2">
             {step} / {TOTAL_STEPS}
           </p>
 
@@ -184,12 +184,12 @@ export default function AddClassPage() {
             <div className="flex gap-3">
               {btn.left && (
                 <button onClick={handleLeft}
-                  className="flex-1 border-2 border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 font-bold py-3.5 rounded-2xl text-sm transition-all">
+                  className="flex-1 border-2 border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 font-bold py-2.5 rounded-xl text-sm transition-all">
                   {btn.left}
                 </button>
               )}
               <button onClick={handleRight} disabled={loading}
-                className={`${btn.left ? 'flex-1' : 'w-full'} bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-2`}>
+                className={`${btn.left ? 'flex-1' : 'w-full'} bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2`}>
                 {loading ? 'Please wait...' : btn.right}
                 {!loading && step < 9 && step !== 5 && step !== 7 && (
                   <ArrowRight className="w-4 h-4" />

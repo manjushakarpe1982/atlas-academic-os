@@ -45,7 +45,7 @@ export default function HelpPage() {
    <div className="w-full">
   {/* Image Section - Top */}
   <header className=" bg-white  px-4 py-2 flex items-center gap-3">
-        <button onClick={() => goBack()}
+        <button  onClick={() => router.back()}
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </button>
