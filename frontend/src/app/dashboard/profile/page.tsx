@@ -82,7 +82,7 @@ export default function ProfilePage() {
     <div className="px-4 py-4">
       {/* ── Profile card ── */}
 
-      <div className="relative w-full h-[180px] rounded-xl mb-5 overflow-hidden">
+      <div className="relative w-full h-[120px] rounded-xl mb-5 overflow-hidden">
         {/* Background Image */}
         <Image
           src="https://res.cloudinary.com/mview/image/upload/v1781777396/atlas/accountpage.png"
@@ -141,7 +141,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Bottom Stats */}
-          <div className="bg-white rounded-2xl px-2 py-3 shadow-sm">
+          {/* <div className="bg-white rounded-2xl px-2 py-3 shadow-sm">
             <div className="grid grid-cols-3 divide-x divide-gray-100">
               <div className="flex items-center justify-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
@@ -176,7 +176,7 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
