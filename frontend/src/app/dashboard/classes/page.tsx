@@ -14,21 +14,9 @@ interface ClassData {
   created_at: string;
 }
 
-const CLASS_STYLES: { pattern: RegExp; icon: string; color: string }[] = [
-  { pattern: /math|calculus|algebra|geometry/i, icon: '📐', color: 'bg-blue-50' },
-  { pattern: /bio|anatomy|genetics/i,          icon: '🧬', color: 'bg-green-50' },
-  { pattern: /chem/i,                          icon: '⚗️', color: 'bg-purple-50' },
-  { pattern: /phys/i,                          icon: '⚛️', color: 'bg-orange-50' },
-  { pattern: /eng|english|lit|writing/i,       icon: '📚', color: 'bg-pink-50' },
-  { pattern: /hist|history/i,                  icon: '📜', color: 'bg-amber-50' },
-  { pattern: /comp|cs|programming|code/i,      icon: '💻', color: 'bg-indigo-50' },
-  { pattern: /art|music|design/i,              icon: '🎨', color: 'bg-rose-50' },
-];
-
-function getStyle(name: string) {
-  const match = CLASS_STYLES.find(s => s.pattern.test(name));
-  return match || { icon: '📖', color: 'bg-gray-50' };
-}
+const CLASS_COLORS = ['bg-indigo-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-blue-500', 'bg-teal-500', 'bg-amber-500'];
+const CLASS_BG     = ['bg-indigo-50',  'bg-green-50',  'bg-purple-50',  'bg-orange-50',  'bg-pink-50',  'bg-blue-50',  'bg-teal-50',  'bg-amber-50'];
+const BORDER_COLORS = ['border-indigo-200', 'border-green-200', 'border-purple-200', 'border-orange-200', 'border-pink-200', 'border-blue-200', 'border-teal-200', 'border-amber-200']; 
 
 export default function ClassesPage() {
   const router = useRouter();
@@ -84,15 +72,16 @@ export default function ClassesPage() {
         </div>
       ) : (
         <div className="px-4 py-4 space-y-3">
-          {classes.map(c => {
-            const s = getStyle(c.name);
+          {classes.map((c, i) => {
+            const color = CLASS_COLORS[i % CLASS_COLORS.length];
+            const bg = CLASS_BG[i % CLASS_BG.length];
             return (
               <button key={c.id} onClick={() => router.push(`/dashboard/classes/${c.id}`)}
-                className={`w-full ${s.color} border-2 border-gray-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all text-left`}>
+               className={`w-full border ${bg} ${BORDER_COLORS[i % BORDER_COLORS.length]} rounded-lg p-3 hover:border-indigo-300 hover:shadow-md transition-all text-left`}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200">
-                      <span className="text-2xl">{s.icon}</span>
+                    <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                      <BookOpen className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-bold text-gray-900">{c.name}</h3>
@@ -112,7 +101,7 @@ export default function ClassesPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-center w-6 h-6 flex-shrink-0 ml-2">
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                    <ChevronRight className="w-5 h-5 text-gray-500" />
                   </div>
                 </div>
               </button>

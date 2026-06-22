@@ -536,6 +536,142 @@ async def get_topics(class_id: str, request: Request):
     return {"topics": result.data or []}
 
 
+# ── GET /api/classes/{id}/overview ─────────────────────────────────────────
+
+@router.get("/{class_id}/overview")
+async def get_class_overview(class_id: str, request: Request):
+    """
+    Returns overview data for a class:
+    - classInfo: instructor, term, credits
+    - currentGrade: average grade %
+    - syllabusFile: uploaded file info
+    - insight: strongest + weakest category
+    - nextDeadline: nearest upcoming event
+    """
+    from datetime import datetime
+    user_id = _get_user(request)
+    cls = _get_class(class_id, user_id)
+
+    # ── Class Info ──
+    class_info = {
+        "name":         cls.get("name", ""),
+        "instructor":   cls.get("instructor"),
+        "term":         cls.get("term"),
+        "credit_hours": cls.get("credit_hours"),
+    }
+
+    # ── Current Grade (average from grades table) ──
+    grades_res = supabase.table("grades") \
+        .select("score, max_score, category") \
+        .eq("class_id", class_id).eq("user_id", user_id).execute()
+    grades = grades_res.data or []
+
+    current_grade = None
+    total_grades = len(grades)
+    if grades:
+        try:
+            current_grade = round(
+                sum(g["score"] / g["max_score"] * 100 for g in grades) / len(grades)
+            )
+        except (ZeroDivisionError, TypeError, KeyError):
+            pass
+
+    # ── Insight: strongest + weakest category ──
+    category_grades: dict[str, list] = {}
+    for g in grades:
+        cat = g.get("category", "Other")
+        if cat not in category_grades:
+            category_grades[cat] = []
+        try:
+            category_grades[cat].append(g["score"] / g["max_score"] * 100)
+        except (ZeroDivisionError, TypeError, KeyError):
+            pass
+
+    strongest = None
+    weakest = None
+    if category_grades:
+        cat_avgs = {cat: round(sum(scores) / len(scores)) for cat, scores in category_grades.items() if scores}
+        if cat_avgs:
+            best_cat = max(cat_avgs, key=cat_avgs.get)
+            worst_cat = min(cat_avgs, key=cat_avgs.get)
+            strongest = {"category": best_cat, "avg": cat_avgs[best_cat]}
+            if best_cat != worst_cat:
+                weakest = {"category": worst_cat, "avg": cat_avgs[worst_cat]}
+
+    # ── Syllabus File ──
+    file_res = supabase.table("files") \
+        .select("id, original_name, created_at") \
+        .eq("class_id", class_id).eq("user_id", user_id) \
+        .order("created_at", desc=True).limit(1).execute()
+    syllabus_file = None
+    if file_res.data:
+        f = file_res.data[0]
+        syllabus_file = {
+            "id":   f.get("id"),
+            "name": f.get("original_name", "Syllabus"),
+            "date": f.get("created_at"),
+        }
+
+    # ── Next Deadline (from assessments for this class) ──
+    now_str = datetime.utcnow().date().isoformat()
+    assess_res = supabase.table("assessments") \
+        .select("title, category, due_date") \
+        .eq("class_id", class_id).eq("user_id", user_id) \
+        .gte("due_date", now_str) \
+        .order("due_date").limit(1).execute()
+
+    next_deadline = None
+    if assess_res.data:
+        a = assess_res.data[0]
+        due = a.get("due_date", "")
+        days_left = None
+        if due:
+            try:
+                days_left = (datetime.strptime(due, "%Y-%m-%d").date() - datetime.utcnow().date()).days
+            except Exception:
+                pass
+        next_deadline = {
+            "title":     a.get("title", ""),
+            "category":  a.get("category", ""),
+            "due_date":  due,
+            "days_left": days_left,
+        }
+
+    # ── Also check calendar events matched by class name ──
+    if not next_deadline:
+        class_name = cls.get("name", "").lower()
+        if class_name:
+            cal_res = supabase.table("calendar_events") \
+                .select("title, start_date, category") \
+                .eq("user_id", user_id) \
+                .gte("start_date", datetime.utcnow().isoformat()) \
+                .order("start_date").limit(20).execute()
+            for ev in (cal_res.data or []):
+                if class_name in (ev.get("title") or "").lower():
+                    due = (ev.get("start_date") or "")[:10]
+                    days_left = None
+                    try:
+                        days_left = (datetime.strptime(due, "%Y-%m-%d").date() - datetime.utcnow().date()).days
+                    except Exception:
+                        pass
+                    next_deadline = {
+                        "title":     ev.get("title", ""),
+                        "category":  ev.get("category", ""),
+                        "due_date":  due,
+                        "days_left": days_left,
+                    }
+                    break
+
+    return {
+        "classInfo":     class_info,
+        "currentGrade":  current_grade,
+        "totalGrades":   total_grades,
+        "insight":       {"strongest": strongest, "weakest": weakest},
+        "syllabusFile":  syllabus_file,
+        "nextDeadline":  next_deadline,
+    }
+
+
 # ── DELETE /api/classes/{id} ──────────────────────────────────────────────
 
 @router.delete("/{class_id}")
