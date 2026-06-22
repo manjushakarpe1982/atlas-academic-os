@@ -62,7 +62,7 @@ function PageContent() {
       <div className="bg-white px-4 pt-3 pb-0 border-b border-gray-100 sticky top-14 z-10">
         <div className="flex items-center justify-between mb-3">
           <button onClick={() => router.back()}><ArrowLeft className="w-5 h-5 text-gray-600" /></button>
-          <button><MoreVertical className="w-5 h-5 text-gray-400" /></button>
+        
         </div>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0">
