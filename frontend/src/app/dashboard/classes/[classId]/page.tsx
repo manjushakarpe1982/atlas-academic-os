@@ -1,6 +1,6 @@
 'use client';
 import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { ArrowLeft, MoreVertical } from 'lucide-react';
 import OverviewTab from './components/OverviewTab';
 import GradesTab from './components/GradesTab';
@@ -13,13 +13,15 @@ type Tab = typeof TABS[number];
 function PageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams();
+  const classId = params.classId as string;
   const init = (searchParams.get('tab') as Tab) || 'Overview';
   const [tab, setTab] = useState<Tab>(TABS.includes(init as Tab) ? init as Tab : 'Overview');
 
   const content: Record<Tab, React.ReactNode> = {
     Overview: <OverviewTab />,
     Grades: <GradesTab />,
-    Topics: <TopicsTab />,
+    Topics: <TopicsTab classId={classId} />,
     Assignments: <AssignmentsTab />,
   };
 

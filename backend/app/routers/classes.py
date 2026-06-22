@@ -518,6 +518,24 @@ async def get_grades(class_id: str, request: Request):
     return {"grades": result.data or []}
 
 
+# ── GET /api/classes/{id}/topics ───────────────────────────────────────────
+
+@router.get("/{class_id}/topics")
+async def get_topics(class_id: str, request: Request):
+    """Get all topics for a class."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    result = supabase.table("topics") \
+        .select("*") \
+        .eq("class_id", class_id) \
+        .eq("user_id", user_id) \
+        .order("created_at") \
+        .execute()
+
+    return {"topics": result.data or []}
+
+
 # ── DELETE /api/classes/{id} ──────────────────────────────────────────────
 
 @router.delete("/{class_id}")
