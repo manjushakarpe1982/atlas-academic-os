@@ -36,7 +36,7 @@ export default function UserAvatar() {
     clearAuth();
     setUser(null);
     setOpen(false);
-    router.push('/auth/login');
+    window.location.href = '/auth/login';
   };
 
   const initial = user?.full_name?.[0]?.toUpperCase()
