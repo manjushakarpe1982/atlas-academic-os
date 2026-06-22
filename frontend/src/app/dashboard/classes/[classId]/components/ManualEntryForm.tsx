@@ -67,8 +67,8 @@ export default function ManualEntryForm({ classId, onBack, onSaved }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center gap-3">
         <button onClick={onBack}>
           <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
@@ -76,7 +76,7 @@ export default function ManualEntryForm({ classId, onBack, onSaved }: Props) {
       </div>
       <div className="px-4 py-4 space-y-4">
         <div>
-          <label className="text-xs font-bold text-gray-500 block mb-1.5">
+          <label className="text-sm font-semibold text-gray-600 block mb-1.5">
             Assessment Name
           </label>
           <input
@@ -87,14 +87,14 @@ export default function ManualEntryForm({ classId, onBack, onSaved }: Props) {
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 block mb-1.5">
+          <label className="text-sm font-semibold text-gray-600 block mb-1.5">
             Category
           </label>
           <div className="relative">
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none bg-white appearance-none"
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm font-semibold text-gray-600 focus:border-indigo-500 focus:outline-none bg-white appearance-none"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -107,7 +107,7 @@ export default function ManualEntryForm({ classId, onBack, onSaved }: Props) {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-bold text-gray-500 block mb-1.5">
+            <label className="text-sm font-semibold text-gray-600 block mb-1.5">
               Score
             </label>
             <input
@@ -115,11 +115,11 @@ export default function ManualEntryForm({ classId, onBack, onSaved }: Props) {
               value={score}
               onChange={(e) => setScore(e.target.value)}
               placeholder="85"
-              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm font-semibold text-gray-600 focus:border-indigo-500 focus:outline-none"
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-gray-500 block mb-1.5">
+            <label className="text-sm font-semibold text-gray-600 block mb-1.5">
               Out Of
             </label>
             <input
@@ -127,28 +127,28 @@ export default function ManualEntryForm({ classId, onBack, onSaved }: Props) {
               value={maxScore}
               onChange={(e) => setMaxScore(e.target.value)}
               placeholder="100"
-              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm font-semibold text-gray-600 focus:border-indigo-500 focus:outline-none"
             />
           </div>
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 block mb-1.5">
+          <label className="text-sm font-semibold text-gray-600 block mb-1.5">
             Date
           </label>
           <input
             type="date"
             defaultValue={new Date().toISOString().split("T")[0]}
-            className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none"
+            className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm font-semibold text-gray-600 focus:border-indigo-500 focus:outline-none"
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 block mb-1.5">
+          <label className="text-sm font-semibold text-gray-600 block mb-1.5">
             Notes <span className="font-normal text-gray-400">(Optional)</span>
           </label>
           <textarea
             placeholder="Add any notes about this grade..."
             rows={3}
-            className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none resize-none"
+            className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm font-semibold text-gray-600 focus:border-indigo-500 focus:outline-none resize-none"
           />
         </div>
 

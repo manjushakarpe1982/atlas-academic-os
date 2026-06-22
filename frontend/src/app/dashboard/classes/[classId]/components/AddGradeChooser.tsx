@@ -6,7 +6,7 @@ interface Props { onClose: () => void; onManual: () => void; onPhoto: () => void
 export default function AddGradeChooser({ onClose, onManual, onPhoto, onUpload }: Props) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
-      <div className="bg-white rounded-t-3xl p-6 pb-28 w-full max-w-md space-y-4 relative">
+      <div className="bg-white rounded-t-2xl p-5 pb-24 w-full max-w-md space-y-2 relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
           <X className="w-5 h-5" />
         </button>
@@ -23,8 +23,8 @@ export default function AddGradeChooser({ onClose, onManual, onPhoto, onUpload }
                 <opt.Icon className="w-5 h-5 text-indigo-600" />
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-900">{opt.title}</p>
-                <p className="text-xs text-gray-400">{opt.sub}</p>
+                <p className="text-[15px] font-bold text-gray-900">{opt.title}</p>
+                <p className="text-[13px] text-gray-400">{opt.sub}</p>
               </div>
             </button>
           ))}
