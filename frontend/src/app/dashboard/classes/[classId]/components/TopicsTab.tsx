@@ -52,9 +52,9 @@ export default function TopicsTab({ classId }: { classId: string }) {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-extrabold text-gray-900">Course Topics</h2>
+              <h2 className="text-base font-bold text-gray-900">Course Topics</h2>
               <span className="text-xs text-gray-400 font-semibold">{topics.length} topics</span>
             </div>
             {topics.map((t, i) => {
@@ -78,13 +78,13 @@ export default function TopicsTab({ classId }: { classId: string }) {
             })}
           </div>
 
-          <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center gap-3">
+          <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 flex items-center gap-3">
             <span className="text-3xl">🏆</span>
             <div>
-              <p className="text-sm font-extrabold text-indigo-800">
+              <p className="text-base font-bold text-indigo-800">
                 {done === topics.length ? 'All topics completed!' : done > 0 ? "You're on track!" : 'Get started!'}
               </p>
-              <p className="text-xs text-indigo-600">
+              <p className="text-sm text-indigo-600">
                 {done > 0 ? `You've completed ${done} of ${topics.length} topics` : `${topics.length} topics to cover`}
               </p>
               <div className="w-32 h-1.5 bg-indigo-200 rounded-full mt-1.5 overflow-hidden">
