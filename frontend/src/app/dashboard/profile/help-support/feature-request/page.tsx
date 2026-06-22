@@ -3,20 +3,33 @@ import { useState } from "react";
 import {
   ChevronDown,
   Upload,
-  Info,
   Star,
   CheckCircle2,
   Copy,
-  Calendar,
-  HelpCircle,
-  Bell,
   CalendarDays,
   ClipboardList,
   CircleHelp,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import BackHeader from "../../BackHeader";
 import Image from "next/image";
+import { API_BASE, getToken } from "@/lib/api";
+
+const CATEGORIES = [
+  { value: "",              label: "Select a category" },
+  { value: "ui_ux",        label: "UI/UX Improvement" },
+  { value: "new_feature",  label: "New Feature" },
+  { value: "performance",  label: "Performance" },
+  { value: "integration",  label: "Integration" },
+  { value: "other",        label: "Other" },
+];
+
+interface ValidationError {
+  field: string;
+  message: string;
+}
 
 export default function FeatureRequestPage() {
   const router = useRouter();
@@ -27,53 +40,147 @@ export default function FeatureRequestPage() {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [requestId, setRequestId] = useState("");
+  const [sending, setSending] = useState(false);
+  const [errors, setErrors] = useState<ValidationError[]>([]);
+  const [serverError, setServerError] = useState("");
 
-  const categories = [
-    "Select a category",
-    "UI/UX Improvement",
-    "New Feature",
-    "Performance",
-    "Integration",
-    "Other",
-  ];
+  // ── Validation ──
+  const validateForm = (): boolean => {
+    const newErrors: ValidationError[] = [];
 
+    if (!title.trim()) {
+      newErrors.push({ field: "title", message: "Feature title is required" });
+    } else if (title.trim().length < 3) {
+      newErrors.push({ field: "title", message: "Title must be at least 3 characters" });
+    } else if (title.length > 80) {
+      newErrors.push({ field: "title", message: "Title must be less than 80 characters" });
+    }
+
+    if (!description.trim()) {
+      newErrors.push({ field: "description", message: "Description is required" });
+    } else if (description.trim().length < 10) {
+      newErrors.push({ field: "description", message: "Description must be at least 10 characters" });
+    } else if (description.length > 1000) {
+      newErrors.push({ field: "description", message: "Description must be less than 1000 characters" });
+    }
+
+    if (!category) {
+      newErrors.push({ field: "category", message: "Please select a category" });
+    } else if (!CATEGORIES.some((c) => c.value === category && c.value !== "")) {
+      newErrors.push({ field: "category", message: "Invalid category selected" });
+    }
+
+    if (importance < 1 || importance > 5) {
+      newErrors.push({ field: "importance", message: "Please rate the importance (1-5 stars)" });
+    }
+
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
+
+  const getFieldError = (field: string): string | undefined => {
+    return errors.find((e) => e.field === field)?.message;
+  };
+
+  const clearFieldError = (field: string) => {
+    setErrors(errors.filter((e) => e.field !== field));
+  };
+
+  // ── Screenshot handling ──
   const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      setScreenshot(e.target.files[0]);
+      const file = e.target.files[0];
+      if (!file.type.startsWith("image/")) {
+        setErrors([...errors, { field: "screenshot", message: "Please select an image file (PNG, JPG)" }]);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors([...errors, { field: "screenshot", message: "File must be less than 5MB" }]);
+        return;
+      }
+      clearFieldError("screenshot");
+      setScreenshot(file);
     }
   };
 
-  const handleSubmit = () => {
-    // Generate request ID
-    const newRequestId = `FR-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}/${Math.random().toString().slice(2, 7)}`;
-    setRequestId(newRequestId);
-    setSubmitted(true);
+  // ── Submit to backend API ──
+  const handleSubmit = async () => {
+    setServerError("");
+
+    if (!validateForm()) return;
+
+    setSending(true);
+
+    try {
+      const token = getToken();
+      if (!token) {
+        setServerError("You must be logged in to submit a request. Please sign in and try again.");
+        setSending(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/api/support/feature-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim(),
+          category: category,
+          importance: importance,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setServerError(errorData.detail || "Failed to submit feature request. Please try again.");
+        setSending(false);
+        return;
+      }
+
+      const data = await response.json();
+
+      // Success
+      setRequestId(data.id);
+      setSubmitted(true);
+      setErrors([]);
+    } catch (error) {
+      console.error("Error submitting feature request:", error);
+      setServerError("Network error. Please check your connection and try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
-  // Success Screen
+  // ── Category label helper ──
+  const getCategoryLabel = (val: string) =>
+    CATEGORIES.find((c) => c.value === val)?.label || val;
+
+  // ══════════════════════════════════════════════════════════════
+  // SUCCESS SCREEN
+  // ══════════════════════════════════════════════════════════════
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="">
         <BackHeader title="Feature Request" />
 
-        <div className="px-4 py-4 ">
-          {/* Success Icon with Decorative Elements */}
+        <div className="px-4 py-4">
+          {/* Success Icon */}
           <div className="flex justify-center relative py-6">
-            {/* Decorative dots */}
-            <div className="absolute top-0 left-1/4 w-2 h-2 bg-purple-400 rounded-full"></div>
-            <div className="absolute top-2 right-1/4 w-2 h-2 bg-yellow-400 rounded-full"></div>
-            <div className="absolute bottom-0 left-1/3 w-2 h-2 bg-blue-400 rounded-full"></div>
-            <div className="absolute top-1/2 right-1/3 w-1.5 h-1.5 bg-purple-300 rounded-full"></div>
-
-            {/* Checkmark Circle */}
-            <CheckCircle2 className="w-20 h-20 text-green-600 relative " />
+            <div className="absolute top-0 left-1/4 w-2 h-2 bg-purple-400 rounded-full" />
+            <div className="absolute top-2 right-1/4 w-2 h-2 bg-yellow-400 rounded-full" />
+            <div className="absolute bottom-0 left-1/3 w-2 h-2 bg-blue-400 rounded-full" />
+            <div className="absolute top-1/2 right-1/3 w-1.5 h-1.5 bg-purple-300 rounded-full" />
+            <CheckCircle2 className="w-20 h-20 text-green-600 relative" />
           </div>
 
-          {/* Thank You Message */}
+          {/* Thank You */}
           <div className="text-center space-y-3 mb-4">
             <h1 className="text-3xl font-bold text-gray-900">Thank you!</h1>
             <p className="text-sm text-gray-600">
-              Your ideas have been submitted.
+              Your idea has been submitted.
             </p>
             <p className="text-sm text-gray-600">
               We review every suggestion and prioritize features based on
@@ -83,22 +190,20 @@ export default function FeatureRequestPage() {
 
           {/* Info Cards */}
           <div className="space-y-5 mb-5">
-            <div className="bg-white border-2 p-3 border-gray-200 rounded-lg divide-y  divide-gray-200">
+            <div className="bg-white border-2 p-3 border-gray-200 rounded-lg divide-y divide-gray-200">
               {/* Request ID */}
               <div className="p-4 flex items-start gap-3">
                 <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
                   <ClipboardList className="w-5 h-5 text-indigo-600" />
                 </div>
-
                 <div className="flex-1">
                   <p className="text-xs text-gray-500 font-bold uppercase">
                     Request ID
                   </p>
-                  <p className="text-sm font-bold text-gray-900 mt-1">
+                  <p className="text-sm font-bold text-gray-900 mt-1 break-all">
                     {requestId}
                   </p>
                 </div>
-
                 <button
                   onClick={() => navigator.clipboard.writeText(requestId)}
                   className="text-gray-400 hover:text-gray-600 shrink-0"
@@ -112,7 +217,6 @@ export default function FeatureRequestPage() {
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
                   <CalendarDays className="w-5 h-5 text-purple-600" />
                 </div>
-
                 <div>
                   <p className="text-xs text-gray-500 font-bold uppercase">
                     Submitted On
@@ -138,7 +242,6 @@ export default function FeatureRequestPage() {
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                   <CircleHelp className="w-5 h-5 text-blue-600" />
                 </div>
-
                 <div>
                   <p className="text-xs text-gray-500 font-bold uppercase">
                     What's Next?
@@ -150,6 +253,7 @@ export default function FeatureRequestPage() {
                 </div>
               </div>
             </div>
+
             {/* Stay in the loop */}
             <div className="bg-purple-50 border-2 border-purple-200 rounded-lg mt-4 p-4 flex items-start gap-3">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -157,14 +261,12 @@ export default function FeatureRequestPage() {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-500 font-bold uppercase">
-                  Stay in the loop
+                  Stored in Supabase
                 </p>
                 <p className="text-sm text-gray-700 mt-1">
-                  We'll notify you if there are any updates about your request.
+                  Your request is securely saved and visible to the admin team.
+                  We'll notify you if there are any updates.
                 </p>
-                <button className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mt-2">
-                  View My Requests →
-                </button>
               </div>
             </div>
           </div>
@@ -181,12 +283,14 @@ export default function FeatureRequestPage() {
     );
   }
 
-  // Form Screen
+  // ══════════════════════════════════════════════════════════════
+  // FORM SCREEN
+  // ══════════════════════════════════════════════════════════════
   return (
     <div className="">
       <BackHeader title="Feature Request" />
 
-      <div className="px-4 py-4 ">
+      <div className="px-4 py-4">
         {/* Hero Section */}
         <div className="text-center mb-4">
           <Image
@@ -206,6 +310,17 @@ export default function FeatureRequestPage() {
           </div>
         </div>
 
+        {/* Server Error */}
+        {serverError && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3 mb-4">
+            <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-bold text-red-900">Error</h3>
+              <p className="text-sm text-red-700 mt-1">{serverError}</p>
+            </div>
+          </div>
+        )}
+
         {/* Form */}
         <div className="space-y-3 mb-4 bg-white rounded-lg p-4 border border-gray-200">
           {/* Feature Title */}
@@ -217,11 +332,26 @@ export default function FeatureRequestPage() {
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value.slice(0, 80))}
+                onChange={(e) => {
+                  setTitle(e.target.value.slice(0, 80));
+                  clearFieldError("title");
+                }}
                 placeholder="E.g., Add dark mode"
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none transition-colors placeholder-gray-400"
+                className={`w-full border rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none transition-colors placeholder-gray-400 ${
+                  getFieldError("title")
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-gray-200"
+                }`}
               />
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between">
+                {getFieldError("title") ? (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {getFieldError("title")}
+                  </p>
+                ) : (
+                  <span />
+                )}
                 <span className="text-xs text-gray-500">
                   {title.length}/80 characters
                 </span>
@@ -237,12 +367,27 @@ export default function FeatureRequestPage() {
             <div className="space-y-1">
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
+                onChange={(e) => {
+                  setDescription(e.target.value.slice(0, 1000));
+                  clearFieldError("description");
+                }}
                 placeholder="Describe your idea in detail. How would it help you and other students?"
                 rows={4}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none transition-colors placeholder-gray-400 resize-none"
+                className={`w-full border rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none transition-colors placeholder-gray-400 resize-none ${
+                  getFieldError("description")
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-gray-200"
+                }`}
               />
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between">
+                {getFieldError("description") ? (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {getFieldError("description")}
+                  </p>
+                ) : (
+                  <span />
+                )}
                 <span className="text-xs text-gray-500">
                   {description.length}/1000 characters
                 </span>
@@ -258,30 +403,47 @@ export default function FeatureRequestPage() {
             <div className="relative">
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none transition-colors appearance-none bg-white cursor-pointer"
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  clearFieldError("category");
+                }}
+                className={`w-full border rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none transition-colors appearance-none bg-white cursor-pointer ${
+                  getFieldError("category")
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-gray-200"
+                }`}
               >
-                {categories.map((cat, idx) => (
-                  <option key={idx} value={cat}>
-                    {cat}
+                {CATEGORIES.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
                   </option>
                 ))}
               </select>
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600 pointer-events-none" />
             </div>
+            {getFieldError("category") && (
+              <p className="text-xs text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {getFieldError("category")}
+              </p>
+            )}
           </div>
 
           {/* Importance Rating */}
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-900">
-              How important is this for you?
+              How important is this for you? <span className="text-red-500">*</span>
             </label>
             <div className="flex items-center justify-between">
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
-                    onClick={() => setImportance(star)}
+                    type="button"
+                    onClick={() => {
+                      setImportance(star);
+                      clearFieldError("importance");
+                    }}
                     className="transition-all"
                   >
                     <Star
@@ -294,13 +456,32 @@ export default function FeatureRequestPage() {
                   </button>
                 ))}
               </div>
+              {importance > 0 && (
+                <span className="text-xs text-gray-500">
+                  {importance === 1
+                    ? "Nice to have"
+                    : importance === 2
+                    ? "Somewhat useful"
+                    : importance === 3
+                    ? "Important"
+                    : importance === 4
+                    ? "Very important"
+                    : "Critical need"}
+                </span>
+              )}
             </div>
+            {getFieldError("importance") && (
+              <p className="text-xs text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {getFieldError("importance")}
+              </p>
+            )}
           </div>
 
           {/* Screenshot Upload */}
           <div className="space-y-1">
             <label className="text-sm font-bold text-gray-900">
-              Attach screenshot (optional)
+              Attach screenshot <span className="font-normal text-gray-500">(optional)</span>
             </label>
             <label className="block">
               <input
@@ -322,16 +503,42 @@ export default function FeatureRequestPage() {
                 )}
               </div>
             </label>
+            {getFieldError("screenshot") && (
+              <p className="text-xs text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {getFieldError("screenshot")}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Submit Button */}
         <button
           onClick={handleSubmit}
-          className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all text-lg"
+          disabled={sending}
+          className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all text-lg disabled:opacity-70 flex items-center justify-center gap-2"
         >
-          Submit Request
+          {sending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
+            </>
+          ) : (
+            "Submit Request"
+          )}
         </button>
+
+        {/* Info Box */}
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mt-6 flex items-start gap-3">
+          <span className="text-2xl flex-shrink-0">ℹ️</span>
+          <div>
+            <p className="text-sm font-bold text-blue-900">
+              Your request is securely stored
+            </p>
+            <p className="text-xs text-blue-700 mt-1">
+              All feature requests are saved in our database. The admin team can view and prioritize every request directly in Supabase.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
