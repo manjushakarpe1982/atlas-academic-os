@@ -518,6 +518,24 @@ async def get_grades(class_id: str, request: Request):
     return {"grades": result.data or []}
 
 
+# ── GET /api/classes/{id}/grade-weights ────────────────────────────────────
+
+@router.get("/{class_id}/grade-weights")
+async def get_grade_weights(class_id: str, request: Request):
+    """Get grade weights for a class."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    result = supabase.table("grade_weights") \
+        .select("*") \
+        .eq("class_id", class_id) \
+        .eq("user_id", user_id) \
+        .order("weight_pct", desc=True) \
+        .execute()
+
+    return {"weights": result.data or []}
+
+
 # ── GET /api/classes/{id}/topics ───────────────────────────────────────────
 
 @router.get("/{class_id}/topics")
@@ -612,55 +630,67 @@ async def get_class_overview(class_id: str, request: Request):
             "date": f.get("created_at"),
         }
 
-    # ── Next Deadline (from assessments for this class) ──
+    # ── Upcoming Deadlines (from assessments + calendar events for this class) ──
     now_str = datetime.utcnow().date().isoformat()
+    now_dt = datetime.utcnow().date()
+
+    deadlines = []
+
+    # Source 1: assessments table
     assess_res = supabase.table("assessments") \
         .select("title, category, due_date") \
         .eq("class_id", class_id).eq("user_id", user_id) \
         .gte("due_date", now_str) \
-        .order("due_date").limit(1).execute()
+        .order("due_date").limit(10).execute()
 
-    next_deadline = None
-    if assess_res.data:
-        a = assess_res.data[0]
+    for a in (assess_res.data or []):
         due = a.get("due_date", "")
         days_left = None
         if due:
             try:
-                days_left = (datetime.strptime(due, "%Y-%m-%d").date() - datetime.utcnow().date()).days
+                days_left = (datetime.strptime(due, "%Y-%m-%d").date() - now_dt).days
             except Exception:
                 pass
-        next_deadline = {
+        deadlines.append({
             "title":     a.get("title", ""),
             "category":  a.get("category", ""),
             "due_date":  due,
             "days_left": days_left,
-        }
+            "source":    "syllabus",
+        })
 
-    # ── Also check calendar events matched by class name ──
-    if not next_deadline:
-        class_name = cls.get("name", "").lower()
-        if class_name:
-            cal_res = supabase.table("calendar_events") \
-                .select("title, start_date, category") \
-                .eq("user_id", user_id) \
-                .gte("start_date", datetime.utcnow().isoformat()) \
-                .order("start_date").limit(20).execute()
-            for ev in (cal_res.data or []):
-                if class_name in (ev.get("title") or "").lower():
-                    due = (ev.get("start_date") or "")[:10]
-                    days_left = None
-                    try:
-                        days_left = (datetime.strptime(due, "%Y-%m-%d").date() - datetime.utcnow().date()).days
-                    except Exception:
-                        pass
-                    next_deadline = {
-                        "title":     ev.get("title", ""),
-                        "category":  ev.get("category", ""),
-                        "due_date":  due,
-                        "days_left": days_left,
-                    }
-                    break
+    # Source 2: calendar events matched by class name
+    class_name = cls.get("name", "").lower()
+    if class_name:
+        cal_res = supabase.table("calendar_events") \
+            .select("title, start_date, category") \
+            .eq("user_id", user_id) \
+            .gte("start_date", datetime.utcnow().isoformat()) \
+            .order("start_date").limit(30).execute()
+
+        existing_titles = {d["title"].lower().strip() for d in deadlines}
+        for ev in (cal_res.data or []):
+            ev_title = ev.get("title") or ""
+            if class_name not in ev_title.lower():
+                continue
+            if ev_title.lower().strip() in existing_titles:
+                continue
+            due = (ev.get("start_date") or "")[:10]
+            days_left = None
+            try:
+                days_left = (datetime.strptime(due, "%Y-%m-%d").date() - now_dt).days
+            except Exception:
+                pass
+            deadlines.append({
+                "title":     ev_title,
+                "category":  ev.get("category", ""),
+                "due_date":  due,
+                "days_left": days_left,
+                "source":    "calendar",
+            })
+
+    # Sort by due_date
+    deadlines.sort(key=lambda x: x.get("due_date") or "9999")
 
     return {
         "classInfo":     class_info,
@@ -668,7 +698,7 @@ async def get_class_overview(class_id: str, request: Request):
         "totalGrades":   total_grades,
         "insight":       {"strongest": strongest, "weakest": weakest},
         "syllabusFile":  syllabus_file,
-        "nextDeadline":  next_deadline,
+        "deadlines":     deadlines,
     }
 
 
