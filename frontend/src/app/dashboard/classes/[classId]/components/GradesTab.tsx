@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { GradeItem } from './shared';
@@ -33,7 +33,7 @@ export default function GradesTab({ classId }: { classId: string }) {
   const [weights, setWeights] = useState<WeightData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     setLoading(true);
     Promise.all([
       api<{ grades: GradeData[] }>(`/api/classes/${classId}/grades`),
@@ -42,13 +42,15 @@ export default function GradesTab({ classId }: { classId: string }) {
       .then(([g, w]) => { setGrades(g.grades || []); setWeights(w.weights || []); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  };
+  }, [classId]);
 
-  useEffect(() => { if (classId) fetchData(); }, [classId]);
+  useEffect(() => { if (classId) fetchData(); }, [classId, fetchData]);
 
   const resetAll = () => { setView('list'); setEditGrade(null); setDeleteGrade(null); };
 
-  // Convert API grades to GradeItem format for child components
+  const handleSaved = () => { resetAll(); fetchData(); };
+  const handleDeleted = () => { setDeleteGrade(null); setEditGrade(null); setView('list'); fetchData(); };
+
   const gradeItems: GradeItem[] = grades.map(g => ({
     id: g.id,
     title: g.title,
@@ -58,14 +60,12 @@ export default function GradesTab({ classId }: { classId: string }) {
     max: g.max_score,
   }));
 
-  // Convert weights to display format
   const weightItems = weights.map((w, i) => ({
     label: w.category,
     pct: w.weight_pct,
     color: WEIGHT_COLORS[i % WEIGHT_COLORS.length],
   }));
 
-  // Calculate current grade average
   const currentGrade = grades.length > 0
     ? Math.round(grades.reduce((s, g) => s + (g.score / g.max_score * 100), 0) / grades.length)
     : null;
@@ -98,21 +98,26 @@ export default function GradesTab({ classId }: { classId: string }) {
         <AddGradeChooser onClose={resetAll} onManual={() => setView('manual')} onPhoto={() => setView('photo')} onUpload={() => setView('upload')} />
       )}
 
-      {view === 'manual' && <ManualEntryForm onBack={resetAll} onSave={() => setView('success')} />}
+      {view === 'manual' && <ManualEntryForm classId={classId} onBack={resetAll} onSaved={() => setView('success')} />}
       {view === 'photo' && <TakePhotoForm onBack={resetAll} />}
       {view === 'upload' && <UploadScreenshotForm onBack={resetAll} />}
 
       {view === 'edit' && editGrade && (
-        <EditGradeForm grade={editGrade} onBack={resetAll} onSave={resetAll}
-          onDelete={() => { setDeleteGrade(editGrade); setView('list'); }} />
+        <EditGradeForm
+          grade={editGrade}
+          classId={classId}
+          onBack={resetAll}
+          onSaved={handleSaved}
+          onDelete={() => { setDeleteGrade(editGrade); setView('list'); }}
+        />
       )}
 
       {view === 'success' && (
-        <GradeSuccess onViewGrades={resetAll} onAddAnother={() => setView('manual')} />
+        <GradeSuccess onViewGrades={handleSaved} onAddAnother={() => setView('manual')} />
       )}
 
       {deleteGrade && (
-        <DeleteGradeModal grade={deleteGrade} onCancel={() => setDeleteGrade(null)} onDelete={() => setDeleteGrade(null)} />
+        <DeleteGradeModal grade={deleteGrade} classId={classId} onCancel={() => setDeleteGrade(null)} onDeleted={handleDeleted} />
       )}
     </div>
   );

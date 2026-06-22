@@ -500,7 +500,36 @@ async def save_grades(class_id: str, req: SaveGradesRequest, request: Request):
     return {"saved": saved, "message": f"{saved} grade(s) saved successfully."}
 
 
-# ── GET /api/classes/{id}/grades ──────────────────────────────────────────
+# ── POST /api/classes/{id}/grades/add ──────────────────────────────────────
+
+@router.post("/{class_id}/grades/add")
+async def add_single_grade(class_id: str, request: Request):
+    """Add a single grade without deleting existing grades."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    body = await request.json()
+    title = (body.get("title") or "").strip()
+    category = body.get("category", "")
+    score = body.get("score")
+    max_score = body.get("max_score")
+
+    if not title:
+        raise HTTPException(400, "Title is required")
+    if score is None or max_score is None or float(max_score) <= 0:
+        raise HTTPException(400, "Valid score and max_score required")
+
+    result = supabase.table("grades").insert({
+        "user_id":   user_id,
+        "class_id":  class_id,
+        "category":  category,
+        "title":     title,
+        "score":     float(score),
+        "max_score": float(max_score),
+        "source":    "manual",
+    }).execute()
+
+    return {"grade": result.data[0] if result.data else None}
 
 @router.get("/{class_id}/grades")
 async def get_grades(class_id: str, request: Request):
@@ -516,6 +545,55 @@ async def get_grades(class_id: str, request: Request):
         .execute()
 
     return {"grades": result.data or []}
+
+
+# ── PATCH /api/classes/{id}/grades/{grade_id} ──────────────────────────────
+
+@router.patch("/{class_id}/grades/{grade_id}")
+async def update_grade(class_id: str, grade_id: str, request: Request):
+    """Update a single grade."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    body = await request.json()
+    update_data = {}
+    if "title" in body:    update_data["title"] = body["title"]
+    if "category" in body: update_data["category"] = body["category"]
+    if "score" in body:    update_data["score"] = body["score"]
+    if "max_score" in body: update_data["max_score"] = body["max_score"]
+
+    if not update_data:
+        raise HTTPException(400, "No fields to update")
+
+    result = supabase.table("grades") \
+        .update(update_data) \
+        .eq("id", grade_id) \
+        .eq("class_id", class_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    if not result.data:
+        raise HTTPException(404, "Grade not found")
+
+    return {"grade": result.data[0]}
+
+
+# ── DELETE /api/classes/{id}/grades/{grade_id} ─────────────────────────────
+
+@router.delete("/{class_id}/grades/{grade_id}")
+async def delete_grade(class_id: str, grade_id: str, request: Request):
+    """Delete a single grade."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    result = supabase.table("grades") \
+        .delete() \
+        .eq("id", grade_id) \
+        .eq("class_id", class_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    return {"deleted": True}
 
 
 # ── GET /api/classes/{id}/grade-weights ────────────────────────────────────

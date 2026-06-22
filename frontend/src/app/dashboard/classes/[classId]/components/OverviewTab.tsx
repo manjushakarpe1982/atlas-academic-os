@@ -92,7 +92,7 @@ export default function OverviewTab({ classId }: { classId: string }) {
   return (
     <div className="space-y-4">
           {/* About This Course */}
-      <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
         <h2 className="text-base font-bold text-gray-900 ">
           About This Course
         </h2>
@@ -146,7 +146,7 @@ export default function OverviewTab({ classId }: { classId: string }) {
       {(insight.strongest || insight.weakest) && (
         <div className="grid grid-cols-2 gap-3">
           {insight.strongest && (
-            <div className="bg-green-50 rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-center text-center">
+            <div className="bg-green-50 rounded-lg border border-gray-200 shadow-sm p-3 flex flex-col items-center text-center">
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
                 <TrendingUp className="w-6 h-6 text-green-600" />
               </div>
@@ -165,7 +165,7 @@ export default function OverviewTab({ classId }: { classId: string }) {
             </div>
           )}
           {insight.weakest && (
-            <div className="bg-red-50 rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-center text-center">
+            <div className="bg-red-50 rounded-lg border border-gray-200 shadow-sm p-3 flex flex-col items-center text-center">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-2">
                 <TrendingDown className="w-6 h-6 text-red-500" />
               </div>
@@ -193,7 +193,7 @@ export default function OverviewTab({ classId }: { classId: string }) {
         (() => {
           const dt = formatDeadlineDate(nextDeadline.due_date);
           return (
-            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <div className="flex items-center justify-between mb-1">
                 <h2 className="text-base font-bold text-gray-900">
                   Next Deadline

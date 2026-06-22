@@ -1,10 +1,27 @@
 'use client';
-import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2, Loader2 } from 'lucide-react';
 import { GradeItem } from './shared';
+import { API_BASE, getToken } from '@/lib/api';
 
-interface Props { grade: GradeItem; onCancel: () => void; onDelete: () => void; }
+interface Props { grade: GradeItem; classId: string; onCancel: () => void; onDeleted: () => void; }
 
-export default function DeleteGradeModal({ grade, onCancel, onDelete }: Props) {
+export default function DeleteGradeModal({ grade, classId, onCancel, onDeleted }: Props) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const token = getToken();
+      await fetch(`${API_BASE}/api/classes/${classId}/grades/${grade.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      onDeleted();
+    } catch {}
+    finally { setDeleting(false); }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
       <div className="bg-white rounded-2xl p-6 max-w-xs w-full text-center space-y-4">
@@ -22,7 +39,10 @@ export default function DeleteGradeModal({ grade, onCancel, onDelete }: Props) {
         <p className="text-xs text-gray-500">This action cannot be undone.</p>
         <div className="flex gap-3 pt-1">
           <button onClick={onCancel} className="flex-1 border-2 border-gray-200 text-gray-700 font-bold py-2.5 rounded-xl hover:bg-gray-50 transition-all text-sm">Cancel</button>
-          <button onClick={onDelete} className="flex-1 bg-red-600 text-white font-bold py-2.5 rounded-xl hover:bg-red-700 transition-all text-sm">Delete</button>
+          <button onClick={handleDelete} disabled={deleting}
+            className="flex-1 bg-red-600 text-white font-bold py-2.5 rounded-xl hover:bg-red-700 transition-all text-sm disabled:opacity-70 flex items-center justify-center gap-2">
+            {deleting ? <><Loader2 className="w-4 h-4 animate-spin" /> Deleting...</> : 'Delete'}
+          </button>
         </div>
       </div>
     </div>

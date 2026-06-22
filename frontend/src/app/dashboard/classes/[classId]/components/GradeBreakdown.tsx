@@ -5,14 +5,14 @@ interface Props { weights: WeightItem[]; currentGrade: number | null; }
 
 export default function GradeBreakdown({ weights, currentGrade }: Props) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-      <h2 className="text-sm font-extrabold text-gray-900 mb-3">Grade Breakdown</h2>
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3">
+      <h2 className="text-base font-bold text-gray-900 mb-3">Grade Breakdown</h2>
 
       {weights.length === 0 ? (
         <p className="text-xs text-gray-400 text-center py-6">No grade weights found. Upload a syllabus to see breakdown.</p>
       ) : (
         <div className="flex items-center gap-4">
-          <div className="relative w-24 h-24 flex-shrink-0">
+          <div className="relative w-28 h-28 flex-shrink-0">
             <svg viewBox="0 0 100 100" className="w-full h-full">
               {(() => {
                 let o = -90;
@@ -31,18 +31,18 @@ export default function GradeBreakdown({ weights, currentGrade }: Props) {
                 });
               })()}
               <circle cx="50" cy="50" r="24" fill="white" />
-              <text x="50" y="47" textAnchor="middle" fontSize="10" fontWeight="800" fill="#111">
+              <text x="50" y="47" textAnchor="middle" fontSize="12" fontWeight="800" fill="#111">
                 {currentGrade !== null ? `${currentGrade}%` : '—'}
               </text>
-              <text x="50" y="57" textAnchor="middle" fontSize="7" fill="#999">Total</text>
+              <text x="50" y="57" textAnchor="middle" fontSize="9" fill="#999">Total</text>
             </svg>
           </div>
-          <div className="flex-1 space-y-1.5">
+          <div className="flex-1 space-y-1">
             {weights.map(w => (
               <div key={w.label} className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: w.color }} />
-                <span className="flex-1 text-xs text-gray-600">{w.label}</span>
-                <span className="text-xs font-bold text-gray-800">{w.pct}%</span>
+                <span className="flex-1 text-[13px] text-gray-600">{w.label}</span>
+                <span className="text-[13px] font-bold text-gray-800">{w.pct}%</span>
               </div>
             ))}
           </div>
