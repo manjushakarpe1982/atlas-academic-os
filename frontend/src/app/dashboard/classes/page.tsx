@@ -1,142 +1,123 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronRight, BookOpen } from 'lucide-react';
+import { ChevronRight, BookOpen, Loader2, Plus } from 'lucide-react';
+import Link from 'next/link';
+import { api } from '@/lib/api';
 
-interface Class {
+interface ClassData {
   id: string;
   name: string;
-  code: string;
-  professor: string;
-  semester: string;
-  credits: number;
-  color: string;
-  icon: string;
+  instructor: string | null;
+  credit_hours: number | null;
+  term: string | null;
+  created_at: string;
 }
 
-// Sample class data
-const CLASSES: Class[] = [
-  {
-    id: 'math251',
-    name: 'Calculus II',
-    code: 'MATH 251',
-    professor: 'Dr. Sarah Johnson',
-    semester: 'Fall 2024',
-    credits: 4,
-    color: 'bg-blue-50',
-    icon: '📐',
-  },
-  {
-    id: 'bio1107',
-    name: 'Biology I',
-    code: 'BIO 1107',
-    professor: 'Dr. Michael Chen',
-    semester: 'Fall 2024',
-    credits: 4,
-    color: 'bg-green-50',
-    icon: '🧬',
-  },
-  {
-    id: 'chem101',
-    name: 'General Chemistry',
-    code: 'CHEM 101',
-    professor: 'Dr. Emily Rodriguez',
-    semester: 'Fall 2024',
-    credits: 4,
-    color: 'bg-purple-50',
-    icon: '⚗️',
-  },
-  {
-    id: 'phys201',
-    name: 'Physics I',
-    code: 'PHYS 201',
-    professor: 'Dr. James Wilson',
-    semester: 'Fall 2024',
-    credits: 4,
-    color: 'bg-orange-50',
-    icon: '⚛️',
-  },
-  {
-    id: 'english101',
-    name: 'English Composition',
-    code: 'ENG 101',
-    professor: 'Dr. Jessica Miller',
-    semester: 'Fall 2024',
-    credits: 3,
-    color: 'bg-pink-50',
-    icon: '📚',
-  },
+const CLASS_STYLES: { pattern: RegExp; icon: string; color: string }[] = [
+  { pattern: /math|calculus|algebra|geometry/i, icon: '📐', color: 'bg-blue-50' },
+  { pattern: /bio|anatomy|genetics/i,          icon: '🧬', color: 'bg-green-50' },
+  { pattern: /chem/i,                          icon: '⚗️', color: 'bg-purple-50' },
+  { pattern: /phys/i,                          icon: '⚛️', color: 'bg-orange-50' },
+  { pattern: /eng|english|lit|writing/i,       icon: '📚', color: 'bg-pink-50' },
+  { pattern: /hist|history/i,                  icon: '📜', color: 'bg-amber-50' },
+  { pattern: /comp|cs|programming|code/i,      icon: '💻', color: 'bg-indigo-50' },
+  { pattern: /art|music|design/i,              icon: '🎨', color: 'bg-rose-50' },
 ];
+
+function getStyle(name: string) {
+  const match = CLASS_STYLES.find(s => s.pattern.test(name));
+  return match || { icon: '📖', color: 'bg-gray-50' };
+}
 
 export default function ClassesPage() {
   const router = useRouter();
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleClassClick = (classId: string) => {
-    router.push(`/dashboard/classes/${classId}`);
-  };
+  useEffect(() => {
+    api<{ classes: ClassData[] }>('/api/classes')
+      .then(d => setClasses(d.classes || []))
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 gap-2 text-gray-400">
+        <Loader2 className="w-6 h-6 animate-spin" />
+        <span className="text-sm font-medium">Loading classes...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="px-4 py-10 text-center">
+        <p className="text-sm text-red-600 font-medium">{error}</p>
+        <button onClick={() => window.location.reload()} className="mt-3 text-sm text-indigo-600 font-bold">Retry</button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
-        <h1 className="text-lg font-bold text-gray-900">My Classes</h1>
-        <p className="text-sm text-gray-600 mt-1">{CLASSES.length} classes this semester</p>
+      <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-14 z-10 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-bold text-gray-900">My Classes</h1>
+          <p className="text-sm text-gray-600 mt-0.5">{classes.length} class{classes.length !== 1 ? 'es' : ''} this semester</p>
+        </div>
+        <Link href="/add-class" className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
+          <Plus className="w-4 h-4 text-white" />
+        </Link>
       </div>
 
-      {/* Classes List */}
-      <div className="px-4 py-6 space-y-3">
-        {CLASSES.map((classItem) => (
-          <button
-            key={classItem.id}
-            onClick={() => handleClassClick(classItem.id)}
-            className={`w-full ${classItem.color} border-2 border-gray-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all text-left`}
-          >
-            <div className="flex items-start justify-between">
-              {/* Left Section - Class Info */}
-              <div className="flex items-start gap-4 flex-1">
-                {/* Icon */}
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200">
-                  <span className="text-2xl">{classItem.icon}</span>
-                </div>
-
-                {/* Class Details */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-gray-500 uppercase">
-                    {classItem.code}
-                  </p>
-                  <h3 className="text-lg font-bold text-gray-900 mt-1">
-                    {classItem.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-600">
-                    <span>👨‍🏫 {classItem.professor}</span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs bg-white px-2 py-1 rounded-full border border-gray-200">
-                      {classItem.semester}
-                    </span>
-                    <span className="text-xs bg-white px-2 py-1 rounded-full border border-gray-200">
-                      {classItem.credits} Credits
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Section - Chevron */}
-              <div className="flex items-center justify-center w-6 h-6 flex-shrink-0 ml-2">
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {/* Empty State (if no classes) */}
-      {CLASSES.length === 0 && (
+      {classes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-4">
           <BookOpen className="w-16 h-16 text-gray-300 mb-4" />
           <p className="text-lg font-bold text-gray-900 mb-2">No Classes Yet</p>
-          <p className="text-sm text-gray-600 text-center">
-            Add your first class to get started with Atlas
-          </p>
+          <p className="text-sm text-gray-600 text-center mb-4">Add your first class to get started with Atlas</p>
+          <Link href="/add-class" className="bg-indigo-600 text-white font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-indigo-700 transition-all">
+            + Add Class
+          </Link>
+        </div>
+      ) : (
+        <div className="px-4 py-4 space-y-3">
+          {classes.map(c => {
+            const s = getStyle(c.name);
+            return (
+              <button key={c.id} onClick={() => router.push(`/dashboard/classes/${c.id}`)}
+                className={`w-full ${s.color} border-2 border-gray-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all text-left`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200">
+                      <span className="text-2xl">{s.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-gray-900">{c.name}</h3>
+                      {c.instructor && (
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-600">
+                          <span>👨‍🏫 {c.instructor}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 mt-2">
+                        {c.term && (
+                          <span className="text-xs bg-white px-2 py-1 rounded-full border border-gray-200">{c.term}</span>
+                        )}
+                        {c.credit_hours && (
+                          <span className="text-xs bg-white px-2 py-1 rounded-full border border-gray-200">{c.credit_hours} Credits</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center w-6 h-6 flex-shrink-0 ml-2">
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
