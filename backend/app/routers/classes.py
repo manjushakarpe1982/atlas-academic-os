@@ -516,3 +516,136 @@ async def get_grades(class_id: str, request: Request):
         .execute()
 
     return {"grades": result.data or []}
+
+
+# ── DELETE /api/classes/{id} ──────────────────────────────────────────────
+
+@router.delete("/{class_id}")
+async def delete_class(class_id: str, request: Request):
+    """Delete a class and ALL associated data (grades, weights, assessments, topics, files, parsed results)."""
+    user_id = _get_user(request)
+
+    # Verify class exists and belongs to user
+    cls = _get_class(class_id, user_id)
+
+    class_name = cls.get("name", "Unknown Class")
+
+    # Delete all related data in order (child tables first)
+    supabase.table("grades").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
+    supabase.table("grade_weights").delete().eq("class_id", class_id).execute()
+    supabase.table("assessments").delete().eq("class_id", class_id).execute()
+    supabase.table("topics").delete().eq("class_id", class_id).execute()
+    supabase.table("parsed_results").delete().eq("class_id", class_id).execute()
+
+    # Delete files from storage + DB
+    file_result = supabase.table("files").select("id, storage_bucket, storage_path") \
+        .eq("class_id", class_id).eq("user_id", user_id).execute()
+
+    for f in (file_result.data or []):
+        if f.get("storage_bucket") and f.get("storage_path"):
+            try:
+                supabase.storage.from_(f["storage_bucket"]).remove([f["storage_path"]])
+            except Exception:
+                pass
+
+    supabase.table("files").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
+
+    # Delete the class itself
+    supabase.table("classes").delete().eq("id", class_id).eq("user_id", user_id).execute()
+
+    print(f"[DeleteClass] Deleted class '{class_name}' ({class_id}) for user {user_id}")
+
+    return {"message": f"Class '{class_name}' and all associated data deleted successfully", "id": class_id}
+
+
+# ============================================================================
+# FILE MANAGEMENT — LIST & DELETE
+# ============================================================================
+
+@router.get("/files/all")
+async def list_user_files(request: Request):
+    """List all uploaded files for the current user, with class names."""
+    user_id = _get_user(request)
+
+    # Get all files for the user
+    file_result = supabase.table("files") \
+        .select("id, original_name, mime_type, size_bytes, extension, category, status, class_id, created_at") \
+        .eq("user_id", user_id) \
+        .order("created_at", desc=True) \
+        .execute()
+
+    files = file_result.data or []
+
+    # Get all classes for the user to map class_id → name
+    class_result = supabase.table("classes") \
+        .select("id, name") \
+        .eq("user_id", user_id) \
+        .execute()
+
+    class_map = {c["id"]: c["name"] for c in (class_result.data or [])}
+
+    # Attach class_name to each file
+    for f in files:
+        f["class_name"] = class_map.get(f.get("class_id"), "Unknown Class") if f.get("class_id") else "No Class"
+
+    return {"files": files}
+
+
+@router.delete("/files/{file_id}")
+async def delete_user_file(file_id: str, request: Request):
+    """Delete a specific uploaded file."""
+    user_id = _get_user(request)
+
+    # Verify the file belongs to the user
+    file_result = supabase.table("files") \
+        .select("id, storage_bucket, storage_path") \
+        .eq("id", file_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    if not file_result.data:
+        raise HTTPException(404, "File not found")
+
+    file_data = file_result.data[0]
+
+    # Try to delete from Supabase Storage if path exists
+    if file_data.get("storage_bucket") and file_data.get("storage_path"):
+        try:
+            supabase.storage.from_(file_data["storage_bucket"]).remove([file_data["storage_path"]])
+        except Exception as e:
+            print(f"Warning: Could not delete from storage: {e}")
+
+    # Delete the database record
+    supabase.table("files").delete().eq("id", file_id).eq("user_id", user_id).execute()
+
+    return {"message": "File deleted successfully", "id": file_id}
+
+
+@router.delete("/files/all/delete")
+async def delete_all_user_files(request: Request):
+    """Delete all uploaded files for the current user."""
+    user_id = _get_user(request)
+
+    # Get all files to clean up storage
+    file_result = supabase.table("files") \
+        .select("id, storage_bucket, storage_path") \
+        .eq("user_id", user_id) \
+        .execute()
+
+    files = file_result.data or []
+    deleted_count = 0
+
+    for f in files:
+        # Try to delete from storage
+        if f.get("storage_bucket") and f.get("storage_path"):
+            try:
+                supabase.storage.from_(f["storage_bucket"]).remove([f["storage_path"]])
+            except Exception:
+                pass
+
+    # Delete all file records from DB
+    if files:
+        supabase.table("files").delete().eq("user_id", user_id).execute()
+        deleted_count = len(files)
+
+    return {"message": f"{deleted_count} file(s) deleted successfully", "deleted_count": deleted_count}
