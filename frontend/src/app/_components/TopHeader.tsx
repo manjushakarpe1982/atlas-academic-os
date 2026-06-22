@@ -1,8 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { X, Home, BookOpen, Target, Calendar, User, Bell, ClipboardList, BarChart3, Brain, HelpCircle, Settings, LogOut } from 'lucide-react';
+import { X, Home, BookOpen, Target, Calendar, User, Bell, ClipboardList, BarChart3, Brain, HelpCircle, Settings, LogOut, BookOpenCheck, FileText, AlertTriangle } from 'lucide-react';
+import UserAvatar from './UserAvatar';
+import { clearAuth } from '@/lib/api';
 
 const MENU_ITEMS = [
   { href: '/dashboard',              icon: Home,          label: '1. Home (Dashboard)'  },
@@ -19,11 +21,70 @@ const MENU_ITEMS = [
  
 ];
 
+// ── Static notification data ──
+const NOTIFICATIONS = [
+  {
+    id: '1',
+    icon: AlertTriangle,
+    iconBg: 'bg-red-100',
+    iconColor: 'text-red-600',
+    title: 'Biology Quiz Tomorrow',
+    body: 'Worth 30% of your grade. Start studying now!',
+    time: '2 hours ago',
+    unread: true,
+  },
+  {
+    id: '2',
+    icon: FileText,
+    iconBg: 'bg-amber-100',
+    iconColor: 'text-amber-600',
+    title: 'Calculus Homework Due',
+    body: 'Due Friday, May 17. 3 problems remaining.',
+    time: '5 hours ago',
+    unread: true,
+  },
+  {
+    id: '3',
+    icon: BookOpenCheck,
+    iconBg: 'bg-green-100',
+    iconColor: 'text-green-600',
+    title: 'Study Plan Updated',
+    body: 'Your study plan for this week has been refreshed.',
+    time: '1 day ago',
+    unread: true,
+  },
+  {
+    id: '4',
+    icon: Brain,
+    iconBg: 'bg-indigo-100',
+    iconColor: 'text-indigo-600',
+    title: 'Atlas Tip',
+    body: 'You completed 3 of 5 study sessions. Keep it up!',
+    time: '2 days ago',
+    unread: false,
+  },
+];
+
 interface Props { title?: string; showBack?: boolean; }
 
 export default function TopHeader({ title, showBack }: Props) {
   const [open, setOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const path = usePathname();
+
+  // Close notification panel when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const unreadCount = NOTIFICATIONS.filter(n => n.unread).length;
 
   return (
     <>
@@ -45,21 +106,82 @@ export default function TopHeader({ title, showBack }: Props) {
       </button>
 
       {/* Logo */}
-      <div className="flex items-center gap-2">
+      <Link href="/dashboard" className="flex items-center gap-2">
         <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
           <span className="text-white text-xs font-extrabold">A</span>
         </div>
         <span className="font-extrabold text-gray-900">Atlas</span>
-      </div>
+      </Link>
     </div>
 
     {/* Right Side */}
-    <Link href="/dashboard/notifications" className="relative">
-      <Bell className="w-5 h-5 text-gray-600" />
-      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center font-bold">
-        3
-      </span>
-    </Link>
+    <div className="flex items-center gap-4">
+      {/* Notification Bell — opens panel, no redirect */}
+      <div className="relative" ref={notifRef}>
+        <button
+          onClick={() => setNotifOpen(!notifOpen)}
+          className="relative"
+        >
+          <Bell className="w-5 h-5 text-gray-600" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center font-bold">
+              {unreadCount}
+            </span>
+          )}
+        </button>
+
+        {/* Notification Panel */}
+        {notifOpen && (
+          <div className="absolute right-0 top-10 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+            {/* Panel Header */}
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-sm font-extrabold text-gray-900">Notifications</h3>
+              <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                {unreadCount} new
+              </span>
+            </div>
+
+            {/* Notification Items */}
+            <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+              {NOTIFICATIONS.map(n => (
+                <div
+                  key={n.id}
+                  className={`px-4 py-3 flex items-start gap-3 transition-colors hover:bg-gray-50 cursor-pointer ${
+                    n.unread ? 'bg-indigo-50/40' : ''
+                  }`}
+                >
+                  <div className={`w-9 h-9 ${n.iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                    <n.icon className={`w-4 h-4 ${n.iconColor}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-gray-900 truncate">{n.title}</p>
+                      {n.unread && (
+                        <span className="w-2 h-2 bg-indigo-600 rounded-full flex-shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.body}</p>
+                    <p className="text-[10px] text-gray-400 mt-1">{n.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Panel Footer */}
+            <div className="border-t border-gray-100 px-4 py-2.5">
+              <button
+                onClick={() => setNotifOpen(false)}
+                className="w-full text-center text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+              >
+                Mark all as read
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <UserAvatar />
+    </div>
   </div>
 </header>
       </header>
@@ -120,7 +242,7 @@ export default function TopHeader({ title, showBack }: Props) {
                 className="flex items-center gap-3 px-3 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded-xl font-semibold">
                 <Settings className="w-4 h-4 text-gray-400" /> Settings
               </Link>
-              <button className="w-full flex items-center gap-3 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-xl font-semibold">
+              <button onClick={() => { clearAuth(); window.location.href = '/auth/login'; }} className="w-full flex items-center gap-3 px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-xl font-semibold">
                 <LogOut className="w-4 h-4" /> Log Out
               </button>
             </div>
@@ -130,48 +252,3 @@ export default function TopHeader({ title, showBack }: Props) {
     </>
   );
 }
-
-
-// /dashboard/profile/help-support/report-problem
-
-// please create this page function  create api and form validations 
-
-// If a report-problem request is created, will it be visible in the supabase ? I need to know because I want to understand when a student has submitted a request.
-
-
-// /dashboard/profile/help-support/feature-request
-
-// please create this page function  create api and form validations 
-
-// If a feature-request request is created, will it be visible in the supabase ? I need to know because I want to understand when a student has submitted a request.
-
-
-
-
-
-// Remove the dynamic data that is currently coming on the dashboard chat page. I have shared an image for reference.
-//  For now, I want to create a static UI exactly like the image. Please update the dashboard home page so that it looks the same as the image provided.
-
-
-
-
-// If a school is being selected for the first time, then the selected school should be displayed on the calendar
-//  screen before the "Add Class" section. It should be visible on the second calendar screen as well.
-
-
-
-// The login icon should be displayed in the top header section of the dashboard page.
-
-// click the notifaction bell icon on header sections nor redireti to notification page click one open notifiation panel not any page 
-
-// /dashboard/profile/privacy-data/export-data this page show class list remove static data add api dynamic data 
-
-
-// /dashboard/profile/privacy-data/delete-files this page show uploaded files remove static data add api dynamic data list of files and delete option for each file.
-
-// /dashboard/profile/privacy-data/delete-class  this page show class list remove static data add api dynamic data
-
-// /dashboard/profile this page logout button click should redirect to login page and clear all the local storage data and cookies student logout to the  wbsite
-
-
-// click on atlas icon redidirect to the home page 
