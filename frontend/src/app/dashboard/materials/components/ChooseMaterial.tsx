@@ -14,7 +14,7 @@ const MATERIALS = [
   { id: 'targeted',   icon: '🎯', title: 'Targeted Practice', sub: 'Focus on weak areas' },
 ];
 
-interface Props { topic: TopicItem; onBack: () => void; onSelect: (id: string) => void; }
+interface Props { topic: TopicItem; onBack: () => void; onSelect: (id: string) => void; className?: string; }
 
 function timeAgo(dateStr: string | null): string {
   if (!dateStr) return '';
@@ -30,7 +30,7 @@ function timeAgo(dateStr: string | null): string {
   } catch { return ''; }
 }
 
-export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
+export default function ChooseMaterial({ topic, onBack, onSelect ,className }: Props) {
   const [progress, setProgress] = useState<Progress | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -106,18 +106,18 @@ export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
   }
 
   return (
-    <div className="px-4 py-4 pb-24">
+    <div className="px-4 py-4 pb-12">
       <div className="flex items-center gap-3 mb-5">
-        <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
+        <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-700" /></button>
         <div>
           <h1 className="text-base font-extrabold text-gray-900">{topic.title}</h1>
-          <p className="text-xs text-gray-400">Biology 1107</p>
+          <p className="text-sm text-gray-500">{className}</p>
         </div>
       </div>
 
       {/* About Topic */}
-      <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-5">
-        <p className="text-xs font-bold text-indigo-700 mb-1">About this topic</p>
+      <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-5">
+        <p className="text-sm font-bold text-indigo-700 mb-1">About this topic</p>
         <p className="text-sm text-gray-700 leading-relaxed">
           {topic.description || `Study materials for ${topic.title}.`} 🧬
         </p>
@@ -125,10 +125,10 @@ export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
 
       {/* Progress Overview */}
       {progress && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-5">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-5">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Your Progress</p>
-            <p className="text-sm font-extrabold text-indigo-600">{completedCount}/4 completed</p>
+            <p className="text-sm font-bold text-gray-500 ">Your Progress</p>
+            <p className="text-sm font-bold text-indigo-600">{completedCount}/4 completed</p>
           </div>
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div className="h-full bg-indigo-600 rounded-full transition-all" style={{ width: `${totalPct}%` }} />
@@ -137,7 +137,7 @@ export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
       )}
 
       {/* Material Options */}
-      <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Choose what you want to study</p>
+      <p className="text-sm font-bold text-gray-600  mb-3">Choose what you want to study</p>
       <div className="space-y-3">
         {MATERIALS.map(m => {
           const p = progress ? progress[m.id as keyof Progress] : null;
@@ -146,10 +146,10 @@ export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
 
           return (
             <button key={m.id} onClick={() => onSelect(m.id)}
-              className={`w-full rounded-2xl border shadow-sm p-4 flex items-center gap-4 transition-all text-left ${
-                done ? 'bg-green-50 border-green-200 hover:border-green-300' : 'bg-white border-gray-100 hover:border-indigo-200'
+              className={`w-full rounded-lg border shadow-sm p-4 flex items-center gap-4 transition-all text-left ${
+                done ? 'bg-green-50 border-green-200 hover:border-green-300' : 'bg-white border-gray-200 hover:border-indigo-200'
               }`}>
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${
+              <div className={`w-11 h-11 rounded-lg flex items-center justify-center text-xl flex-shrink-0 ${
                 done ? 'bg-green-100' : 'bg-gray-100'
               }`}>{m.icon}</div>
               <div className="flex-1">
@@ -165,7 +165,7 @@ export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
                   <p className="text-[10px] text-gray-400 mt-0.5">Not started</p>
                 )}
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+              <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
             </button>
           );
         })}

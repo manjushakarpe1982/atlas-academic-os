@@ -27,7 +27,7 @@ export default function MaterialsPage() {
   };
   const backToChoose = () => setView('choose');
 
-  if (view === 'choose' && topic) return <ChooseMaterial topic={topic} onBack={() => setView('topics')} onSelect={selectMaterial} />;
+  if (view === 'choose' && topic) return <ChooseMaterial topic={topic} onBack={() => setView('topics')} onSelect={selectMaterial} className={className}/>;
   if (view === 'summary')    return <SummaryView className={className} classId={classId} topic={topic!} onBack={backToChoose} onFlashcards={() => setView('flashcards')} onQuiz={() => setView('quiz')} onTargeted={() => setView('targeted')} />;
   if (view === 'flashcards') return <FlashcardsView className={className} classId={classId} topic={topic!} onBack={backToChoose} onDone={backToChoose} />;
   if (view === 'quiz')       return <PracticeQuiz className={className} classId={classId} topic={topic!} onBack={backToChoose} onDone={backToChoose} />;
