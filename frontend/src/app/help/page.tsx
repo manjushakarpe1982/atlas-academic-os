@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Clock, Layers, Play, ChevronRight } from "lucide-react";
 import AppHeader from "../_components/AppHeader";
+import { Suspense } from "react";
 
 const STEPS = [
   { num: 1, title: "Choose Your School", icon: "🏫", color: "bg-orange-100" },
@@ -26,7 +27,7 @@ const STEPS = [
   { num: 8, title: "Get Smart Study Plans", icon: "🎯", color: "bg-teal-100" },
 ];
 
-export default function HelpPage() {
+function HelpPageContent() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const from         = searchParams.get('from');
@@ -171,5 +172,13 @@ export default function HelpPage() {
   </div>
 </div>
     </div>
+  );
+}
+
+export default function HelpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>}>
+      <HelpPageContent />
+    </Suspense>
   );
 }
