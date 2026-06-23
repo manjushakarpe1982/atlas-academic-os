@@ -1,198 +1,529 @@
-'use client';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { CheckCircle2, Circle, ChevronRight, ArrowRight, Brain, Loader2 } from 'lucide-react';
-import { getUser, api } from '@/lib/api';
-import LoadingDashboard from './components/LoadingDashboard';
+"use client";
+import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import {
+  CheckCircle2,
+  Circle,
+  ChevronRight,
+  ArrowRight,
+  Brain,
+  Loader2,
+  Info,
+  X,
+} from "lucide-react";
+import LoadingDashboard from "./components/LoadingDashboard";
+import { api } from "@/lib/api";
 
-// ── Types ──────────────────────────────────────────────────────────────────
-interface ClassSummary {
-  id: string; name: string; term: string; grade: number | null;
+// ── Types ──
+interface Summary {
+  greeting: string;
+  name: string;
+  deadlines_this_week: number;
+  high_priority_tasks: number;
+}
+interface FocusTask {
+  title: string;
+  class_name: string;
+  class_id: string;
+  due_date: string | null;
+  days_left: number | null;
+  due_display: string;
+  category: string;
+  weight_pct: number | null;
+  current_grade: number | null;
+  priority: string;
+  priority_score: number;
+  confidence: string;
+  source: string;
+  reason: string;
+  recommended_study_mins: number;
+}
+interface PlanItem {
+  class_id: string;
+  class_name: string;
+  mins: number;
+  done: boolean;
 }
 interface Deadline {
-  title: string; due_date: string | null; category: string; class_name: string; confidence: string;
+  id: string;
+  title: string;
+  class_name: string;
+  due_date: string;
+  due_display: string;
+  day_name: string;
+  category: string;
+  priority: string;
 }
-interface StudySession { class_name: string; mins: number; done: boolean; }
-interface CalEvent    { title: string; start_date: string; category: string; }
-interface WeeklyProg  { sessions_done: number; sessions_goal: number; pct: number; }
-
-interface DashData {
-  classes:           ClassSummary[];
-  deadlines:         Deadline[];
-  study_plan:        StudySession[];
-  calendar_events:   CalEvent[];
-  weekly_progress:   WeeklyProg;
-  ai_recommendation: string | null;
-  stats:             { deadlines_this_week: number; high_priority_count: number };
+interface ClassGrade {
+  id: string;
+  name: string;
+  term: string;
+  grade: number | null;
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────
-const CLASS_COLORS = ['bg-green-500','bg-blue-500','bg-purple-500','bg-orange-500','bg-pink-500','bg-teal-500'];
-const CLASS_ICONS  = ['🌿','📐','⚗️','📝','📖','🔬'];
-const CAT_PRIORITY: Record<string,string> = { exam:'High', quiz:'Medium', assignment:'Low', other:'Low' };
-const PC: Record<string,string> = {
-  High:'text-red-600 bg-red-50', Medium:'text-amber-600 bg-amber-50', Low:'text-green-600 bg-green-50',
-  high:'text-red-600 bg-red-50', medium:'text-amber-600 bg-amber-50', low:'text-green-600 bg-green-50',
-};
-
-function fmtDate(iso: string | null): string {
-  if (!iso) return 'TBD';
-  try {
-    const d = new Date(iso);
-    const today = new Date();
-    const diff  = Math.ceil((d.getTime() - today.getTime()) / 86400000);
-    if (diff === 0) return 'Today';
-    if (diff === 1) return 'Tomorrow';
-    return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
-  } catch { return iso; }
+interface WeeklyProgress {
+  sessions_done: number;
+  sessions_goal: number;
+  pct: number;
+}
+interface DashboardData {
+  summary: Summary;
+  focusTask: FocusTask | null;
+  todayPlan: PlanItem[];
+  upcomingDeadlines: Deadline[];
+  classGrades: ClassGrade[];
+  weeklyProgress: WeeklyProgress;
+  aiRecommendation: string | null;
 }
 
-// ── Component ─────────────────────────────────────────────────────────────
-export default function DashboardHome() {
-  const user      = getUser();
-  const firstName = user?.full_name?.split(' ')[0] || 'Student';
+// ── Helpers ──
+const CLASS_COLORS = [
+  "bg-green-500",
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-orange-500",
+  "bg-pink-500",
+  "bg-teal-500",
+];
+const CLASS_LIGHT = [
+  "bg-green-100",
+  "bg-blue-100",
+  "bg-red-100",
+  "bg-orange-100",
+  "bg-pink-100",
+  "bg-teal-100",
+];
+const CLASS_ICONS = ["🌿", "📐", "⚗️", "📝", "🎨", "💻", "📜", "📖"];
 
-  const [data,    setData]    = useState<DashData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
+function getClassStyle(i: number) {
+  return {
+    color: CLASS_COLORS[i % CLASS_COLORS.length],
+    light: CLASS_LIGHT[i % CLASS_LIGHT.length],
+    icon: CLASS_ICONS[i % CLASS_ICONS.length],
+  };
+}
+
+function getCategoryIcon(cat: string): string {
+  const c = (cat || "").toLowerCase();
+  if (c.includes("quiz") || c.includes("exam") || c.includes("test"))
+    return "📝";
+  if (c.includes("homework") || c.includes("assignment")) return "📄";
+  if (c.includes("lab")) return "🧪";
+  if (c.includes("essay") || c.includes("paper")) return "✍️";
+  return "📄";
+}
+
+function gradeColor(grade: number | null): string {
+  if (grade === null) return "text-gray-400";
+  if (grade >= 90) return "text-green-600";
+  if (grade >= 80) return "text-blue-600";
+  if (grade >= 70) return "text-amber-600";
+  return "text-red-600";
+}
+
+// ── Tooltip Component ──
+function Tooltip({ lines }: { lines: string[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    api<DashData>('/api/dashboard')
-      .then(d => setData(d))
-      .catch(e => setError(e.message))
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className="relative inline-flex" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="text-gray-400 hover:text-indigo-500 transition-colors"
+      >
+        <Info className="w-3.5 h-3.5" />
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center pt-32 px-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-xs bg-white border border-violet-300 text-violet-900 rounded-xl shadow-2xl p-3 text-xs leading-relaxed"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute top-2 right-6 text-black hover:text-white"
+            >
+              <X className="w-3 h-3" />
+            </button>
+
+            <div className="space-y-1.5 pr-4">
+              {lines.map((line, i) => (
+                <p
+                  key={i}
+                  className={
+                    line.startsWith("•")
+                      ? "text-violet-700 pl-2"
+                      : line.startsWith("→")
+                        ? "text-black font-semibold"
+                        : "text-violet-900 font-bold"
+                  }
+                >
+                  {line}
+                </p>
+              ))}
+            </div>
+
+            {/* Tooltip arrow */}
+            <div className="absolute -top-1.5 left-3 w-3 h-3 bg-violet-100 rotate-45" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Tooltip content for each section ──
+const TIPS = {
+  deadlines: [
+    "Deadlines This Week",
+    "→ Formula:",
+    "• Count of assessments from assessments table",
+    "• Where due_date is between Monday and Sunday of current week",
+    "→ Source: assessments table (from syllabus AI parsing)",
+  ],
+  highPriority: [
+    "High Priority Tasks",
+    "→ Formula:",
+    "• Count of calendar_events where start_date is within next 7 days",
+    "→ Source: calendar_events table (from ICS calendar sync)",
+  ],
+  focusTask: [
+    "What to Study First",
+    "→ Formula: SCORE = (urgency × 40%) + (impact × 35%) + (need × 25%) + bonus",
+    "→ Combines 3 tables:",
+    "• calendar_events.start_date → urgency (how soon)",
+    "• grade_weights.weight_pct → impact (how much it's worth)",
+    "• grades (score/max_score) → need (current grade)",
+    "→ Bonus: +15 final/midterm, +10 exam, +5 quiz",
+    "→ Picks the calendar event with the highest score",
+    "→ Confidence: HIGH if all 3 sources have data, MEDIUM if 2, LOW if 1",
+  ],
+  todayPlan: [
+    "Today's Study Plan",
+    "→ Source: classes table",
+    "• Shows first 4 classes (ordered by created_at)",
+    "• 45 min per class (fixed)",
+    "• Done ✓ = grades table has entry this week for that class",
+  ],
+  upcomingDeadlines: [
+    "Upcoming Deadlines",
+    "→ Sources: assessments table + calendar_events table",
+    "• All future assessments (from syllabus parsing)",
+    "• All future calendar events (from ICS sync)",
+    "• Deduplicated by title (no duplicates)",
+    "• Sorted by due_date ascending, limit 5",
+    "→ Priority: High if title contains exam/quiz/test/final/midterm, else Medium",
+  ],
+  classGrades: [
+    "My Classes",
+    "→ Sources: classes table + grades table",
+    "• Classes from classes table (ordered by created_at)",
+    "• Grade = average of (score / max_score × 100) from grades table",
+    "• Color: green ≥90%, blue ≥80%, amber ≥70%, red <70%",
+  ],
+  weeklyProgress: [
+    "Weekly Progress",
+    "→ Source: grades table",
+    "• sessions_done = count of unique class_ids with grades entered this week",
+    "• sessions_goal = max(total classes, 5)",
+    "• pct = (sessions_done / sessions_goal) × 100",
+  ],
+  aiRecommendation: [
+    "Atlas Recommendation",
+    "→ Source: Claude Haiku AI",
+    "• Sends class names + most urgent focusTask title to Claude",
+    "• Returns a 2-sentence study recommendation",
+    "• Falls back to null if AI call fails",
+  ],
+};
+
+export default function DashboardHome() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [recExpanded, setRecExpanded] = useState(false);
+
+  useEffect(() => {
+    api<DashboardData>("/api/dashboard")
+      .then(setData)
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <LoadingDashboard isVisible={true} />;
+  if (loading) {
+    return <LoadingDashboard />;
+  }
 
-  if (error) return (
-    <div className="px-4 py-8 text-center">
-      <p className="text-red-500 text-sm mb-3">❌ {error}</p>
-      <button onClick={() => window.location.reload()}
-        className="text-indigo-600 text-sm font-semibold hover:underline">Retry</button>
-    </div>
-  );
+  if (error || !data) {
+    return (
+      <div className="px-4 py-10 text-center">
+        <p className="text-sm text-red-600 font-medium">
+          {error || "Failed to load dashboard"}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-3 text-sm text-indigo-600 font-bold"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
-  const classes    = data?.classes        || [];
-  const deadlines  = data?.deadlines      || [];
-  const studyPlan  = data?.study_plan     || [];
-  const events     = data?.calendar_events|| [];
-  const weekly     = data?.weekly_progress|| { sessions_done:0, sessions_goal:5, pct:0 };
-  const stats      = data?.stats          || { deadlines_this_week:0, high_priority_count:0 };
-  const aiRec      = data?.ai_recommendation;
-
-  // Most urgent item for "What to study first"
-  const topDeadline = deadlines[0] || null;
+  const summary = data.summary || {
+    greeting: "Hello",
+    name: "Student",
+    deadlines_this_week: 0,
+    high_priority_tasks: 0,
+  };
+  const rawFocus = data.focusTask;
+  const focusTask = rawFocus && rawFocus.title ? rawFocus : null;
+  const todayPlan = data.todayPlan || [];
+  const upcomingDeadlines = data.upcomingDeadlines || [];
+  const classGrades = data.classGrades || [];
+  const weeklyProgress = data.weeklyProgress || {
+    sessions_done: 0,
+    sessions_goal: 5,
+    pct: 0,
+  };
+  const aiRecommendation = data.aiRecommendation || null;
+  const pctFrac = (weeklyProgress.pct || 0) / 100;
 
   return (
-    <div className="px-4 py-4 space-y-4 pb-24">
-
+    <div className="px-4 py-4 space-y-5 pb-12">
       {/* ── Greeting ── */}
-      <div>
-        <h1 className="text-xl font-extrabold text-gray-900">Good Morning, {firstName} 👋</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Let&apos;s make today productive!</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-extrabold text-gray-900">
+            {summary.greeting}, {summary.name} 👋
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5 font-medium">
+            Let&apos;s make today productive!
+          </p>
+        </div>
       </div>
 
-      {/* ── Quick stats ── */}
+      {/* ── Quick Stats ── */}
       <div className="grid grid-cols-2 gap-3">
-        {[
-          { icon:'📅', value: String(stats.deadlines_this_week || deadlines.length), label:'Deadlines this week' },
-          { icon:'⚡', value: String(stats.high_priority_count || 0),               label:'High priority tasks' },
-        ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
-            <span className="text-2xl">{s.icon}</span>
-            <div>
-              <p className="text-xl font-extrabold text-gray-900">{s.value}</p>
-              <p className="text-xs text-gray-400 leading-tight">{s.label}</p>
-            </div>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm px-2 py-1 flex items-center gap-2">
+          <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="text-base">📅</span>
           </div>
-        ))}
+          <div className="flex-1">
+            <div className="flex items-center gap-1.5">
+              <p className="text-xl font-extrabold text-gray-900">
+                {summary.deadlines_this_week}
+              </p>
+              <Tooltip lines={TIPS.deadlines} />
+            </div>
+            <p className="text-[11px] text-gray-500 ">Deadlines this week</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm px-2 py-1 flex items-center gap-2">
+          <div className="w-8 h-8 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="text-base">⚡</span>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-1.5">
+              <p className="text-xl font-extrabold text-gray-900">
+                {summary.high_priority_tasks}
+              </p>
+              <Tooltip lines={TIPS.highPriority} />
+            </div>
+            <p className="text-[11px] text-gray-500 ">High priority tasks</p>
+          </div>
+        </div>
       </div>
 
       {/* ── What to Study First ── */}
-      {topDeadline ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-4 pt-3 pb-1">
-            <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">What to Study First</p>
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-2xl flex items-center justify-center text-xl flex-shrink-0">
-                {topDeadline.category === 'exam' ? '📄' : topDeadline.category === 'quiz' ? '❓' : '📝'}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-base font-extrabold text-gray-900">{topDeadline.title}</p>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${PC[CAT_PRIORITY[topDeadline.category] || 'Low']}`}>
-                    {CAT_PRIORITY[topDeadline.category] || 'Medium'}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {fmtDate(topDeadline.due_date)}
-                  {topDeadline.class_name ? ` · ${topDeadline.class_name}` : ''}
+      {focusTask && (
+        <div
+          className="rounded-lg border border-purple-200 shadow-sm overflow-hidden bg-no-repeat relative"
+          style={{
+            backgroundImage: `url('https://res.cloudinary.com/mview/image/upload/v1781853065/atlas/dashboardhomepage1.png')`,
+            backgroundSize: "cover", // ← Changed to cover for proper fit
+            backgroundPosition: "center", // ← Better positioning
+            // Adjust height as needed
+          }}
+        >
+          {/* Light overlay - very subtle (you can remove if you don't want any) */}
+
+          <div className="relative z-10">
+            <div className="px-4 pt-3">
+              <div className="flex items-center gap-1.5 mb-2">
+                <p className="text-sm font-bold text-indigo-500 ">
+                  What to Study First
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Reason: High grade impact + close deadline</p>
+                <Tooltip lines={TIPS.focusTask} />
               </div>
-              <span className="text-3xl flex-shrink-0">🏆</span>
+
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl flex-shrink-0">
+                  {getCategoryIcon(focusTask.category)}
+                </div>
+
+                <div className="flex-1 min-w-0 mb-1">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <p className="text-base font-extrabold text-gray-900">
+                      {focusTask.title}
+                    </p>
+                    <span
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                        focusTask.priority === "High"
+                          ? "text-red-600 bg-red-50"
+                          : focusTask.priority === "Medium"
+                            ? "text-amber-600 bg-amber-50"
+                            : "text-gray-600 bg-gray-100"
+                      }`}
+                    >
+                      {focusTask.priority}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    📅 {focusTask.due_display}
+                    {focusTask.weight_pct
+                      ? ` · Worth ${focusTask.weight_pct}%`
+                      : ""}
+                    {focusTask.current_grade
+                      ? ` · Grade ${focusTask.current_grade}%`
+                      : ""}
+                  </p>
+
+                  <p className="text-xs text-gray-600 mt-1">
+                    Reason: {focusTask.reason}
+                  </p>
+
+                  {focusTask.recommended_study_mins > 0 && (
+                    <p className="text-xs text-indigo-600 font-semibold mt-1">
+                      ⏱ {focusTask.recommended_study_mins} min recommended
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-4 py-3">
+              <Link
+                href="/dashboard/study-plan"
+                className="flex items-center justify-between w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-5 rounded-lg text-base transition-all shadow-md"
+              >
+                Start Studying <ChevronRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
-          <div className="px-4 py-3">
-            <Link href="/dashboard/study-plan"
-              className="flex items-center justify-between w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-2xl text-sm transition-all shadow-md">
-              Start Studying <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
         </div>
-      ) : classes.length > 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-          <p className="text-sm font-semibold text-gray-600 mb-2">🎉 No urgent deadlines this week!</p>
-          <Link href="/dashboard/study-plan" className="text-xs text-indigo-600 font-semibold">View Study Plan</Link>
-        </div>
-      ) : null}
+      )}
 
       {/* ── Today's Study Plan ── */}
-      {studyPlan.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-extrabold text-gray-900">Today&apos;s Study Plan</h2>
-            <Link href="/dashboard/study-plan" className="text-xs text-indigo-600 font-semibold">View all</Link>
+      {todayPlan.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <div className="flex items-center  justify-between mb-1">
+            <div className="flex items-center  gap-1.5">
+              <h2 className="text-base font-bold text-gray-900">
+                Today&apos;s Study Plan
+              </h2>
+              <Tooltip lines={TIPS.todayPlan} />
+            </div>
+            <Link
+              href="/dashboard/study-plan"
+              className="text-xs text-indigo-600 font-semibold"
+            >
+              View all
+            </Link>
           </div>
-          <div className="space-y-3">
-            {studyPlan.slice(0,4).map((s, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${CLASS_COLORS[i % CLASS_COLORS.length]} flex-shrink-0`} />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-800">{s.class_name}</p>
-                  <p className="text-xs text-gray-400">{s.mins} min</p>
+          <div className="">
+            {todayPlan.map((item, i) => {
+              const s = getClassStyle(i);
+              return (
+                <div
+                  key={item.class_id}
+                  className="flex items-center gap-3 py-1.5 border-b border-gray-100 last:border-b-0"
+                >
+                  <div
+                    className={`w-8 h-8 ${s.light} rounded-xl flex items-center justify-center flex-shrink-0`}
+                  >
+                    <span className="text-sm">{s.icon}</span>
+                  </div>
+
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-800">
+                      {item.class_name}
+                    </p>
+                    <p className="text-xs text-gray-400">{item.mins} min</p>
+                  </div>
+
+                  {item.done ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-gray-300 flex-shrink-0" />
+                  )}
                 </div>
-                {s.done
-                  ? <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  : <Circle className="w-5 h-5 text-gray-300 flex-shrink-0" />}
-              </div>
-            ))}
+              );
+            })}
           </div>
-          <Link href="/dashboard/study-plan"
-            className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 mt-4 hover:text-indigo-800 transition-colors">
+          <Link
+            href="/dashboard/study-plan"
+            className="flex items-center justify-center gap-1.5 text-sm bg-violet-100 text-violet-600 px-3 py-2 rounded-lg font-bold mt-4 hover:text-indigo-800 transition-colors w-full"
+          >
             View Full Study Plan <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       )}
 
-      {/* ── Upcoming Deadlines — from assessments API ── */}
-      {deadlines.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-extrabold text-gray-900">Upcoming Deadlines</h2>
-            <Link href="/dashboard/assignments" className="text-xs text-indigo-600 font-semibold">View all</Link>
+      {/* ── Upcoming Deadlines ── */}
+      {upcomingDeadlines.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-base font-bold text-gray-900">
+                Upcoming Deadlines
+              </h2>
+              <Tooltip lines={TIPS.upcomingDeadlines} />
+            </div>
+            <Link
+              href="/dashboard/assignments"
+              className="text-xs text-indigo-600 font-semibold"
+            >
+              View all
+            </Link>
           </div>
-          <div className="space-y-2">
-            {deadlines.slice(0,5).map((d, i) => (
-              <div key={i} className="flex items-center gap-3 py-1.5">
-                <p className="text-xs text-gray-400 w-20 flex-shrink-0">{fmtDate(d.due_date)}</p>
-                <div className="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center text-sm flex-shrink-0">
-                  {d.category === 'exam' ? '📄' : d.category === 'quiz' ? '❓' : '📝'}
+          <div className="">
+            {upcomingDeadlines.slice(0, 3).map((d) => (
+              <div
+                key={d.id}
+                className="flex items-center border-b border-gray-100 gap-2 py-2"
+              >
+                <p className="text-xs text-gray-500 w-20 flex-shrink-0">
+                  {d.due_display}
+                </p>
+                <div className="w-6 h-6 bg-indigo-50 rounded-lg flex items-center justify-center text-[13px] flex-shrink-0">
+                  {getCategoryIcon(d.category)}
                 </div>
-                <p className="flex-1 text-sm font-semibold text-gray-800 truncate">{d.title}</p>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${PC[CAT_PRIORITY[d.category] || 'Low']}`}>
-                  {CAT_PRIORITY[d.category] || 'Medium'}
+                <p className="flex-1 text-sm font-semibold text-gray-800 truncate">
+                  {d.title}
+                </p>
+                <span
+                  className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                    d.priority === "High"
+                      ? "text-red-600 bg-red-50"
+                      : "text-amber-600 bg-amber-50"
+                  }`}
+                >
+                  {d.priority}
                 </span>
               </div>
             ))}
@@ -200,120 +531,180 @@ export default function DashboardHome() {
         </div>
       )}
 
-      {/* ── Calendar Events (if no assessments) ── */}
-      {deadlines.length === 0 && events.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-extrabold text-gray-900">Upcoming Events</h2>
-            <Link href="/dashboard/calendar" className="text-xs text-indigo-600 font-semibold">View all</Link>
-          </div>
-          {events.slice(0,4).map((e, i) => (
-            <div key={i} className="flex items-center gap-3 py-1.5 border-b border-gray-50 last:border-0">
-              <span className="text-lg">{e.category === 'exam' ? '📄' : e.category === 'quiz' ? '❓' : '📅'}</span>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-800">{e.title}</p>
-                <p className="text-xs text-gray-400">{fmtDate(e.start_date)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── My Classes — from classes API ── */}
-      {classes.length > 0 ? (
+      {/* ── My Classes ── */}
+      {classGrades.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-extrabold text-gray-900">My Classes</h2>
-            <Link href="/dashboard/classes" className="text-xs text-indigo-600 font-semibold">View all</Link>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-base font-bold text-gray-900">My Classes</h2>
+              <Tooltip lines={TIPS.classGrades} />
+            </div>
+            <Link
+              href="/dashboard/classes"
+              className="text-xs text-indigo-600 font-semibold"
+            >
+              View all
+            </Link>
           </div>
-          <div className="grid grid-cols-4 gap-2">
-            {classes.slice(0,4).map((c, i) => (
-              <Link key={c.id} href="/dashboard/class-detail"
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 flex flex-col items-center text-center hover:shadow-md transition-all">
-                <div className={`w-9 h-9 ${CLASS_COLORS[i % CLASS_COLORS.length]} rounded-xl flex items-center justify-center text-base mb-1.5`}>
-                  {CLASS_ICONS[i % CLASS_ICONS.length]}
-                </div>
-                <p className="text-[9px] font-bold text-gray-700 leading-tight mb-1 truncate w-full">
-                  {c.name.split(' ').slice(0,2).join(' ')}
-                </p>
-                {c.grade != null ? (
-                  <>
-                    <p className={`text-sm font-extrabold ${
-                      c.grade >= 90 ? 'text-green-600' : c.grade >= 80 ? 'text-blue-600' : c.grade >= 70 ? 'text-amber-600' : 'text-red-500'
-                    }`}>{c.grade}%</p>
-                    <div className="w-full h-1 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
-                      <div className={`h-full ${CLASS_COLORS[i % CLASS_COLORS.length]} rounded-full`} style={{ width:`${c.grade}%` }}/>
+          <div className="grid grid-cols-3 gap-2">
+            {classGrades.slice(0, 3).map((c, i) => {
+              const s = getClassStyle(i);
+              const grade = c.grade ?? 0;
+              return (
+                <div
+                  key={c.id}
+                  className="bg-white rounded-lg border border-gray-100 shadow-sm p-2 flex flex-col items-center text-center"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-7 h-7 ${s.color} rounded-lg flex items-center justify-center text-base flex-shrink-0`}
+                    >
+                      {s.icon}
                     </div>
-                  </>
-                ) : (
-                  <p className="text-[9px] text-gray-400 mt-1">No grades</p>
-                )}
-              </Link>
-            ))}
+                    <p className="text-[12px] font-bold text-gray-700 leading-tight truncate">
+                      {c.name}
+                    </p>
+                  </div>
+                  <p
+                    className={`text-sm font-extrabold ${gradeColor(c.grade)}`}
+                  >
+                    {c.grade !== null ? `${c.grade}%` : "—"}
+                  </p>
+                  <div className="w-full h-1 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
+                    <div
+                      className={`h-full ${s.color} rounded-full`}
+                      style={{ width: `${grade}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
-          <p className="text-sm font-semibold text-gray-500 mb-2">No classes added yet</p>
-          <Link href="/add-class"
-            className="text-xs font-bold text-indigo-600 hover:underline">+ Add your first class</Link>
         </div>
       )}
 
       {/* ── Weekly Progress ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-        <h2 className="text-sm font-extrabold text-gray-900 mb-3">Weekly Progress</h2>
-        <div className="flex items-center gap-4">
-          <div className="relative w-16 h-16 flex-shrink-0">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+        <div className="flex items-center gap-1.5 mb-4">
+          <h2 className="text-base font-bold text-gray-900">
+            Weekly Progress
+          </h2>
+          <Tooltip lines={TIPS.weeklyProgress} />
+        </div>
+        <div className="flex items-center gap-5">
+          <div className="relative w-20 h-20 flex-shrink-0">
             <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-              <circle cx="50" cy="50" r="38" fill="none" stroke="#e5e7eb" strokeWidth="12"/>
-              <circle cx="50" cy="50" r="38" fill="none" stroke="#6366f1" strokeWidth="12"
-                strokeDasharray={`${2*Math.PI*38*(weekly.pct/100)} ${2*Math.PI*38*(1-weekly.pct/100)}`}
-                strokeLinecap="round"/>
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#f3f4f6"
+                strokeWidth="12"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#7c3aed"
+                strokeWidth="12"
+                strokeDasharray={`${2 * Math.PI * 40 * pctFrac} ${2 * Math.PI * 40 * (1 - pctFrac)}`}
+                strokeLinecap="round"
+              />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-sm font-extrabold text-indigo-600">{weekly.pct}%</span>
+              <span className="text-base font-extrabold text-purple-700">
+                {weeklyProgress.pct}%
+              </span>
             </div>
           </div>
           <div className="flex-1">
-            <p className="text-2xl font-extrabold text-gray-900">
-              {weekly.sessions_done} <span className="text-base font-bold text-gray-400">/ {weekly.sessions_goal}</span>
+            <p className="text-3xl font-extrabold text-gray-900 leading-none">
+              {weeklyProgress.sessions_done}{" "}
+              <span className="text-xl font-bold text-gray-400">
+                / {weeklyProgress.sessions_goal}
+              </span>
             </p>
-            <p className="text-xs text-gray-500">study sessions<br/>completed</p>
+            <p className="text-[13px] text-gray-500 mt-1">
+              study sessions
+            
+              completed
+            </p>
           </div>
-          <svg viewBox="0 0 60 30" className="w-14 h-8 flex-shrink-0">
-            <polyline points="0,28 10,22 20,24 30,15 40,12 50,8 60,5"
-              fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M0,28 10,22 20,24 30,15 40,12 50,8 60,5 60,30 0,30Z" fill="rgba(99,102,241,0.1)"/>
-          </svg>
-          <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0"/>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <svg viewBox="0 0 60 35" className="w-16 h-10">
+              <defs>
+                <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="rgba(124,58,237,0.25)" />
+                  <stop offset="100%" stopColor="rgba(124,58,237,0.02)" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M0,30 8,25 16,27 24,18 32,14 40,10 48,7 56,4 60,3 60,35 0,35Z"
+                fill="url(#sparkFill)"
+              />
+              <polyline
+                points="0,30 8,25 16,27 24,18 32,14 40,10 48,7 56,4 60,3"
+                fill="none"
+                stroke="#7c3aed"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+           
+          </div>
         </div>
-        <p className="text-xs text-gray-400 mt-2">Goal: {weekly.sessions_goal} study sessions this week</p>
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-xs text-gray-500 font-medium">Weekly Goal</p>
+            <p className="text-xs font-bold text-purple-700">
+              {weeklyProgress.sessions_done} of {weeklyProgress.sessions_goal}{" "}
+              sessions
+            </p>
+          </div>
+          <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all"
+              style={{ width: `${weeklyProgress.pct}%` }}
+            />
+          </div>
+        </div>
+        <div className="border-t border-gray-100 mt-3 pt-2">
+          <p className="text-xs text-gray-500">
+            Goal: {weeklyProgress.sessions_goal} study sessions this week
+          </p>
+        </div>
       </div>
 
-      {/* ── Atlas AI Recommendation — from Claude API ── */}
-      <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3">
-        <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0">
-          <Brain className="w-5 h-5 text-white"/>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-widest mb-0.5">Atlas Recommendation</p>
-          {aiRec ? (
-            <p className="text-xs text-gray-600 leading-relaxed">{aiRec}</p>
-          ) : (
-            <>
-              <p className="text-sm font-extrabold text-gray-900 mb-0.5">Focus on your studies today.</p>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                {classes.length > 0
-                  ? `You have ${classes.length} active class${classes.length > 1 ? 'es' : ''}. Keep up the great work!`
-                  : 'Add your first class to get personalized study recommendations.'}
+      {/* ── Atlas Recommendation ── */}
+      {aiRecommendation && (
+        <div className="bg-violet-50 border border-indigo-100 rounded-lg p-3 flex items-start gap-3">
+          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Brain className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <p className="text-12 font-bold text-indigo-500 ">
+                Atlas Recommendation
               </p>
-            </>
-          )}
+              <Tooltip lines={TIPS.aiRecommendation} />
+            </div>
+            <p
+              className={`text-sm text-gray-700 leading-relaxed ${!recExpanded ? "line-clamp-3" : ""}`}
+            >
+              {aiRecommendation}
+            </p>
+            <button
+              onClick={() => setRecExpanded(!recExpanded)}
+              className="text-xs font-bold text-indigo-600 mt-1 hover:text-indigo-800 transition-colors"
+            >
+              {recExpanded ? "Show less" : "Show more"}
+            </button>
+          </div>
         </div>
-        <ChevronRight className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-1"/>
-      </div>
-
+      )}
     </div>
   );
 }

@@ -68,7 +68,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     clearAuth();
-    router.push("/auth/login");
+    window.location.href = '/auth/login';
   };
 
   const [user, setUser] = useState<any | null>(null);

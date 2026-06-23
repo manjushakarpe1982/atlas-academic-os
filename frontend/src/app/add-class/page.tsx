@@ -83,6 +83,18 @@ export default function AddClassPage() {
       return;
     }
 
+    // Step 4 → "Everything Looks Good ✓" — confirm draft → writes assessments, grade_weights, topics to DB
+    if (step === 4 && classId) {
+      setLoading(true);
+      try {
+        await api(`/api/classes/${classId}/confirm`, { method: 'POST' });
+        next();
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Failed to confirm class data');
+      } finally { setLoading(false); }
+      return;
+    }
+
     // Step 7 right = "Save & Continue" → save grades first
     if (step === 7) {
       screen7Ref.current?.saveAndContinue();

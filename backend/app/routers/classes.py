@@ -500,7 +500,36 @@ async def save_grades(class_id: str, req: SaveGradesRequest, request: Request):
     return {"saved": saved, "message": f"{saved} grade(s) saved successfully."}
 
 
-# ── GET /api/classes/{id}/grades ──────────────────────────────────────────
+# ── POST /api/classes/{id}/grades/add ──────────────────────────────────────
+
+@router.post("/{class_id}/grades/add")
+async def add_single_grade(class_id: str, request: Request):
+    """Add a single grade without deleting existing grades."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    body = await request.json()
+    title = (body.get("title") or "").strip()
+    category = body.get("category", "")
+    score = body.get("score")
+    max_score = body.get("max_score")
+
+    if not title:
+        raise HTTPException(400, "Title is required")
+    if score is None or max_score is None or float(max_score) <= 0:
+        raise HTTPException(400, "Valid score and max_score required")
+
+    result = supabase.table("grades").insert({
+        "user_id":   user_id,
+        "class_id":  class_id,
+        "category":  category,
+        "title":     title,
+        "score":     float(score),
+        "max_score": float(max_score),
+        "source":    "manual",
+    }).execute()
+
+    return {"grade": result.data[0] if result.data else None}
 
 @router.get("/{class_id}/grades")
 async def get_grades(class_id: str, request: Request):
@@ -516,3 +545,1051 @@ async def get_grades(class_id: str, request: Request):
         .execute()
 
     return {"grades": result.data or []}
+
+
+# ── PATCH /api/classes/{id}/grades/{grade_id} ──────────────────────────────
+
+@router.patch("/{class_id}/grades/{grade_id}")
+async def update_grade(class_id: str, grade_id: str, request: Request):
+    """Update a single grade."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    body = await request.json()
+    update_data = {}
+    if "title" in body:    update_data["title"] = body["title"]
+    if "category" in body: update_data["category"] = body["category"]
+    if "score" in body:    update_data["score"] = body["score"]
+    if "max_score" in body: update_data["max_score"] = body["max_score"]
+
+    if not update_data:
+        raise HTTPException(400, "No fields to update")
+
+    result = supabase.table("grades") \
+        .update(update_data) \
+        .eq("id", grade_id) \
+        .eq("class_id", class_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    if not result.data:
+        raise HTTPException(404, "Grade not found")
+
+    return {"grade": result.data[0]}
+
+
+# ── DELETE /api/classes/{id}/grades/{grade_id} ─────────────────────────────
+
+@router.delete("/{class_id}/grades/{grade_id}")
+async def delete_grade(class_id: str, grade_id: str, request: Request):
+    """Delete a single grade."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    result = supabase.table("grades") \
+        .delete() \
+        .eq("id", grade_id) \
+        .eq("class_id", class_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    return {"deleted": True}
+
+
+# ── GET /api/classes/{id}/grade-weights ────────────────────────────────────
+
+@router.get("/{class_id}/grade-weights")
+async def get_grade_weights(class_id: str, request: Request):
+    """Get grade weights for a class."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    result = supabase.table("grade_weights") \
+        .select("*") \
+        .eq("class_id", class_id) \
+        .eq("user_id", user_id) \
+        .order("weight_pct", desc=True) \
+        .execute()
+
+    return {"weights": result.data or []}
+
+
+# ── GET /api/classes/{id}/assignments ──────────────────────────────────────
+
+@router.get("/{class_id}/assignments")
+async def get_assignments(class_id: str, request: Request):
+    """
+    Returns assignments for a class with stats and completion status.
+    Combines assessments + grades to determine what's done.
+    """
+    from datetime import datetime, timedelta
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    today = datetime.utcnow().date()
+    week_end = (today + timedelta(days=7)).isoformat()
+    today_str = today.isoformat()
+
+    # Fetch assessments for this class
+    assess_res = supabase.table("assessments") \
+        .select("id, title, category, due_date") \
+        .eq("class_id", class_id).eq("user_id", user_id) \
+        .order("due_date").execute()
+    assessments = assess_res.data or []
+
+    # Fetch grade weights for weight lookup
+    weights_res = supabase.table("grade_weights") \
+        .select("category, weight_pct") \
+        .eq("class_id", class_id).eq("user_id", user_id).execute()
+    weight_map = {w.get("category", "").lower(): w.get("weight_pct", 0) for w in (weights_res.data or [])}
+
+    # Fetch grades to check completion
+    grades_res = supabase.table("grades") \
+        .select("title, category") \
+        .eq("class_id", class_id).eq("user_id", user_id).execute()
+    grade_titles = {(g.get("title", "").lower().strip(), g.get("category", "").lower().strip()) for g in (grades_res.data or [])}
+
+    # Build assignment list with computed fields
+    items = []
+    stats = {"upcoming": 0, "overdue": 0, "completed": 0, "due_this_week": 0}
+
+    for a in assessments:
+        title = a.get("title", "")
+        category = a.get("category", "")
+        due_date = a.get("due_date", "")
+        weight = weight_map.get(category.lower(), 0)
+
+        # Check if completed (matching grade exists)
+        is_completed = (title.lower().strip(), category.lower().strip()) in grade_titles
+
+        # Calculate days left
+        days_left = None
+        if due_date:
+            try:
+                due_dt = datetime.strptime(due_date, "%Y-%m-%d").date()
+                days_left = (due_dt - today).days
+            except Exception:
+                pass
+
+        # Determine priority
+        if is_completed:
+            priority = "COMPLETED"
+            stats["completed"] += 1
+        elif days_left is not None and days_left < 0:
+            priority = "OVERDUE"
+            stats["overdue"] += 1
+        elif days_left is not None and days_left <= 3:
+            priority = "HIGH"
+            stats["upcoming"] += 1
+        elif days_left is not None and days_left <= 7:
+            priority = "MEDIUM"
+            stats["upcoming"] += 1
+        else:
+            priority = "LOW"
+            stats["upcoming"] += 1
+
+        # Due this week
+        if due_date and today_str <= due_date <= week_end and not is_completed:
+            stats["due_this_week"] += 1
+
+        # Action button text
+        if is_completed:
+            action = "Done"
+        elif category.lower() in ("exam", "midterm", "final"):
+            action = "Study"
+        elif category.lower() == "quiz":
+            action = "Prepare"
+        else:
+            action = "View"
+
+        # Due text
+        if is_completed:
+            due_text = f"Completed"
+        elif days_left is not None:
+            if days_left == 0:
+                due_text = f"Due Today, {due_date}"
+            elif days_left == 1:
+                due_text = f"Due Tomorrow, {_fmt_date(due_date)}"
+            elif days_left > 1:
+                due_text = f"Due in {days_left} days, {_fmt_date(due_date)}"
+            else:
+                due_text = f"Overdue by {abs(days_left)} days, {_fmt_date(due_date)}"
+        else:
+            due_text = due_date or "No date"
+
+        items.append({
+            "id":        a.get("id"),
+            "title":     title,
+            "category":  category,
+            "due_date":  due_date,
+            "days_left": days_left,
+            "weight":    weight,
+            "priority":  priority,
+            "action":    action,
+            "due_text":  due_text,
+            "completed": is_completed,
+        })
+
+    # Atlas insight
+    high_items = [i for i in items if i["priority"] in ("HIGH", "OVERDUE")]
+    high_weight = sum(i["weight"] for i in high_items)
+    insight = None
+    if high_items:
+        insight = f"You have {len(high_items)} high priority assessment{'s' if len(high_items) != 1 else ''} coming up that {'are' if len(high_items) != 1 else 'is'} worth {high_weight}% of your grade."
+
+    return {"assignments": items, "stats": stats, "insight": insight}
+
+
+def _fmt_date(d: str) -> str:
+    """Format 2026-06-25 → Jun 25"""
+    try:
+        from datetime import datetime
+        dt = datetime.strptime(d, "%Y-%m-%d")
+        return dt.strftime("%b %d").replace(" 0", " ")
+    except Exception:
+        return d
+
+
+# ── GET /api/classes/{id}/topics ───────────────────────────────────────────
+
+@router.get("/{class_id}/topics")
+async def get_topics(class_id: str, request: Request):
+    """Get all topics for a class."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    result = supabase.table("topics") \
+        .select("*") \
+        .eq("class_id", class_id) \
+        .eq("user_id", user_id) \
+        .order("created_at") \
+        .execute()
+
+    return {"topics": result.data or []}
+
+
+# ── GET /api/classes/{id}/overview ─────────────────────────────────────────
+
+@router.get("/{class_id}/overview")
+async def get_class_overview(class_id: str, request: Request):
+    """
+    Returns overview data for a class:
+    - classInfo: instructor, term, credits
+    - currentGrade: average grade %
+    - syllabusFile: uploaded file info
+    - insight: strongest + weakest category
+    - nextDeadline: nearest upcoming event
+    """
+    from datetime import datetime
+    user_id = _get_user(request)
+    cls = _get_class(class_id, user_id)
+
+    # ── Class Info ──
+    class_info = {
+        "name":         cls.get("name", ""),
+        "instructor":   cls.get("instructor"),
+        "term":         cls.get("term"),
+        "credit_hours": cls.get("credit_hours"),
+    }
+
+    # ── Current Grade (average from grades table) ──
+    grades_res = supabase.table("grades") \
+        .select("score, max_score, category") \
+        .eq("class_id", class_id).eq("user_id", user_id).execute()
+    grades = grades_res.data or []
+
+    current_grade = None
+    total_grades = len(grades)
+    if grades:
+        try:
+            current_grade = round(
+                sum(g["score"] / g["max_score"] * 100 for g in grades) / len(grades)
+            )
+        except (ZeroDivisionError, TypeError, KeyError):
+            pass
+
+    # ── Insight: strongest + weakest category ──
+    category_grades: dict[str, list] = {}
+    for g in grades:
+        cat = g.get("category", "Other")
+        if cat not in category_grades:
+            category_grades[cat] = []
+        try:
+            category_grades[cat].append(g["score"] / g["max_score"] * 100)
+        except (ZeroDivisionError, TypeError, KeyError):
+            pass
+
+    strongest = None
+    weakest = None
+    if category_grades:
+        cat_avgs = {cat: round(sum(scores) / len(scores)) for cat, scores in category_grades.items() if scores}
+        if cat_avgs:
+            best_cat = max(cat_avgs, key=cat_avgs.get)
+            worst_cat = min(cat_avgs, key=cat_avgs.get)
+            strongest = {"category": best_cat, "avg": cat_avgs[best_cat]}
+            if best_cat != worst_cat:
+                weakest = {"category": worst_cat, "avg": cat_avgs[worst_cat]}
+
+    # ── Syllabus File ──
+    file_res = supabase.table("files") \
+        .select("id, original_name, created_at") \
+        .eq("class_id", class_id).eq("user_id", user_id) \
+        .order("created_at", desc=True).limit(1).execute()
+    syllabus_file = None
+    if file_res.data:
+        f = file_res.data[0]
+        syllabus_file = {
+            "id":   f.get("id"),
+            "name": f.get("original_name", "Syllabus"),
+            "date": f.get("created_at"),
+        }
+
+    # ── Upcoming Deadlines (from assessments + calendar events for this class) ──
+    now_str = datetime.utcnow().date().isoformat()
+    now_dt = datetime.utcnow().date()
+
+    deadlines = []
+
+    # Source 1: assessments table
+    assess_res = supabase.table("assessments") \
+        .select("title, category, due_date") \
+        .eq("class_id", class_id).eq("user_id", user_id) \
+        .gte("due_date", now_str) \
+        .order("due_date").limit(10).execute()
+
+    for a in (assess_res.data or []):
+        due = a.get("due_date", "")
+        days_left = None
+        if due:
+            try:
+                days_left = (datetime.strptime(due, "%Y-%m-%d").date() - now_dt).days
+            except Exception:
+                pass
+        deadlines.append({
+            "title":     a.get("title", ""),
+            "category":  a.get("category", ""),
+            "due_date":  due,
+            "days_left": days_left,
+            "source":    "syllabus",
+        })
+
+    # Source 2: calendar events matched by class name
+    class_name = cls.get("name", "").lower()
+    if class_name:
+        cal_res = supabase.table("calendar_events") \
+            .select("title, start_date, category") \
+            .eq("user_id", user_id) \
+            .gte("start_date", datetime.utcnow().isoformat()) \
+            .order("start_date").limit(30).execute()
+
+        existing_titles = {d["title"].lower().strip() for d in deadlines}
+        for ev in (cal_res.data or []):
+            ev_title = ev.get("title") or ""
+            if class_name not in ev_title.lower():
+                continue
+            if ev_title.lower().strip() in existing_titles:
+                continue
+            due = (ev.get("start_date") or "")[:10]
+            days_left = None
+            try:
+                days_left = (datetime.strptime(due, "%Y-%m-%d").date() - now_dt).days
+            except Exception:
+                pass
+            deadlines.append({
+                "title":     ev_title,
+                "category":  ev.get("category", ""),
+                "due_date":  due,
+                "days_left": days_left,
+                "source":    "calendar",
+            })
+
+    # Sort by due_date
+    deadlines.sort(key=lambda x: x.get("due_date") or "9999")
+
+    return {
+        "classInfo":     class_info,
+        "currentGrade":  current_grade,
+        "totalGrades":   total_grades,
+        "insight":       {"strongest": strongest, "weakest": weakest},
+        "syllabusFile":  syllabus_file,
+        "deadlines":     deadlines,
+    }
+
+
+# ── DELETE /api/classes/{id} ──────────────────────────────────────────────
+
+@router.delete("/{class_id}")
+async def delete_class(class_id: str, request: Request):
+    """Delete a class and ALL associated data (grades, weights, assessments, topics, files, parsed results)."""
+    user_id = _get_user(request)
+
+    # Verify class exists and belongs to user
+    cls = _get_class(class_id, user_id)
+
+    class_name = cls.get("name", "Unknown Class")
+
+    # Delete all related data in order (child tables first)
+    supabase.table("grades").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
+    supabase.table("grade_weights").delete().eq("class_id", class_id).execute()
+    supabase.table("assessments").delete().eq("class_id", class_id).execute()
+    supabase.table("topics").delete().eq("class_id", class_id).execute()
+    supabase.table("parsed_results").delete().eq("class_id", class_id).execute()
+
+    # Delete files from storage + DB
+    file_result = supabase.table("files").select("id, storage_bucket, storage_path") \
+        .eq("class_id", class_id).eq("user_id", user_id).execute()
+
+    for f in (file_result.data or []):
+        if f.get("storage_bucket") and f.get("storage_path"):
+            try:
+                supabase.storage.from_(f["storage_bucket"]).remove([f["storage_path"]])
+            except Exception:
+                pass
+
+    supabase.table("files").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
+
+    # Delete the class itself
+    supabase.table("classes").delete().eq("id", class_id).eq("user_id", user_id).execute()
+
+    print(f"[DeleteClass] Deleted class '{class_name}' ({class_id}) for user {user_id}")
+
+    return {"message": f"Class '{class_name}' and all associated data deleted successfully", "id": class_id}
+
+
+# ============================================================================
+# FILE MANAGEMENT — LIST & DELETE
+# ============================================================================
+
+@router.get("/files/all")
+async def list_user_files(request: Request):
+    """List all uploaded files for the current user, with class names."""
+    user_id = _get_user(request)
+
+    # Get all files for the user
+    file_result = supabase.table("files") \
+        .select("id, original_name, mime_type, size_bytes, extension, category, status, class_id, created_at") \
+        .eq("user_id", user_id) \
+        .order("created_at", desc=True) \
+        .execute()
+
+    files = file_result.data or []
+
+    # Get all classes for the user to map class_id → name
+    class_result = supabase.table("classes") \
+        .select("id, name") \
+        .eq("user_id", user_id) \
+        .execute()
+
+    class_map = {c["id"]: c["name"] for c in (class_result.data or [])}
+
+    # Attach class_name to each file
+    for f in files:
+        f["class_name"] = class_map.get(f.get("class_id"), "Unknown Class") if f.get("class_id") else "No Class"
+
+    return {"files": files}
+
+
+@router.delete("/files/{file_id}")
+async def delete_user_file(file_id: str, request: Request):
+    """Delete a specific uploaded file."""
+    user_id = _get_user(request)
+
+    # Verify the file belongs to the user
+    file_result = supabase.table("files") \
+        .select("id, storage_bucket, storage_path") \
+        .eq("id", file_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    if not file_result.data:
+        raise HTTPException(404, "File not found")
+
+    file_data = file_result.data[0]
+
+    # Try to delete from Supabase Storage if path exists
+    if file_data.get("storage_bucket") and file_data.get("storage_path"):
+        try:
+            supabase.storage.from_(file_data["storage_bucket"]).remove([file_data["storage_path"]])
+        except Exception as e:
+            print(f"Warning: Could not delete from storage: {e}")
+
+    # Delete the database record
+    supabase.table("files").delete().eq("id", file_id).eq("user_id", user_id).execute()
+
+    return {"message": "File deleted successfully", "id": file_id}
+
+
+@router.delete("/files/all/delete")
+async def delete_all_user_files(request: Request):
+    """Delete all uploaded files for the current user."""
+    user_id = _get_user(request)
+
+    # Get all files to clean up storage
+    file_result = supabase.table("files") \
+        .select("id, storage_bucket, storage_path") \
+        .eq("user_id", user_id) \
+        .execute()
+
+    files = file_result.data or []
+    deleted_count = 0
+
+    for f in files:
+        # Try to delete from storage
+        if f.get("storage_bucket") and f.get("storage_path"):
+            try:
+                supabase.storage.from_(f["storage_bucket"]).remove([f["storage_path"]])
+            except Exception:
+                pass
+
+    # Delete all file records from DB
+    if files:
+        supabase.table("files").delete().eq("user_id", user_id).execute()
+        deleted_count = len(files)
+
+    return {"message": f"{deleted_count} file(s) deleted successfully", "deleted_count": deleted_count}
+
+
+# ── POST /api/study/summary ────────────────────────────────────────────────
+
+from app.config import settings
+import anthropic as anthropic_lib
+
+@router.post("/study/summary")
+async def generate_study_summary(request: Request):
+    """Generate or retrieve an AI-powered study summary for a topic."""
+    import json as json_lib
+    user_id = _get_user(request)
+    body = await request.json()
+    class_name = body.get("class_name", "")
+    class_id = body.get("class_id", "")
+    topic_id = body.get("topic_id", "")
+    topic_title = body.get("topic_title", "")
+    topic_description = body.get("topic_description", "")
+    regenerate = body.get("regenerate", False)
+
+    if not class_name or not topic_title:
+        raise HTTPException(400, "class_name and topic_title required")
+
+    # ── Check DB for existing summary (unless regenerate) ──
+    if topic_id and not regenerate:
+        try:
+            existing = supabase.table("study_summaries") \
+                .select("summary_json, updated_at") \
+                .eq("user_id", user_id) \
+                .eq("topic_id", topic_id) \
+                .limit(1).execute()
+            if existing.data:
+                return {
+                    "summary": existing.data[0]["summary_json"],
+                    "cached": True,
+                    "updated_at": existing.data[0]["updated_at"],
+                }
+        except Exception as check_err:
+            import logging
+            logging.error(f"Failed to check cached summary: {check_err}")
+
+    # ── Generate with AI ──
+    if not settings.anthropic_api_key:
+        return {"summary": None, "error": "AI not configured"}
+
+    try:
+        client = anthropic_lib.Anthropic(api_key=settings.anthropic_api_key)
+
+        system_prompt = (
+            "You are Atlas AI, a study assistant for college students.\n"
+            "Your job is to create concise, accurate study summaries from academic course content.\n\n"
+            "RULES:\n"
+            "- Focus only on the provided topic. Do not include unrelated information.\n"
+            "- Use simple, student-friendly language. Explain concepts clearly.\n"
+            "- Prioritize accuracy — never fabricate facts, formulas, or definitions.\n"
+            "- If information is missing or uncertain, say so instead of guessing.\n"
+            "- Highlight key definitions, important facts, formulas, and concepts.\n"
+            "- Include 5-8 key concepts ordered from foundational to advanced.\n"
+            "- Each definition should be concise (1-2 sentences) but complete enough to study from.\n"
+            "- The 'remember' field should contain the single most critical takeaway.\n"
+            "- The 'connections' field should link this topic to related concepts in the same course.\n"
+            "- The 'studyTip' should be a specific, actionable study technique for this topic.\n"
+            "- The 'keyTakeaways' field must contain 3-5 important summary points.\n\n"
+            "RESPONSE FORMAT: JSON only. No markdown fences. No preamble. No extra text.\n"
+            "{\n"
+            '  "title": "Topic Title",\n'
+            '  "keyConcepts": [\n'
+            '    {"term": "Term Name", "definition": "Clear, concise definition"}\n'
+            '  ],\n'
+            '  "remember": "The single most important takeaway",\n'
+            '  "connections": "How this topic connects to other concepts in the course",\n'
+            '  "studyTip": "A specific, actionable study technique for this topic",\n'
+            '  "keyTakeaways": [\n'
+            '    "Important point 1",\n'
+            '    "Important point 2",\n'
+            '    "Important point 3"\n'
+            '  ]\n'
+            "}"
+        )
+
+        user_message = f"Generate a study summary for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        if topic_description:
+            user_message += f"\n\nTopic description: {topic_description}"
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1500,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}]
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+
+        summary_data = json_lib.loads(raw)
+
+        # ── Save to DB ──
+        save_status = "skipped"
+        save_error = None
+        print(f"[SUMMARY SAVE] topic_id={topic_id}, class_id={class_id}, user_id={user_id}")
+
+        if topic_id and class_id:
+            try:
+                from datetime import datetime
+                now_ts = datetime.utcnow().isoformat()
+
+                existing = supabase.table("study_summaries") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .eq("topic_id", topic_id) \
+                    .limit(1).execute()
+
+                print(f"[SUMMARY SAVE] existing check: {existing.data}")
+
+                if existing.data:
+                    supabase.table("study_summaries") \
+                        .update({"summary_json": summary_data, "updated_at": now_ts}) \
+                        .eq("id", existing.data[0]["id"]) \
+                        .execute()
+                    save_status = "updated"
+                else:
+                    ins_result = supabase.table("study_summaries").insert({
+                        "user_id":      user_id,
+                        "class_id":     class_id,
+                        "topic_id":     topic_id,
+                        "summary_json": summary_data,
+                    }).execute()
+                    print(f"[SUMMARY SAVE] insert result: {ins_result.data}")
+                    save_status = "inserted"
+            except Exception as save_err:
+                save_status = "failed"
+                save_error = str(save_err)
+                print(f"[SUMMARY SAVE] ERROR: {save_err}")
+        else:
+            print(f"[SUMMARY SAVE] SKIPPED - topic_id or class_id empty")
+
+        return {"summary": summary_data, "cached": False, "save_status": save_status, "save_error": save_error}
+
+    except Exception as e:
+        return {"summary": None, "error": str(e)}
+
+
+# ── POST /api/classes/study/flashcards ─────────────────────────────────────
+
+@router.post("/study/flashcards")
+async def generate_study_flashcards(request: Request):
+    """Generate or retrieve AI-powered flashcards for a topic."""
+    import json as json_lib
+    user_id = _get_user(request)
+    body = await request.json()
+    class_name = body.get("class_name", "")
+    class_id = body.get("class_id", "")
+    topic_id = body.get("topic_id", "")
+    topic_title = body.get("topic_title", "")
+    topic_description = body.get("topic_description", "")
+    regenerate = body.get("regenerate", False)
+
+    if not class_name or not topic_title:
+        raise HTTPException(400, "class_name and topic_title required")
+
+    # ── Check DB cache ──
+    if topic_id and not regenerate:
+        try:
+            existing = supabase.table("study_flashcards") \
+                .select("flashcards_json, updated_at") \
+                .eq("user_id", user_id) \
+                .eq("topic_id", topic_id) \
+                .limit(1).execute()
+            if existing.data:
+                return {
+                    "flashcards": existing.data[0]["flashcards_json"],
+                    "cached": True,
+                    "updated_at": existing.data[0]["updated_at"],
+                }
+        except Exception as e:
+            print(f"[FLASHCARDS CHECK] ERROR: {e}")
+
+    # ── Generate with AI ──
+    if not settings.anthropic_api_key:
+        return {"flashcards": None, "error": "AI not configured"}
+
+    try:
+        client = anthropic_lib.Anthropic(api_key=settings.anthropic_api_key)
+
+        system_prompt = (
+            "You are Atlas AI, an educational assistant that creates high-quality study flashcards.\n"
+            "Your task is to generate flashcards from the provided topic content.\n\n"
+            "RULES:\n"
+            "- Create concise question-answer flashcards.\n"
+            "- Focus on important concepts, definitions, formulas, processes, and facts.\n"
+            "- Questions should be clear and specific.\n"
+            "- Answers should be short and easy to memorize (1-2 sentences max).\n"
+            "- Avoid duplicate flashcards.\n"
+            "- Use simple, student-friendly language.\n"
+            "- Generate between 10 and 20 flashcards depending on topic complexity.\n"
+            "- Do not invent information not present in the source material.\n"
+            "- If information is uncertain, skip it rather than guessing.\n"
+            "- Each flashcard should test ONE concept only.\n"
+            "- Order flashcards from foundational to advanced.\n"
+            "- If a concept involves a formula, include it in the answer.\n"
+            "- Assign difficulty: 'easy' for definitions, 'medium' for explanations, 'hard' for application.\n\n"
+            "RESPONSE FORMAT: JSON only. No markdown fences. No preamble. No extra text.\n"
+            "{\n"
+            '  "title": "Topic Title",\n'
+            '  "totalCards": 12,\n'
+            '  "cards": [\n'
+            '    {"id": 1, "question": "Clear specific question", "answer": "Short memorable answer", "difficulty": "easy|medium|hard"}\n'
+            '  ]\n'
+            "}"
+        )
+
+        user_message = f"Generate study flashcards for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        if topic_description:
+            user_message += f"\n\nTopic description: {topic_description}"
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2000,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}]
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+
+        flashcards_data = json_lib.loads(raw)
+
+        # ── Save to DB ──
+        save_status = "skipped"
+        if topic_id and class_id:
+            try:
+                from datetime import datetime
+                now_ts = datetime.utcnow().isoformat()
+
+                existing = supabase.table("study_flashcards") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .eq("topic_id", topic_id) \
+                    .limit(1).execute()
+
+                if existing.data:
+                    supabase.table("study_flashcards") \
+                        .update({"flashcards_json": flashcards_data, "updated_at": now_ts}) \
+                        .eq("id", existing.data[0]["id"]) \
+                        .execute()
+                    save_status = "updated"
+                else:
+                    supabase.table("study_flashcards").insert({
+                        "user_id":         user_id,
+                        "class_id":        class_id,
+                        "topic_id":        topic_id,
+                        "flashcards_json": flashcards_data,
+                    }).execute()
+                    save_status = "inserted"
+                print(f"[FLASHCARDS SAVE] {save_status}")
+            except Exception as save_err:
+                save_status = "failed"
+                print(f"[FLASHCARDS SAVE] ERROR: {save_err}")
+
+        return {"flashcards": flashcards_data, "cached": False, "save_status": save_status}
+
+    except Exception as e:
+        return {"flashcards": None, "error": str(e)}
+
+
+# ── POST /api/classes/study/quiz ───────────────────────────────────────────
+
+@router.post("/study/quiz")
+async def generate_study_quiz(request: Request):
+    """Generate or retrieve AI-powered practice quiz for a topic."""
+    import json as json_lib
+    user_id = _get_user(request)
+    body = await request.json()
+    class_name = body.get("class_name", "")
+    class_id = body.get("class_id", "")
+    topic_id = body.get("topic_id", "")
+    topic_title = body.get("topic_title", "")
+    topic_description = body.get("topic_description", "")
+    regenerate = body.get("regenerate", False)
+
+    if not class_name or not topic_title:
+        raise HTTPException(400, "class_name and topic_title required")
+
+    # ── Check DB cache ──
+    if topic_id and not regenerate:
+        try:
+            existing = supabase.table("study_quizzes") \
+                .select("quiz_json, updated_at") \
+                .eq("user_id", user_id) \
+                .eq("topic_id", topic_id) \
+                .limit(1).execute()
+            if existing.data:
+                return {
+                    "quiz": existing.data[0]["quiz_json"],
+                    "cached": True,
+                    "updated_at": existing.data[0]["updated_at"],
+                }
+        except Exception as e:
+            print(f"[QUIZ CHECK] ERROR: {e}")
+
+    # ── Generate with AI ──
+    if not settings.anthropic_api_key:
+        return {"quiz": None, "error": "AI not configured"}
+
+    try:
+        client = anthropic_lib.Anthropic(api_key=settings.anthropic_api_key)
+
+        system_prompt = (
+            "You are Atlas AI, an educational assistant that creates practice quizzes for students.\n"
+            "Your task is to generate high-quality quiz questions from the provided topic content.\n\n"
+            "RULES:\n"
+            "- Create multiple-choice questions (MCQs).\n"
+            "- Focus on important concepts, definitions, facts, formulas, and processes.\n"
+            "- Questions should test understanding, not just memorization.\n"
+            "- Each question must have exactly 4 answer choices.\n"
+            "- Only one answer should be correct.\n"
+            "- Include a brief explanation for the correct answer.\n"
+            "- Avoid duplicate questions.\n"
+            "- Use simple, student-friendly language.\n"
+            "- Generate between 10 and 15 questions depending on topic complexity.\n"
+            "- Do not invent information that is not present in the source material.\n"
+            "- Distractors (wrong options) should be plausible but clearly wrong.\n"
+            "- Avoid 'all of the above' or 'none of the above' options.\n"
+            "- Order questions from easy to hard.\n"
+            "- Assign difficulty: 'easy' for recall, 'medium' for understanding, 'hard' for application.\n\n"
+            "RESPONSE FORMAT: JSON only. No markdown fences. No preamble. No extra text.\n"
+            "{\n"
+            '  "title": "Topic Title Quiz",\n'
+            '  "totalQuestions": 10,\n'
+            '  "questions": [\n'
+            '    {\n'
+            '      "id": 1,\n'
+            '      "question": "Clear question text",\n'
+            '      "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],\n'
+            '      "correctIndex": 0,\n'
+            '      "explanation": "Brief explanation of why this is correct",\n'
+            '      "difficulty": "easy|medium|hard"\n'
+            '    }\n'
+            '  ]\n'
+            "}"
+        )
+
+        user_message = f"Generate a practice quiz for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        if topic_description:
+            user_message += f"\n\nTopic description: {topic_description}"
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=8192,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}]
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+
+        quiz_data = json_lib.loads(raw)
+
+        # ── Save to DB ──
+        save_status = "skipped"
+        if topic_id and class_id:
+            try:
+                from datetime import datetime
+                now_ts = datetime.utcnow().isoformat()
+
+                existing = supabase.table("study_quizzes") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .eq("topic_id", topic_id) \
+                    .limit(1).execute()
+
+                if existing.data:
+                    supabase.table("study_quizzes") \
+                        .update({"quiz_json": quiz_data, "updated_at": now_ts}) \
+                        .eq("id", existing.data[0]["id"]) \
+                        .execute()
+                    save_status = "updated"
+                else:
+                    supabase.table("study_quizzes").insert({
+                        "user_id":  user_id,
+                        "class_id": class_id,
+                        "topic_id": topic_id,
+                        "quiz_json": quiz_data,
+                    }).execute()
+                    save_status = "inserted"
+                print(f"[QUIZ SAVE] {save_status}")
+            except Exception as save_err:
+                save_status = "failed"
+                print(f"[QUIZ SAVE] ERROR: {save_err}")
+
+        return {"quiz": quiz_data, "cached": False, "save_status": save_status}
+
+    except Exception as e:
+        return {"quiz": None, "error": str(e)}
+
+
+# ── POST /api/classes/study/targeted ───────────────────────────────────────
+
+@router.post("/study/targeted")
+async def generate_targeted_practice(request: Request):
+    """Generate or retrieve AI-powered targeted practice for weak areas in a topic."""
+    import json as json_lib
+    user_id = _get_user(request)
+    body = await request.json()
+    class_name = body.get("class_name", "")
+    class_id = body.get("class_id", "")
+    topic_id = body.get("topic_id", "")
+    topic_title = body.get("topic_title", "")
+    topic_description = body.get("topic_description", "")
+    difficulty = body.get("difficulty", "medium")
+    regenerate = body.get("regenerate", False)
+
+    if not class_name or not topic_title:
+        raise HTTPException(400, "class_name and topic_title required")
+
+    # ── Check DB cache ──
+    if topic_id and not regenerate:
+        try:
+            existing = supabase.table("study_targeted") \
+                .select("targeted_json, updated_at") \
+                .eq("user_id", user_id) \
+                .eq("topic_id", topic_id) \
+                .limit(1).execute()
+            if existing.data:
+                return {
+                    "targeted": existing.data[0]["targeted_json"],
+                    "cached": True,
+                    "updated_at": existing.data[0]["updated_at"],
+                }
+        except Exception as e:
+            print(f"[TARGETED CHECK] ERROR: {e}")
+
+    # ── Generate with AI ──
+    if not settings.anthropic_api_key:
+        return {"targeted": None, "error": "AI not configured"}
+
+    try:
+        client = anthropic_lib.Anthropic(api_key=settings.anthropic_api_key)
+
+        system_prompt = (
+            "You are Atlas AI, an educational assistant that creates targeted practice exercises for students.\n"
+            "Your goal is to help students improve weak areas and strengthen understanding of difficult concepts.\n\n"
+            "RULES:\n"
+            "- Identify 2-3 sub-topics or concepts that students commonly struggle with in this topic.\n"
+            "- Create application-based and reasoning-based questions, not just recall.\n"
+            "- Encourage critical thinking rather than simple memorization.\n"
+            "- Cover misconceptions and common mistakes students make.\n"
+            "- Generate 8-12 practice questions total (3-5 per weak area).\n"
+            "- Each question must be multiple-choice with exactly 4 options, one correct.\n"
+            "- Include a detailed explanation for every answer.\n"
+            "- If formulas are involved, include worked solutions in the explanation.\n"
+            "- Do not invent information not present in standard academic material.\n"
+            "- Use simple, student-friendly language.\n"
+            "- Include confidence percentage for each weak area (how likely students struggle with it).\n"
+            f"- Current difficulty: {difficulty} (easy = basic understanding, medium = application, hard = analysis & problem-solving).\n"
+            "- Adjust question complexity based on the requested difficulty level.\n\n"
+            "RESPONSE FORMAT: JSON only. No markdown fences. No preamble. No extra text.\n"
+            "{\n"
+            '  "title": "Topic Title - Targeted Practice",\n'
+            '  "difficulty": "' + difficulty + '",\n'
+            '  "weakAreas": [\n'
+            '    {\n'
+            '      "id": 1,\n'
+            '      "name": "Sub-topic or concept name",\n'
+            '      "confidence": 45,\n'
+            '      "description": "Why students struggle with this and common misconceptions",\n'
+            '      "questions": [\n'
+            '        {\n'
+            '          "id": 1,\n'
+            '          "question": "Application or reasoning-based question",\n'
+            '          "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],\n'
+            '          "correctIndex": 0,\n'
+            '          "explanation": "Detailed explanation with worked solution if applicable"\n'
+            '        }\n'
+            '      ]\n'
+            '    }\n'
+            '  ],\n'
+            '  "totalQuestions": 10,\n'
+            '  "studyAdvice": "Specific advice for improving in these weak areas"\n'
+            "}"
+        )
+
+        user_message = f"Generate targeted practice for the topic \"{topic_title}\" in the class \"{class_name}\" at {difficulty} difficulty."
+        if topic_description:
+            user_message += f"\n\nTopic description: {topic_description}"
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=8192,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}]
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+
+        targeted_data = json_lib.loads(raw)
+
+        # ── Save to DB ──
+        save_status = "skipped"
+        if topic_id and class_id:
+            try:
+                from datetime import datetime
+                now_ts = datetime.utcnow().isoformat()
+
+                existing = supabase.table("study_targeted") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .eq("topic_id", topic_id) \
+                    .limit(1).execute()
+
+                if existing.data:
+                    supabase.table("study_targeted") \
+                        .update({"targeted_json": targeted_data, "updated_at": now_ts}) \
+                        .eq("id", existing.data[0]["id"]) \
+                        .execute()
+                    save_status = "updated"
+                else:
+                    supabase.table("study_targeted").insert({
+                        "user_id":       user_id,
+                        "class_id":      class_id,
+                        "topic_id":      topic_id,
+                        "targeted_json": targeted_data,
+                    }).execute()
+                    save_status = "inserted"
+                print(f"[TARGETED SAVE] {save_status}")
+            except Exception as save_err:
+                save_status = "failed"
+                print(f"[TARGETED SAVE] ERROR: {save_err}")
+
+        return {"targeted": targeted_data, "cached": False, "save_status": save_status}
+
+    except Exception as e:
+        return {"targeted": None, "error": str(e)}

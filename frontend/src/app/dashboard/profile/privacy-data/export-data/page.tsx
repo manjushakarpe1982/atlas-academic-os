@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Download,
   ChevronRight,
@@ -10,61 +10,41 @@ import {
   Code,
   CheckCircle2,
   Eye,
-  FileIcon,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import BackHeader from "../../BackHeader";
 import Image from "next/image";
+import { api } from "@/lib/api";
 
-interface ClassOption {
+// ── Types ──
+interface ClassData {
   id: string;
   name: string;
-  code: string;
-  type: string;
-  professor: string;
-  icon: string;
-  iconBg: string;
+  instructor: string | null;
+  term: string | null;
+  credit_hours: number | null;
 }
 
-const CLASSES: ClassOption[] = [
-  {
-    id: "math-251",
-    name: "Mathematics 251",
-    code: "MATH 251",
-    type: "Engineering Math II",
-    professor: "Prof. John Smith",
-    icon: "📐",
-    iconBg: "bg-indigo-100",
-  },
-  {
-    id: "bio-1107",
-    name: "Biology 1107",
-    code: "BIO 1107",
-    type: "General Biology",
-    professor: "Prof. Sarah Johnson",
-    icon: "🧬",
-    iconBg: "bg-green-100",
-  },
-  {
-    id: "chem-101",
-    name: "Chemistry 101",
-    code: "CHEM 101",
-    type: "Intro to Chemistry",
-    professor: "Prof. Michael Brown",
-    icon: "⚗️",
-    iconBg: "bg-yellow-100",
-  },
-  {
-    id: "phys-201",
-    name: "Physics 201",
-    code: "PHYS 201",
-    type: "Mechanics",
-    professor: "Prof. David Wilson",
-    icon: "⚛️",
-    iconBg: "bg-blue-100",
-  },
+// ── Icon / color helpers based on class name ──
+const CLASS_STYLES: { pattern: RegExp; icon: string; iconBg: string }[] = [
+  { pattern: /math|calculus|algebra|geometry/i, icon: "📐", iconBg: "bg-indigo-100" },
+  { pattern: /bio|anatomy|genetics/i,          icon: "🧬", iconBg: "bg-green-100" },
+  { pattern: /chem/i,                          icon: "⚗️", iconBg: "bg-yellow-100" },
+  { pattern: /phys/i,                          icon: "⚛️", iconBg: "bg-blue-100" },
+  { pattern: /eng|english|lit|writing/i,       icon: "📝", iconBg: "bg-orange-100" },
+  { pattern: /hist|history/i,                  icon: "📜", iconBg: "bg-amber-100" },
+  { pattern: /comp|cs|programming|code/i,      icon: "💻", iconBg: "bg-purple-100" },
+  { pattern: /art|music|design/i,              icon: "🎨", iconBg: "bg-pink-100" },
 ];
 
+function getClassStyle(name: string) {
+  const match = CLASS_STYLES.find((s) => s.pattern.test(name));
+  return match || { icon: "📖", iconBg: "bg-gray-100" };
+}
+
+// ── Export options ──
 interface ExportOption {
   id: string;
   label: string;
@@ -89,8 +69,7 @@ const FORMAT_OPTIONS = [
 export default function ExportDataPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [selectedClass, setSelectedClass] = useState("math-251");
-  const [showClassDropdown, setShowClassDropdown] = useState(false);
+  const [selectedClass, setSelectedClass] = useState("");
   const [selectedItems, setSelectedItems] = useState<string[]>([
     "course-info",
     "grades",
@@ -101,7 +80,28 @@ export default function ExportDataPage() {
   ]);
   const [selectedFormat, setSelectedFormat] = useState("pdf");
 
-  const selectedClassName = CLASSES.find((c) => c.id === selectedClass);
+  // ── Dynamic class data ──
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api<{ classes: ClassData[] }>("/api/classes")
+      .then((data) => {
+        const list = data.classes || [];
+        setClasses(list);
+        if (list.length > 0) {
+          setSelectedClass(list[0].id);
+        }
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const selectedClassData = classes.find((c) => c.id === selectedClass);
+  const selectedClassStyle = selectedClassData
+    ? getClassStyle(selectedClassData.name)
+    : { icon: "📖", iconBg: "bg-gray-100" };
   const formatLabel =
     FORMAT_OPTIONS.find((f) => f.id === selectedFormat)?.label || "PDF";
 
@@ -109,17 +109,6 @@ export default function ExportDataPage() {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
-  };
-
-  const getFileIcon = () => {
-    switch (selectedFormat) {
-      case "zip":
-        return "📦";
-      case "json":
-        return "📄";
-      default:
-        return "📄";
-    }
   };
 
   const handleContinue = () => {
@@ -174,12 +163,9 @@ export default function ExportDataPage() {
                 }`}
               >
                 <div className="flex items-center gap-3 text-left">
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-100 flex-shrink-0`}
-                  >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-100 flex-shrink-0">
                     <Globe className="w-5 h-5 text-indigo-600" />
                   </div>
-
                   <div>
                     <p className="font-semibold text-gray-900">All Classes</p>
                     <p className="text-xs text-gray-600">
@@ -195,77 +181,93 @@ export default function ExportDataPage() {
                   }`}
                 >
                   {selectedClass === "all" && (
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   )}
                 </div>
               </button>
 
-              {/* Your Classes */}
+              {/* Your Classes — dynamic from API */}
               <div>
                 <h3 className="font-bold text-gray-900 mb-3">Your Classes</h3>
-                <div className="space-y-2">
-                  {CLASSES.map((cls) => (
-                    <button
-                      key={cls.id}
-                      onClick={() => setSelectedClass(cls.id)}
-                      className={`w-full p-3 rounded-lg border transition-all flex items-center justify-between ${
-                        selectedClass === cls.id
-                          ? "border-indigo-500 bg-indigo-50"
-                          : "border-gray-300 bg-white hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3 text-left flex-1">
-                        <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center ${cls.iconBg} flex-shrink-0`}
+
+                {/* Loading */}
+                {loading && (
+                  <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="text-sm font-medium">Loading classes...</span>
+                  </div>
+                )}
+
+                {/* Error */}
+                {!loading && error && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-red-900">Failed to load classes</p>
+                      <p className="text-xs text-red-700 mt-1">{error}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty */}
+                {!loading && !error && classes.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-gray-500 font-medium">No classes found</p>
+                    <p className="text-xs text-gray-400 mt-1">Add a class first to export data.</p>
+                  </div>
+                )}
+
+                {/* Class List */}
+                {!loading && !error && classes.length > 0 && (
+                  <div className="space-y-2">
+                    {classes.map((cls) => {
+                      const style = getClassStyle(cls.name);
+                      return (
+                        <button
+                          key={cls.id}
+                          onClick={() => setSelectedClass(cls.id)}
+                          className={`w-full p-3 rounded-lg border transition-all flex items-center justify-between ${
+                            selectedClass === cls.id
+                              ? "border-indigo-500 bg-indigo-50"
+                              : "border-gray-300 bg-white hover:border-gray-300"
+                          }`}
                         >
-                          <span className="text-2xl">{cls.icon}</span>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {cls.name}
-                          </p>
-                          <p className="text-xs text-gray-600 mt-0.5">
-                            {cls.type}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {cls.professor}
-                          </p>
-                        </div>
-                      </div>
-                      <div
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                          selectedClass === cls.id
-                            ? "border-indigo-600 bg-indigo-600"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        {selectedClass === cls.id && (
-                          <svg
-                            className="w-4 h-4 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
+                          <div className="flex items-start gap-3 text-left flex-1">
+                            <div
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center ${style.iconBg} flex-shrink-0`}
+                            >
+                              <span className="text-2xl">{style.icon}</span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">{cls.name}</p>
+                              {cls.term && (
+                                <p className="text-xs text-gray-600 mt-0.5">{cls.term}</p>
+                              )}
+                              {cls.instructor && (
+                                <p className="text-xs text-gray-500 mt-1">{cls.instructor}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                              selectedClass === cls.id
+                                ? "border-indigo-600 bg-indigo-600"
+                                : "border-gray-300"
+                            }`}
                           >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                            {selectedClass === cls.id && (
+                              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -275,19 +277,28 @@ export default function ExportDataPage() {
             {/* Selected Class Card */}
             <div className="bg-white border-2 border-gray-200 rounded-lg mb-7 p-4">
               <div className="flex items-start gap-3">
-                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
-                  {selectedClassName?.icon}
+                <div className={`w-12 h-12 ${selectedClassStyle.iconBg} rounded-xl flex items-center justify-center text-2xl flex-shrink-0`}>
+                  {selectedClass === "all" ? (
+                    <Globe className="w-6 h-6 text-indigo-600" />
+                  ) : (
+                    selectedClassStyle.icon
+                  )}
                 </div>
                 <div className="flex-1">
                   <h2 className="font-bold text-gray-900">
-                    {selectedClassName?.name}
+                    {selectedClass === "all" ? "All Classes" : selectedClassData?.name}
                   </h2>
-                  <p className="text-sm text-gray-600 mt-0.5">
-                    {selectedClassName?.type}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {selectedClassName?.professor}
-                  </p>
+                  {selectedClass !== "all" && selectedClassData?.term && (
+                    <p className="text-sm text-gray-600 mt-0.5">{selectedClassData.term}</p>
+                  )}
+                  {selectedClass !== "all" && selectedClassData?.instructor && (
+                    <p className="text-xs text-gray-500 mt-1">{selectedClassData.instructor}</p>
+                  )}
+                  {selectedClass === "all" && (
+                    <p className="text-sm text-gray-600 mt-0.5">
+                      Export data from all {classes.length} classes
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="mt-1 flex justify-end">
@@ -314,7 +325,6 @@ export default function ExportDataPage() {
               <div className="grid grid-cols-2 gap-3">
                 {EXPORT_ITEMS.map((item) => {
                   const isSelected = selectedItems.includes(item.id);
-
                   return (
                     <button
                       key={item.id}
@@ -325,7 +335,6 @@ export default function ExportDataPage() {
                           : "border-gray-200 bg-white hover:border-gray-300"
                       }`}
                     >
-                      {/* Checkmark */}
                       <div
                         className={`absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center ${
                           isSelected
@@ -335,8 +344,6 @@ export default function ExportDataPage() {
                       >
                         {isSelected && <Check className="w-2.5 h-2.5" />}
                       </div>
-
-                      {/* Content */}
                       <div className="flex flex-col items-start">
                         <div
                           className={`w-8 h-8 rounded-md flex items-center justify-center mb-2 ${
@@ -345,7 +352,6 @@ export default function ExportDataPage() {
                         >
                           {item.icon}
                         </div>
-
                         <p className="text-sm font-medium text-gray-700 leading-tight">
                           {item.label}
                         </p>
@@ -398,7 +404,6 @@ export default function ExportDataPage() {
         ) : (
           /* STEP 3: Export Success */
           <div className="space-y-6">
-            {/* Success Checkmark */}
             <div className="flex flex-col items-center text-center space-y-3">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
                 <CheckCircle2 className="w-12 h-12 text-green-600" />
@@ -421,8 +426,9 @@ export default function ExportDataPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-gray-900">
-                    {selectedClassName?.name.replace(/\s+/g, "")}_Export.
-                    {selectedFormat}
+                    {selectedClass === "all"
+                      ? `AllClasses_Export.${selectedFormat}`
+                      : `${(selectedClassData?.name || "Class").replace(/\s+/g, "")}_Export.${selectedFormat}`}
                   </p>
                   <p className="text-xs text-gray-600 mt-1">
                     Created just now • {formatLabel}
@@ -431,7 +437,6 @@ export default function ExportDataPage() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-2 mt-4">
                 <button className="flex-1 border-2 border-indigo-200 text-indigo-600 font-bold py-2 rounded-lg hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
                   <Eye className="w-4 h-4" /> Preview
@@ -444,7 +449,7 @@ export default function ExportDataPage() {
 
             {/* What's Next */}
             <div className="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-3">
-              <h3 className="font-bold text-gray-900 mb-2">What's next?</h3>
+              <h3 className="font-bold text-gray-900 mb-2">What&apos;s next?</h3>
               <p className="text-sm text-gray-600 mb-3">
                 You can also find this export in Recent Exports.
               </p>
@@ -458,7 +463,8 @@ export default function ExportDataPage() {
         {/* Continue/Done Button */}
         <button
           onClick={step === 3 ? handleDone : handleContinue}
-          className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 text-base transition-all flex items-center justify-center gap-2"
+          disabled={step === 1 && !selectedClass}
+          className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-base transition-all flex items-center justify-center gap-2"
         >
           {step === 3 ? (
             "Done"
