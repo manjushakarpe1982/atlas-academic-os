@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { API_BASE, getToken } from '@/lib/api';
 import { TopicItem } from './shared';
 
@@ -54,6 +54,57 @@ export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
   const completedCount = progress ? Object.values(progress).filter(p => p.completed).length : 0;
   const totalPct = Math.round((completedCount / 4) * 100);
 
+  // Skeleton loading UI
+  if (loading) {
+    return (
+      <div className="px-4 py-4 pb-24">
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
+          <div>
+            <h1 className="text-base font-extrabold text-gray-900">{topic.title}</h1>
+            <p className="text-xs text-gray-400">Loading progress...</p>
+          </div>
+        </div>
+
+        {/* About Topic skeleton */}
+        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-5">
+          <p className="text-xs font-bold text-indigo-700 mb-1">About this topic</p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {topic.description || `Study materials for ${topic.title}.`} 🧬
+          </p>
+        </div>
+
+        {/* Progress skeleton */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-5 animate-pulse">
+          <div className="flex items-center justify-between mb-2">
+            <div className="h-3 w-24 bg-gray-200 rounded-full" />
+            <div className="h-3 w-20 bg-gray-200 rounded-full" />
+          </div>
+          <div className="w-full h-2 bg-gray-100 rounded-full" />
+        </div>
+
+        {/* Material cards skeleton */}
+        <div className="h-3 w-44 bg-gray-200 rounded-full mb-3" />
+        <div className="space-y-3">
+          {MATERIALS.map(m => (
+            <div key={m.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4 animate-pulse">
+              <div className="w-11 h-11 bg-gray-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">{m.icon}</div>
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-extrabold text-gray-900">{m.title}</p>
+                  <div className="w-4 h-4 bg-gray-200 rounded-full" />
+                </div>
+                <div className="h-2.5 w-36 bg-gray-100 rounded-full" />
+                <div className="h-2 w-20 bg-gray-100 rounded-full" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-200 flex-shrink-0" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 py-4 pb-24">
       <div className="flex items-center gap-3 mb-5">
@@ -73,7 +124,7 @@ export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
       </div>
 
       {/* Progress Overview */}
-      {!loading && progress && (
+      {progress && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-5">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Your Progress</p>
@@ -104,17 +155,13 @@ export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-extrabold text-gray-900">{m.title}</p>
-                  {loading ? (
-                    <Loader2 className="w-3 h-3 text-gray-300 animate-spin" />
-                  ) : done ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  ) : null}
+                  {done && <CheckCircle2 className="w-4 h-4 text-green-500" />}
                 </div>
                 <p className="text-xs text-gray-400">{m.sub}</p>
                 {done && updatedAt && (
                   <p className="text-[10px] text-green-600 font-semibold mt-0.5">Completed · {timeAgo(updatedAt)}</p>
                 )}
-                {!done && !loading && (
+                {!done && (
                   <p className="text-[10px] text-gray-400 mt-0.5">Not started</p>
                 )}
               </div>
