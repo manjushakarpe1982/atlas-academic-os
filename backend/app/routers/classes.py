@@ -1316,3 +1316,137 @@ async def generate_study_flashcards(request: Request):
 
     except Exception as e:
         return {"flashcards": None, "error": str(e)}
+
+
+# ── POST /api/classes/study/quiz ───────────────────────────────────────────
+
+@router.post("/study/quiz")
+async def generate_study_quiz(request: Request):
+    """Generate or retrieve AI-powered practice quiz for a topic."""
+    import json as json_lib
+    user_id = _get_user(request)
+    body = await request.json()
+    class_name = body.get("class_name", "")
+    class_id = body.get("class_id", "")
+    topic_id = body.get("topic_id", "")
+    topic_title = body.get("topic_title", "")
+    topic_description = body.get("topic_description", "")
+    regenerate = body.get("regenerate", False)
+
+    if not class_name or not topic_title:
+        raise HTTPException(400, "class_name and topic_title required")
+
+    # ── Check DB cache ──
+    if topic_id and not regenerate:
+        try:
+            existing = supabase.table("study_quizzes") \
+                .select("quiz_json, updated_at") \
+                .eq("user_id", user_id) \
+                .eq("topic_id", topic_id) \
+                .limit(1).execute()
+            if existing.data:
+                return {
+                    "quiz": existing.data[0]["quiz_json"],
+                    "cached": True,
+                    "updated_at": existing.data[0]["updated_at"],
+                }
+        except Exception as e:
+            print(f"[QUIZ CHECK] ERROR: {e}")
+
+    # ── Generate with AI ──
+    if not settings.anthropic_api_key:
+        return {"quiz": None, "error": "AI not configured"}
+
+    try:
+        client = anthropic_lib.Anthropic(api_key=settings.anthropic_api_key)
+
+        system_prompt = (
+            "You are Atlas AI, an educational assistant that creates practice quizzes for students.\n"
+            "Your task is to generate high-quality quiz questions from the provided topic content.\n\n"
+            "RULES:\n"
+            "- Create multiple-choice questions (MCQs).\n"
+            "- Focus on important concepts, definitions, facts, formulas, and processes.\n"
+            "- Questions should test understanding, not just memorization.\n"
+            "- Each question must have exactly 4 answer choices.\n"
+            "- Only one answer should be correct.\n"
+            "- Include a brief explanation for the correct answer.\n"
+            "- Avoid duplicate questions.\n"
+            "- Use simple, student-friendly language.\n"
+            "- Generate between 10 and 15 questions depending on topic complexity.\n"
+            "- Do not invent information that is not present in the source material.\n"
+            "- Distractors (wrong options) should be plausible but clearly wrong.\n"
+            "- Avoid 'all of the above' or 'none of the above' options.\n"
+            "- Order questions from easy to hard.\n"
+            "- Assign difficulty: 'easy' for recall, 'medium' for understanding, 'hard' for application.\n\n"
+            "RESPONSE FORMAT: JSON only. No markdown fences. No preamble. No extra text.\n"
+            "{\n"
+            '  "title": "Topic Title Quiz",\n'
+            '  "totalQuestions": 10,\n'
+            '  "questions": [\n'
+            '    {\n'
+            '      "id": 1,\n'
+            '      "question": "Clear question text",\n'
+            '      "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],\n'
+            '      "correctIndex": 0,\n'
+            '      "explanation": "Brief explanation of why this is correct",\n'
+            '      "difficulty": "easy|medium|hard"\n'
+            '    }\n'
+            '  ]\n'
+            "}"
+        )
+
+        user_message = f"Generate a practice quiz for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        if topic_description:
+            user_message += f"\n\nTopic description: {topic_description}"
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=3000,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}]
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+
+        quiz_data = json_lib.loads(raw)
+
+        # ── Save to DB ──
+        save_status = "skipped"
+        if topic_id and class_id:
+            try:
+                from datetime import datetime
+                now_ts = datetime.utcnow().isoformat()
+
+                existing = supabase.table("study_quizzes") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .eq("topic_id", topic_id) \
+                    .limit(1).execute()
+
+                if existing.data:
+                    supabase.table("study_quizzes") \
+                        .update({"quiz_json": quiz_data, "updated_at": now_ts}) \
+                        .eq("id", existing.data[0]["id"]) \
+                        .execute()
+                    save_status = "updated"
+                else:
+                    supabase.table("study_quizzes").insert({
+                        "user_id":  user_id,
+                        "class_id": class_id,
+                        "topic_id": topic_id,
+                        "quiz_json": quiz_data,
+                    }).execute()
+                    save_status = "inserted"
+                print(f"[QUIZ SAVE] {save_status}")
+            except Exception as save_err:
+                save_status = "failed"
+                print(f"[QUIZ SAVE] ERROR: {save_err}")
+
+        return {"quiz": quiz_data, "cached": False, "save_status": save_status}
+
+    except Exception as e:
+        return {"quiz": None, "error": str(e)}
