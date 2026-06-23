@@ -20,6 +20,7 @@ export default function SelectTopic({ onTopicSelect }: Props) {
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [loadingTopics, setLoadingTopics] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showAllTopics, setShowAllTopics] = useState(false);
 
   // Fetch classes on mount
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function SelectTopic({ onTopicSelect }: Props) {
   const handleClassSelect = (c: ClassData) => {
     setSelectedClass(c);
     setDropdownOpen(false);
+    setShowAllTopics(false);
   };
 
   if (loadingClasses) {
@@ -132,9 +134,9 @@ export default function SelectTopic({ onTopicSelect }: Props) {
           </div>
         ) : (
           <>
-            <p className="text-xs text-gray-500 mb-3">All Topics ({topics.length})</p>
+            <p className="text-xs text-gray-500 mb-3">Topics ({topics.length})</p>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-              {topics.map((t, i) => {
+              {(showAllTopics ? topics : topics.slice(0, 5)).map((t, i) => {
                 const isDone = t.status === 'completed';
                 const inProgress = t.status === 'in_progress';
                 return (
@@ -155,6 +157,13 @@ export default function SelectTopic({ onTopicSelect }: Props) {
                 );
               })}
             </div>
+            {topics.length > 5 && (
+              <button onClick={() => setShowAllTopics(!showAllTopics)}
+                className="w-full mt-3 flex items-center justify-center gap-2 text-sm font-bold text-indigo-600 py-2.5 rounded-xl border border-indigo-200 hover:bg-indigo-50 transition-all">
+                <ChevronDown className={`w-4 h-4 transition-transform ${showAllTopics ? 'rotate-180' : ''}`} />
+                {showAllTopics ? 'Show Less' : `View All Topics (${topics.length})`}
+              </button>
+            )}
           </>
         )}
       </div>
