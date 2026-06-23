@@ -1450,3 +1450,146 @@ async def generate_study_quiz(request: Request):
 
     except Exception as e:
         return {"quiz": None, "error": str(e)}
+
+
+# ── POST /api/classes/study/targeted ───────────────────────────────────────
+
+@router.post("/study/targeted")
+async def generate_targeted_practice(request: Request):
+    """Generate or retrieve AI-powered targeted practice for weak areas in a topic."""
+    import json as json_lib
+    user_id = _get_user(request)
+    body = await request.json()
+    class_name = body.get("class_name", "")
+    class_id = body.get("class_id", "")
+    topic_id = body.get("topic_id", "")
+    topic_title = body.get("topic_title", "")
+    topic_description = body.get("topic_description", "")
+    difficulty = body.get("difficulty", "medium")
+    regenerate = body.get("regenerate", False)
+
+    if not class_name or not topic_title:
+        raise HTTPException(400, "class_name and topic_title required")
+
+    # ── Check DB cache ──
+    if topic_id and not regenerate:
+        try:
+            existing = supabase.table("study_targeted") \
+                .select("targeted_json, updated_at") \
+                .eq("user_id", user_id) \
+                .eq("topic_id", topic_id) \
+                .limit(1).execute()
+            if existing.data:
+                return {
+                    "targeted": existing.data[0]["targeted_json"],
+                    "cached": True,
+                    "updated_at": existing.data[0]["updated_at"],
+                }
+        except Exception as e:
+            print(f"[TARGETED CHECK] ERROR: {e}")
+
+    # ── Generate with AI ──
+    if not settings.anthropic_api_key:
+        return {"targeted": None, "error": "AI not configured"}
+
+    try:
+        client = anthropic_lib.Anthropic(api_key=settings.anthropic_api_key)
+
+        system_prompt = (
+            "You are Atlas AI, an educational assistant that creates targeted practice exercises for students.\n"
+            "Your goal is to help students improve weak areas and strengthen understanding of difficult concepts.\n\n"
+            "RULES:\n"
+            "- Identify 2-3 sub-topics or concepts that students commonly struggle with in this topic.\n"
+            "- Create application-based and reasoning-based questions, not just recall.\n"
+            "- Encourage critical thinking rather than simple memorization.\n"
+            "- Cover misconceptions and common mistakes students make.\n"
+            "- Generate 8-12 practice questions total (3-5 per weak area).\n"
+            "- Each question must be multiple-choice with exactly 4 options, one correct.\n"
+            "- Include a detailed explanation for every answer.\n"
+            "- If formulas are involved, include worked solutions in the explanation.\n"
+            "- Do not invent information not present in standard academic material.\n"
+            "- Use simple, student-friendly language.\n"
+            "- Include confidence percentage for each weak area (how likely students struggle with it).\n"
+            f"- Current difficulty: {difficulty} (easy = basic understanding, medium = application, hard = analysis & problem-solving).\n"
+            "- Adjust question complexity based on the requested difficulty level.\n\n"
+            "RESPONSE FORMAT: JSON only. No markdown fences. No preamble. No extra text.\n"
+            "{\n"
+            '  "title": "Topic Title - Targeted Practice",\n'
+            '  "difficulty": "' + difficulty + '",\n'
+            '  "weakAreas": [\n'
+            '    {\n'
+            '      "id": 1,\n'
+            '      "name": "Sub-topic or concept name",\n'
+            '      "confidence": 45,\n'
+            '      "description": "Why students struggle with this and common misconceptions",\n'
+            '      "questions": [\n'
+            '        {\n'
+            '          "id": 1,\n'
+            '          "question": "Application or reasoning-based question",\n'
+            '          "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],\n'
+            '          "correctIndex": 0,\n'
+            '          "explanation": "Detailed explanation with worked solution if applicable"\n'
+            '        }\n'
+            '      ]\n'
+            '    }\n'
+            '  ],\n'
+            '  "totalQuestions": 10,\n'
+            '  "studyAdvice": "Specific advice for improving in these weak areas"\n'
+            "}"
+        )
+
+        user_message = f"Generate targeted practice for the topic \"{topic_title}\" in the class \"{class_name}\" at {difficulty} difficulty."
+        if topic_description:
+            user_message += f"\n\nTopic description: {topic_description}"
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=3000,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}]
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+
+        targeted_data = json_lib.loads(raw)
+
+        # ── Save to DB ──
+        save_status = "skipped"
+        if topic_id and class_id:
+            try:
+                from datetime import datetime
+                now_ts = datetime.utcnow().isoformat()
+
+                existing = supabase.table("study_targeted") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .eq("topic_id", topic_id) \
+                    .limit(1).execute()
+
+                if existing.data:
+                    supabase.table("study_targeted") \
+                        .update({"targeted_json": targeted_data, "updated_at": now_ts}) \
+                        .eq("id", existing.data[0]["id"]) \
+                        .execute()
+                    save_status = "updated"
+                else:
+                    supabase.table("study_targeted").insert({
+                        "user_id":       user_id,
+                        "class_id":      class_id,
+                        "topic_id":      topic_id,
+                        "targeted_json": targeted_data,
+                    }).execute()
+                    save_status = "inserted"
+                print(f"[TARGETED SAVE] {save_status}")
+            except Exception as save_err:
+                save_status = "failed"
+                print(f"[TARGETED SAVE] ERROR: {save_err}")
+
+        return {"targeted": targeted_data, "cached": False, "save_status": save_status}
+
+    except Exception as e:
+        return {"targeted": None, "error": str(e)}

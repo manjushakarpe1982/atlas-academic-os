@@ -31,7 +31,7 @@ export default function MaterialsPage() {
   if (view === 'summary')    return <SummaryView className={className} classId={classId} topic={topic!} onBack={() => setView('choose')} onGenerateQuiz={() => setView('quiz')} />;
   if (view === 'flashcards') return <FlashcardsView className={className} classId={classId} topic={topic!} onBack={() => setView('choose')} onDone={() => setView('progress')} />;
   if (view === 'quiz')       return <PracticeQuiz className={className} classId={classId} topic={topic!} onBack={() => setView('choose')} onDone={() => setView('progress')} />;
-  if (view === 'targeted')   return <TargetedPractice onBack={() => setView('choose')} onDone={() => setView('progress')} />;
+  if (view === 'targeted')   return <TargetedPractice className={className} classId={classId} topic={topic!} onBack={() => setView('choose')} onDone={() => setView('progress')} />;
   if (view === 'progress')   return <ProgressView onBack={() => setView('topics')} />;
 
   return <SelectTopic onTopicSelect={selectTopic} />;
