@@ -1047,3 +1047,134 @@ async def delete_all_user_files(request: Request):
         deleted_count = len(files)
 
     return {"message": f"{deleted_count} file(s) deleted successfully", "deleted_count": deleted_count}
+
+
+# ── POST /api/study/summary ────────────────────────────────────────────────
+
+from app.config import settings
+import anthropic as anthropic_lib
+
+@router.post("/study/summary")
+async def generate_study_summary(request: Request):
+    """Generate or retrieve an AI-powered study summary for a topic."""
+    import json as json_lib
+    user_id = _get_user(request)
+    body = await request.json()
+    class_name = body.get("class_name", "")
+    class_id = body.get("class_id", "")
+    topic_id = body.get("topic_id", "")
+    topic_title = body.get("topic_title", "")
+    topic_description = body.get("topic_description", "")
+    regenerate = body.get("regenerate", False)
+
+    if not class_name or not topic_title:
+        raise HTTPException(400, "class_name and topic_title required")
+
+    # ── Check DB for existing summary (unless regenerate) ──
+    if topic_id and not regenerate:
+        try:
+            existing = supabase.table("study_summaries") \
+                .select("summary_json, updated_at") \
+                .eq("user_id", user_id) \
+                .eq("topic_id", topic_id) \
+                .limit(1).execute()
+            if existing.data:
+                return {
+                    "summary": existing.data[0]["summary_json"],
+                    "cached": True,
+                    "updated_at": existing.data[0]["updated_at"],
+                }
+        except Exception as check_err:
+            import logging
+            logging.error(f"Failed to check cached summary: {check_err}")
+
+    # ── Generate with AI ──
+    if not settings.anthropic_api_key:
+        return {"summary": None, "error": "AI not configured"}
+
+    try:
+        client = anthropic_lib.Anthropic(api_key=settings.anthropic_api_key)
+
+        system_prompt = (
+            "You are Atlas AI, a study assistant for college students.\n"
+            "Your job is to create concise, accurate study summaries from academic course content.\n\n"
+            "RULES:\n"
+            "- Focus only on the provided topic. Do not include unrelated information.\n"
+            "- Use simple, student-friendly language. Explain concepts clearly.\n"
+            "- Prioritize accuracy — never fabricate facts, formulas, or definitions.\n"
+            "- If information is missing or uncertain, say so instead of guessing.\n"
+            "- Highlight key definitions, important facts, formulas, and concepts.\n"
+            "- Include 5-8 key concepts ordered from foundational to advanced.\n"
+            "- Each definition should be concise (1-2 sentences) but complete enough to study from.\n"
+            "- The 'remember' field should contain the single most critical takeaway.\n"
+            "- The 'connections' field should link this topic to related concepts in the same course.\n"
+            "- The 'studyTip' should be a specific, actionable study technique for this topic.\n"
+            "- The 'keyTakeaways' field must contain 3-5 important summary points.\n\n"
+            "RESPONSE FORMAT: JSON only. No markdown fences. No preamble. No extra text.\n"
+            "{\n"
+            '  "title": "Topic Title",\n'
+            '  "keyConcepts": [\n'
+            '    {"term": "Term Name", "definition": "Clear, concise definition"}\n'
+            '  ],\n'
+            '  "remember": "The single most important takeaway",\n'
+            '  "connections": "How this topic connects to other concepts in the course",\n'
+            '  "studyTip": "A specific, actionable study technique for this topic",\n'
+            '  "keyTakeaways": [\n'
+            '    "Important point 1",\n'
+            '    "Important point 2",\n'
+            '    "Important point 3"\n'
+            '  ]\n'
+            "}"
+        )
+
+        user_message = f"Generate a study summary for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        if topic_description:
+            user_message += f"\n\nTopic description: {topic_description}"
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1500,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}]
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        raw = raw.strip()
+
+        summary_data = json_lib.loads(raw)
+
+        # ── Save to DB ──
+        if topic_id and class_id:
+            try:
+                from datetime import datetime
+                now_ts = datetime.utcnow().isoformat()
+
+                existing = supabase.table("study_summaries") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .eq("topic_id", topic_id) \
+                    .limit(1).execute()
+
+                if existing.data:
+                    supabase.table("study_summaries") \
+                        .update({"summary_json": summary_data, "updated_at": now_ts}) \
+                        .eq("id", existing.data[0]["id"]) \
+                        .execute()
+                else:
+                    supabase.table("study_summaries").insert({
+                        "user_id":      user_id,
+                        "class_id":     class_id,
+                        "topic_id":     topic_id,
+                        "summary_json": summary_data,
+                    }).execute()
+            except Exception as save_err:
+                import logging
+                logging.error(f"Failed to save summary: {save_err}")
+
+        return {"summary": summary_data, "cached": False}
+
+    except Exception as e:
+        return {"summary": None, "error": str(e)}

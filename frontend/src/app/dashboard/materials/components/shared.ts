@@ -1,5 +1,5 @@
 export interface TopicItem {
-  id: string; title: string; lastStudied: string;
+  id: string; title: string; lastStudied: string; description?: string;
 }
 
 export interface FlashcardItem {
