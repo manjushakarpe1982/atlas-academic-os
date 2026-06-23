@@ -7,9 +7,8 @@ import SummaryView from './components/SummaryView';
 import FlashcardsView from './components/FlashcardsView';
 import PracticeQuiz from './components/PracticeQuiz';
 import TargetedPractice from './components/TargetedPractice';
-import ProgressView from './components/ProgressView';
 
-type View = 'topics' | 'choose' | 'summary' | 'flashcards' | 'quiz' | 'targeted' | 'progress';
+type View = 'topics' | 'choose' | 'summary' | 'flashcards' | 'quiz' | 'targeted';
 
 export default function MaterialsPage() {
   const [view, setView] = useState<View>('topics');
@@ -26,13 +25,13 @@ export default function MaterialsPage() {
     else if (id === 'quiz') setView('quiz');
     else if (id === 'targeted') setView('targeted');
   };
+  const backToChoose = () => setView('choose');
 
   if (view === 'choose' && topic) return <ChooseMaterial topic={topic} onBack={() => setView('topics')} onSelect={selectMaterial} />;
-  if (view === 'summary')    return <SummaryView className={className} classId={classId} topic={topic!} onBack={() => setView('choose')} onFlashcards={() => setView('flashcards')} onQuiz={() => setView('quiz')} onTargeted={() => setView('targeted')} />;
-  if (view === 'flashcards') return <FlashcardsView className={className} classId={classId} topic={topic!} onBack={() => setView('choose')} onDone={() => setView('progress')} />;
-  if (view === 'quiz')       return <PracticeQuiz className={className} classId={classId} topic={topic!} onBack={() => setView('choose')} onDone={() => setView('progress')} />;
-  if (view === 'targeted')   return <TargetedPractice className={className} classId={classId} topic={topic!} onBack={() => setView('choose')} onDone={() => setView('progress')} />;
-  if (view === 'progress')   return <ProgressView onBack={() => setView('topics')} />;
+  if (view === 'summary')    return <SummaryView className={className} classId={classId} topic={topic!} onBack={backToChoose} onFlashcards={() => setView('flashcards')} onQuiz={() => setView('quiz')} onTargeted={() => setView('targeted')} />;
+  if (view === 'flashcards') return <FlashcardsView className={className} classId={classId} topic={topic!} onBack={backToChoose} onDone={backToChoose} />;
+  if (view === 'quiz')       return <PracticeQuiz className={className} classId={classId} topic={topic!} onBack={backToChoose} onDone={backToChoose} />;
+  if (view === 'targeted')   return <TargetedPractice className={className} classId={classId} topic={topic!} onBack={backToChoose} onDone={backToChoose} />;
 
   return <SelectTopic onTopicSelect={selectTopic} />;
 }

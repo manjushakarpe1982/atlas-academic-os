@@ -1,10 +1,59 @@
 'use client';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { MATERIALS, TopicItem } from './shared';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { API_BASE, getToken } from '@/lib/api';
+import { TopicItem } from './shared';
+
+interface ProgressItem { completed: boolean; updated_at: string | null; }
+interface Progress { summary: ProgressItem; flashcards: ProgressItem; quiz: ProgressItem; targeted: ProgressItem; }
+
+const MATERIALS = [
+  { id: 'summary',    icon: '📝', title: 'Summary',          sub: 'Key concepts in easy words' },
+  { id: 'flashcards', icon: '🗂️', title: 'Flashcards',       sub: 'Review important terms' },
+  { id: 'quiz',       icon: '❓', title: 'Practice Quiz',     sub: 'Test your understanding' },
+  { id: 'targeted',   icon: '🎯', title: 'Targeted Practice', sub: 'Focus on weak areas' },
+];
 
 interface Props { topic: TopicItem; onBack: () => void; onSelect: (id: string) => void; }
 
+function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return '';
+  try {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return 'Just now';
+    if (min < 60) return `${min}m ago`;
+    const hrs = Math.floor(min / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  } catch { return ''; }
+}
+
 export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/api/classes/study/progress/${topic.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const d = await res.json();
+        if (!cancelled && d.progress) setProgress(d.progress);
+      } catch {}
+      finally { if (!cancelled) setLoading(false); }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [topic.id]);
+
+  const completedCount = progress ? Object.values(progress).filter(p => p.completed).length : 0;
+  const totalPct = Math.round((completedCount / 4) * 100);
+
   return (
     <div className="px-4 py-4 pb-24">
       <div className="flex items-center gap-3 mb-5">
@@ -19,24 +68,60 @@ export default function ChooseMaterial({ topic, onBack, onSelect }: Props) {
       <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-5">
         <p className="text-xs font-bold text-indigo-700 mb-1">About this topic</p>
         <p className="text-sm text-gray-700 leading-relaxed">
-          Learn about genes, DNA, inheritance patterns and genetic variations. 🧬
+          {topic.description || `Study materials for ${topic.title}.`} 🧬
         </p>
       </div>
+
+      {/* Progress Overview */}
+      {!loading && progress && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Your Progress</p>
+            <p className="text-sm font-extrabold text-indigo-600">{completedCount}/4 completed</p>
+          </div>
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-indigo-600 rounded-full transition-all" style={{ width: `${totalPct}%` }} />
+          </div>
+        </div>
+      )}
 
       {/* Material Options */}
       <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Choose what you want to study</p>
       <div className="space-y-3">
-        {MATERIALS.map(m => (
-          <button key={m.id} onClick={() => onSelect(m.id)}
-            className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4 hover:border-indigo-200 transition-all text-left">
-            <div className="w-11 h-11 bg-gray-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">{m.icon}</div>
-            <div className="flex-1">
-              <p className="text-sm font-extrabold text-gray-900">{m.title}</p>
-              <p className="text-xs text-gray-400">{m.sub}</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
-          </button>
-        ))}
+        {MATERIALS.map(m => {
+          const p = progress ? progress[m.id as keyof Progress] : null;
+          const done = p?.completed || false;
+          const updatedAt = p?.updated_at || null;
+
+          return (
+            <button key={m.id} onClick={() => onSelect(m.id)}
+              className={`w-full rounded-2xl border shadow-sm p-4 flex items-center gap-4 transition-all text-left ${
+                done ? 'bg-green-50 border-green-200 hover:border-green-300' : 'bg-white border-gray-100 hover:border-indigo-200'
+              }`}>
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${
+                done ? 'bg-green-100' : 'bg-gray-100'
+              }`}>{m.icon}</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-extrabold text-gray-900">{m.title}</p>
+                  {loading ? (
+                    <Loader2 className="w-3 h-3 text-gray-300 animate-spin" />
+                  ) : done ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  ) : null}
+                </div>
+                <p className="text-xs text-gray-400">{m.sub}</p>
+                {done && updatedAt && (
+                  <p className="text-[10px] text-green-600 font-semibold mt-0.5">Completed · {timeAgo(updatedAt)}</p>
+                )}
+                {!done && !loading && (
+                  <p className="text-[10px] text-gray-400 mt-0.5">Not started</p>
+                )}
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+            </button>
+          );
+        })}
       </div>
     </div>
   );

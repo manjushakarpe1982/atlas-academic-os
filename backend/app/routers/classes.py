@@ -131,7 +131,7 @@ async def _parse_with_claude(class_id: str, file_id: str, user_id: str,
 
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=4096,
+            max_tokens=8192,
             messages=[{"role": "user", "content": content}],
         )
 
@@ -1503,10 +1503,10 @@ async def generate_targeted_practice(request: Request):
             "- Create application-based and reasoning-based questions, not just recall.\n"
             "- Encourage critical thinking rather than simple memorization.\n"
             "- Cover misconceptions and common mistakes students make.\n"
-            "- Generate 8-12 practice questions total (3-5 per weak area).\n"
+            "- Generate 8-12 practice questions total (3-4 per weak area).\n"
             "- Each question must be multiple-choice with exactly 4 options, one correct.\n"
-            "- Include a detailed explanation for every answer.\n"
-            "- If formulas are involved, include worked solutions in the explanation.\n"
+            "- Include a concise explanation for every answer (1-2 sentences max).\n"
+            "- If formulas are involved, include the key formula in the explanation.\n"
             "- Do not invent information not present in standard academic material.\n"
             "- Use simple, student-friendly language.\n"
             "- Include confidence percentage for each weak area (how likely students struggle with it).\n"
@@ -1593,3 +1593,36 @@ async def generate_targeted_practice(request: Request):
 
     except Exception as e:
         return {"targeted": None, "error": str(e)}
+
+
+# ── GET /api/classes/study/progress/{topic_id} ─────────────────────────────
+
+@router.get("/study/progress/{topic_id}")
+async def get_study_progress(topic_id: str, request: Request):
+    """Check which study materials have been completed for a topic."""
+    user_id = _get_user(request)
+
+    progress = {}
+    tables = {
+        "summary":   "study_summaries",
+        "flashcards": "study_flashcards",
+        "quiz":      "study_quizzes",
+        "targeted":  "study_targeted",
+    }
+
+    for key, table in tables.items():
+        try:
+            col = "summary_json" if key == "summary" else f"{key}_json" if key != "targeted" else "targeted_json"
+            result = supabase.table(table) \
+                .select("id, updated_at") \
+                .eq("user_id", user_id) \
+                .eq("topic_id", topic_id) \
+                .limit(1).execute()
+            progress[key] = {
+                "completed": bool(result.data),
+                "updated_at": result.data[0]["updated_at"] if result.data else None,
+            }
+        except Exception:
+            progress[key] = {"completed": False, "updated_at": None}
+
+    return {"progress": progress}
