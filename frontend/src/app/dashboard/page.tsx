@@ -138,7 +138,7 @@ function Tooltip({ lines }: { lines: string[] }) {
     <div className="relative inline-flex" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="text-gray-300 hover:text-indigo-500 transition-colors"
+        className="text-gray-400 hover:text-indigo-500 transition-colors"
       >
         <Info className="w-3.5 h-3.5" />
       </button>
@@ -149,12 +149,12 @@ function Tooltip({ lines }: { lines: string[] }) {
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-xs bg-gray-900 text-white rounded-xl shadow-2xl p-3 text-xs leading-relaxed"
+            className="w-full max-w-xs bg-white border border-violet-300 text-violet-900 rounded-xl shadow-2xl p-3 text-xs leading-relaxed"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setOpen(false)}
-              className="absolute top-2 right-6 text-gray-400 hover:text-white"
+              className="absolute top-2 right-6 text-black hover:text-white"
             >
               <X className="w-3 h-3" />
             </button>
@@ -165,10 +165,10 @@ function Tooltip({ lines }: { lines: string[] }) {
                   key={i}
                   className={
                     line.startsWith("•")
-                      ? "text-gray-300 pl-2"
+                      ? "text-violet-700 pl-2"
                       : line.startsWith("→")
-                        ? "text-indigo-300 font-semibold"
-                        : "text-white font-bold"
+                        ? "text-black font-semibold"
+                        : "text-violet-900 font-bold"
                   }
                 >
                   {line}
@@ -177,7 +177,7 @@ function Tooltip({ lines }: { lines: string[] }) {
             </div>
 
             {/* Tooltip arrow */}
-            <div className="absolute -top-1.5 left-3 w-3 h-3 bg-gray-900 rotate-45" />
+            <div className="absolute -top-1.5 left-3 w-3 h-3 bg-violet-100 rotate-45" />
           </div>
         </div>
       )}
@@ -303,27 +303,24 @@ export default function DashboardHome() {
   const pctFrac = (weeklyProgress.pct || 0) / 100;
 
   return (
-    <div className="px-4 py-4 space-y-5 pb-24">
+    <div className="px-4 py-4 space-y-5 pb-12">
       {/* ── Greeting ── */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-extrabold text-gray-900">
             {summary.greeting}, {summary.name} 👋
           </h1>
-          <p className="text-sm text-green-500 mt-0.5 font-medium">
+          <p className="text-sm text-gray-500 mt-0.5 font-medium">
             Let&apos;s make today productive!
           </p>
-        </div>
-        <div className="w-10 h-10 flex items-center justify-center">
-          <span className="text-3xl">🏆</span>
         </div>
       </div>
 
       {/* ── Quick Stats ── */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
-          <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span className="text-lg">📅</span>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm px-2 py-1 flex items-center gap-2">
+          <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="text-base">📅</span>
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-1.5">
@@ -332,14 +329,12 @@ export default function DashboardHome() {
               </p>
               <Tooltip lines={TIPS.deadlines} />
             </div>
-            <p className="text-xs text-gray-400 leading-tight">
-              Deadlines this week
-            </p>
+            <p className="text-[11px] text-gray-500 ">Deadlines this week</p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
-          <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <span className="text-lg">⚡</span>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm px-2 py-1 flex items-center gap-2">
+          <div className="w-8 h-8 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="text-base">⚡</span>
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-1.5">
@@ -348,9 +343,7 @@ export default function DashboardHome() {
               </p>
               <Tooltip lines={TIPS.highPriority} />
             </div>
-            <p className="text-xs text-gray-400 leading-tight">
-              High priority tasks
-            </p>
+            <p className="text-[11px] text-gray-500 ">High priority tasks</p>
           </div>
         </div>
       </div>
@@ -358,33 +351,37 @@ export default function DashboardHome() {
       {/* ── What to Study First ── */}
       {focusTask && (
         <div
-          className="rounded-2xl border border-gray-100 shadow-sm overflow-hidden bg-no-repeat"
+          className="rounded-lg border border-purple-200 shadow-sm overflow-hidden bg-no-repeat relative"
           style={{
-            backgroundImage:
-              "url(https://res.cloudinary.com/mview/image/upload/v1781853065/atlas/dashboardhomepage1.png)",
-            backgroundPosition: "right -10px top -10px",
-            backgroundSize: "140px",
+            backgroundImage: `url('https://res.cloudinary.com/mview/image/upload/v1781853065/atlas/dashboardhomepage1.png')`,
+            backgroundSize: "cover", // ← Changed to cover for proper fit
+            backgroundPosition: "center", // ← Better positioning
+            // Adjust height as needed
           }}
         >
-          <div className="bg-gradient-to-r from-white via-white/90 to-transparent">
-            <div className="px-4 pt-3 pb-1">
+          {/* Light overlay - very subtle (you can remove if you don't want any) */}
+
+          <div className="relative z-10">
+            <div className="px-4 pt-3">
               <div className="flex items-center gap-1.5 mb-2">
-                <p className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-widest">
+                <p className="text-sm font-bold text-indigo-500 ">
                   What to Study First
                 </p>
                 <Tooltip lines={TIPS.focusTask} />
               </div>
+
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-2xl flex items-center justify-center text-xl flex-shrink-0">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl flex-shrink-0">
                   {getCategoryIcon(focusTask.category)}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
+
+                <div className="flex-1 min-w-0 mb-1">
+                  <div className="flex items-center gap-1 flex-wrap">
                     <p className="text-base font-extrabold text-gray-900">
                       {focusTask.title}
                     </p>
                     <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                         focusTask.priority === "High"
                           ? "text-red-600 bg-red-50"
                           : focusTask.priority === "Medium"
@@ -395,6 +392,7 @@ export default function DashboardHome() {
                       {focusTask.priority}
                     </span>
                   </div>
+
                   <p className="text-xs text-gray-500 mt-0.5">
                     📅 {focusTask.due_display}
                     {focusTask.weight_pct
@@ -404,9 +402,11 @@ export default function DashboardHome() {
                       ? ` · Grade ${focusTask.current_grade}%`
                       : ""}
                   </p>
+
                   <p className="text-xs text-gray-600 mt-1">
                     Reason: {focusTask.reason}
                   </p>
+
                   {focusTask.recommended_study_mins > 0 && (
                     <p className="text-xs text-indigo-600 font-semibold mt-1">
                       ⏱ {focusTask.recommended_study_mins} min recommended
@@ -415,10 +415,11 @@ export default function DashboardHome() {
                 </div>
               </div>
             </div>
+
             <div className="px-4 py-3">
               <Link
                 href="/dashboard/study-plan"
-                className="flex items-center justify-between w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-2xl text-sm transition-all shadow-md"
+                className="flex items-center justify-between w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-5 rounded-lg text-base transition-all shadow-md"
               >
                 Start Studying <ChevronRight className="w-4 h-4" />
               </Link>
@@ -429,10 +430,10 @@ export default function DashboardHome() {
 
       {/* ── Today's Study Plan ── */}
       {todayPlan.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-extrabold text-gray-900">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <div className="flex items-center  justify-between mb-1">
+            <div className="flex items-center  gap-1.5">
+              <h2 className="text-base font-bold text-gray-900">
                 Today&apos;s Study Plan
               </h2>
               <Tooltip lines={TIPS.todayPlan} />
@@ -444,22 +445,27 @@ export default function DashboardHome() {
               View all
             </Link>
           </div>
-          <div className="space-y-3">
+          <div className="">
             {todayPlan.map((item, i) => {
               const s = getClassStyle(i);
               return (
-                <div key={item.class_id} className="flex items-center gap-3">
+                <div
+                  key={item.class_id}
+                  className="flex items-center gap-3 py-1.5 border-b border-gray-100 last:border-b-0"
+                >
                   <div
                     className={`w-8 h-8 ${s.light} rounded-xl flex items-center justify-center flex-shrink-0`}
                   >
                     <span className="text-sm">{s.icon}</span>
                   </div>
+
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-800">
                       {item.class_name}
                     </p>
                     <p className="text-xs text-gray-400">{item.mins} min</p>
                   </div>
+
                   {item.done ? (
                     <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
                   ) : (
@@ -471,7 +477,7 @@ export default function DashboardHome() {
           </div>
           <Link
             href="/dashboard/study-plan"
-            className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 mt-4 hover:text-indigo-800 transition-colors"
+            className="flex items-center justify-center gap-1.5 text-sm bg-violet-100 text-violet-600 px-3 py-2 rounded-lg font-bold mt-4 hover:text-indigo-800 transition-colors w-full"
           >
             View Full Study Plan <ArrowRight className="w-3.5 h-3.5" />
           </Link>
@@ -480,10 +486,10 @@ export default function DashboardHome() {
 
       {/* ── Upcoming Deadlines ── */}
       {upcomingDeadlines.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center justify-between mb-3">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-extrabold text-gray-900">
+              <h2 className="text-base font-bold text-gray-900">
                 Upcoming Deadlines
               </h2>
               <Tooltip lines={TIPS.upcomingDeadlines} />
@@ -495,20 +501,23 @@ export default function DashboardHome() {
               View all
             </Link>
           </div>
-          <div className="space-y-2">
+          <div className="">
             {upcomingDeadlines.slice(0, 3).map((d) => (
-              <div key={d.id} className="flex items-center gap-3 py-1.5">
-                <p className="text-xs text-gray-400 w-20 flex-shrink-0">
+              <div
+                key={d.id}
+                className="flex items-center border-b border-gray-100 gap-2 py-2"
+              >
+                <p className="text-xs text-gray-500 w-20 flex-shrink-0">
                   {d.due_display}
                 </p>
-                <div className="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center text-sm flex-shrink-0">
+                <div className="w-6 h-6 bg-indigo-50 rounded-lg flex items-center justify-center text-[13px] flex-shrink-0">
                   {getCategoryIcon(d.category)}
                 </div>
                 <p className="flex-1 text-sm font-semibold text-gray-800 truncate">
                   {d.title}
                 </p>
                 <span
-                  className={`text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                  className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
                     d.priority === "High"
                       ? "text-red-600 bg-red-50"
                       : "text-amber-600 bg-amber-50"
@@ -525,11 +534,9 @@ export default function DashboardHome() {
       {/* ── My Classes ── */}
       {classGrades.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-extrabold text-gray-900">
-                My Classes
-              </h2>
+              <h2 className="text-base font-bold text-gray-900">My Classes</h2>
               <Tooltip lines={TIPS.classGrades} />
             </div>
             <Link
@@ -539,23 +546,25 @@ export default function DashboardHome() {
               View all
             </Link>
           </div>
-          <div className="grid grid-cols-4 gap-2">
-            {classGrades.slice(0, 4).map((c, i) => {
+          <div className="grid grid-cols-3 gap-2">
+            {classGrades.slice(0, 3).map((c, i) => {
               const s = getClassStyle(i);
               const grade = c.grade ?? 0;
               return (
                 <div
                   key={c.id}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 flex flex-col items-center text-center"
+                  className="bg-white rounded-lg border border-gray-100 shadow-sm p-2 flex flex-col items-center text-center"
                 >
-                  <div
-                    className={`w-9 h-9 ${s.color} rounded-xl flex items-center justify-center text-base mb-1.5`}
-                  >
-                    {s.icon}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-7 h-7 ${s.color} rounded-lg flex items-center justify-center text-base flex-shrink-0`}
+                    >
+                      {s.icon}
+                    </div>
+                    <p className="text-[12px] font-bold text-gray-700 leading-tight truncate">
+                      {c.name}
+                    </p>
                   </div>
-                  <p className="text-[9px] font-bold text-gray-700 leading-tight mb-1 truncate w-full">
-                    {c.name}
-                  </p>
                   <p
                     className={`text-sm font-extrabold ${gradeColor(c.grade)}`}
                   >
@@ -575,9 +584,9 @@ export default function DashboardHome() {
       )}
 
       {/* ── Weekly Progress ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
         <div className="flex items-center gap-1.5 mb-4">
-          <h2 className="text-base font-extrabold text-gray-900">
+          <h2 className="text-base font-bold text-gray-900">
             Weekly Progress
           </h2>
           <Tooltip lines={TIPS.weeklyProgress} />
@@ -591,7 +600,7 @@ export default function DashboardHome() {
                 r="40"
                 fill="none"
                 stroke="#f3f4f6"
-                strokeWidth="10"
+                strokeWidth="12"
               />
               <circle
                 cx="50"
@@ -599,7 +608,7 @@ export default function DashboardHome() {
                 r="40"
                 fill="none"
                 stroke="#7c3aed"
-                strokeWidth="10"
+                strokeWidth="12"
                 strokeDasharray={`${2 * Math.PI * 40 * pctFrac} ${2 * Math.PI * 40 * (1 - pctFrac)}`}
                 strokeLinecap="round"
               />
@@ -617,9 +626,9 @@ export default function DashboardHome() {
                 / {weeklyProgress.sessions_goal}
               </span>
             </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-[13px] text-gray-500 mt-1">
               study sessions
-              <br />
+            
               completed
             </p>
           </div>
@@ -644,7 +653,7 @@ export default function DashboardHome() {
                 strokeLinejoin="round"
               />
             </svg>
-            <ChevronRight className="w-5 h-5 text-gray-300" />
+           
           </div>
         </div>
         <div className="mt-4">
@@ -662,8 +671,8 @@ export default function DashboardHome() {
             />
           </div>
         </div>
-        <div className="border-t border-gray-100 mt-4 pt-3">
-          <p className="text-xs text-gray-400">
+        <div className="border-t border-gray-100 mt-3 pt-2">
+          <p className="text-xs text-gray-500">
             Goal: {weeklyProgress.sessions_goal} study sessions this week
           </p>
         </div>
@@ -671,13 +680,13 @@ export default function DashboardHome() {
 
       {/* ── Atlas Recommendation ── */}
       {aiRecommendation && (
-        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+        <div className="bg-violet-50 border border-indigo-100 rounded-lg p-3 flex items-start gap-3">
+          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <p className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-widest">
+              <p className="text-12 font-bold text-indigo-500 ">
                 Atlas Recommendation
               </p>
               <Tooltip lines={TIPS.aiRecommendation} />
