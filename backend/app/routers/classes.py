@@ -614,6 +614,142 @@ async def get_grade_weights(class_id: str, request: Request):
     return {"weights": result.data or []}
 
 
+# ── GET /api/classes/{id}/assignments ──────────────────────────────────────
+
+@router.get("/{class_id}/assignments")
+async def get_assignments(class_id: str, request: Request):
+    """
+    Returns assignments for a class with stats and completion status.
+    Combines assessments + grades to determine what's done.
+    """
+    from datetime import datetime, timedelta
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    today = datetime.utcnow().date()
+    week_end = (today + timedelta(days=7)).isoformat()
+    today_str = today.isoformat()
+
+    # Fetch assessments for this class
+    assess_res = supabase.table("assessments") \
+        .select("id, title, category, due_date") \
+        .eq("class_id", class_id).eq("user_id", user_id) \
+        .order("due_date").execute()
+    assessments = assess_res.data or []
+
+    # Fetch grade weights for weight lookup
+    weights_res = supabase.table("grade_weights") \
+        .select("category, weight_pct") \
+        .eq("class_id", class_id).eq("user_id", user_id).execute()
+    weight_map = {w.get("category", "").lower(): w.get("weight_pct", 0) for w in (weights_res.data or [])}
+
+    # Fetch grades to check completion
+    grades_res = supabase.table("grades") \
+        .select("title, category") \
+        .eq("class_id", class_id).eq("user_id", user_id).execute()
+    grade_titles = {(g.get("title", "").lower().strip(), g.get("category", "").lower().strip()) for g in (grades_res.data or [])}
+
+    # Build assignment list with computed fields
+    items = []
+    stats = {"upcoming": 0, "overdue": 0, "completed": 0, "due_this_week": 0}
+
+    for a in assessments:
+        title = a.get("title", "")
+        category = a.get("category", "")
+        due_date = a.get("due_date", "")
+        weight = weight_map.get(category.lower(), 0)
+
+        # Check if completed (matching grade exists)
+        is_completed = (title.lower().strip(), category.lower().strip()) in grade_titles
+
+        # Calculate days left
+        days_left = None
+        if due_date:
+            try:
+                due_dt = datetime.strptime(due_date, "%Y-%m-%d").date()
+                days_left = (due_dt - today).days
+            except Exception:
+                pass
+
+        # Determine priority
+        if is_completed:
+            priority = "COMPLETED"
+            stats["completed"] += 1
+        elif days_left is not None and days_left < 0:
+            priority = "OVERDUE"
+            stats["overdue"] += 1
+        elif days_left is not None and days_left <= 3:
+            priority = "HIGH"
+            stats["upcoming"] += 1
+        elif days_left is not None and days_left <= 7:
+            priority = "MEDIUM"
+            stats["upcoming"] += 1
+        else:
+            priority = "LOW"
+            stats["upcoming"] += 1
+
+        # Due this week
+        if due_date and today_str <= due_date <= week_end and not is_completed:
+            stats["due_this_week"] += 1
+
+        # Action button text
+        if is_completed:
+            action = "Done"
+        elif category.lower() in ("exam", "midterm", "final"):
+            action = "Study"
+        elif category.lower() == "quiz":
+            action = "Prepare"
+        else:
+            action = "View"
+
+        # Due text
+        if is_completed:
+            due_text = f"Completed"
+        elif days_left is not None:
+            if days_left == 0:
+                due_text = f"Due Today, {due_date}"
+            elif days_left == 1:
+                due_text = f"Due Tomorrow, {_fmt_date(due_date)}"
+            elif days_left > 1:
+                due_text = f"Due in {days_left} days, {_fmt_date(due_date)}"
+            else:
+                due_text = f"Overdue by {abs(days_left)} days, {_fmt_date(due_date)}"
+        else:
+            due_text = due_date or "No date"
+
+        items.append({
+            "id":        a.get("id"),
+            "title":     title,
+            "category":  category,
+            "due_date":  due_date,
+            "days_left": days_left,
+            "weight":    weight,
+            "priority":  priority,
+            "action":    action,
+            "due_text":  due_text,
+            "completed": is_completed,
+        })
+
+    # Atlas insight
+    high_items = [i for i in items if i["priority"] in ("HIGH", "OVERDUE")]
+    high_weight = sum(i["weight"] for i in high_items)
+    insight = None
+    if high_items:
+        insight = f"You have {len(high_items)} high priority assessment{'s' if len(high_items) != 1 else ''} coming up that {'are' if len(high_items) != 1 else 'is'} worth {high_weight}% of your grade."
+
+    return {"assignments": items, "stats": stats, "insight": insight}
+
+
+def _fmt_date(d: str) -> str:
+    """Format 2026-06-25 → Jun 25"""
+    try:
+        from datetime import datetime
+        dt = datetime.strptime(d, "%Y-%m-%d")
+        return dt.strftime("%b %d").replace(" 0", " ")
+    except Exception:
+        return d
+
+
 # ── GET /api/classes/{id}/topics ───────────────────────────────────────────
 
 @router.get("/{class_id}/topics")

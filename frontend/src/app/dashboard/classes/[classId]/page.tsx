@@ -54,7 +54,7 @@ function PageContent() {
     Overview: <OverviewTab classId={classId} />,
     Grades: <GradesTab classId={classId} />,
     Topics: <TopicsTab classId={classId} />,
-    Assignments: <AssignmentsTab />,
+    Assignments: <AssignmentsTab classId={classId} />,
   };
 
   return (
