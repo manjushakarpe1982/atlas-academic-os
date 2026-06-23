@@ -1,0 +1,1 @@
+ALTER TABLE study_summaries ADD COLUMN IF NOT EXISTS feedback TEXT DEFAULT NULL;

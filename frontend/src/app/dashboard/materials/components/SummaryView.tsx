@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Sparkles, Lightbulb, Link2, BookOpen, Loader2, RefreshCw, Clock } from 'lucide-react';
+import { ChevronLeft, Sparkles, Lightbulb, Link2, BookOpen, Loader2, RefreshCw, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { API_BASE, getToken } from '@/lib/api';
 import { TopicItem } from './shared';
 
@@ -30,6 +30,19 @@ export default function SummaryView({ className, classId, topic, onBack, onFlash
   const [error, setError] = useState('');
   const [cached, setCached] = useState(false);
   const [updatedAt, setUpdatedAt] = useState('');
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
+
+  const saveFeedback = async (value: 'up' | 'down' | null) => {
+    setFeedback(value);
+    try {
+      const token = getToken();
+      await fetch(`${API_BASE}/api/classes/study/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ topic_id: topic.id, feedback: value }),
+      });
+    } catch {}
+  };
 
   const fetchSummary = async (regenerate = false) => {
     setLoading(true);
@@ -53,6 +66,7 @@ export default function SummaryView({ className, classId, topic, onBack, onFlash
         setSummary(data.summary);
         setCached(data.cached || false);
         setUpdatedAt(data.updated_at || '');
+        if (data.feedback) setFeedback(data.feedback);
       } else {
         setError(data.error || 'Failed to generate summary');
       }
@@ -80,7 +94,7 @@ export default function SummaryView({ className, classId, topic, onBack, onFlash
         });
         const data = await res.json();
         if (cancelled) return;
-        if (data.summary) { setSummary(data.summary); setCached(data.cached || false); setUpdatedAt(data.updated_at || ''); }
+        if (data.summary) { setSummary(data.summary); setCached(data.cached || false); setUpdatedAt(data.updated_at || ''); if (data.feedback) setFeedback(data.feedback); }
         else { setError(data.error || 'Failed to generate summary'); }
       } catch { if (!cancelled) setError('Network error'); }
       finally { if (!cancelled) setLoading(false); }
@@ -242,6 +256,19 @@ export default function SummaryView({ className, classId, topic, onBack, onFlash
           </div>
         </div>
       )}
+
+      {/* Feedback */}
+      <div className="flex items-center justify-center gap-4 py-3 mb-2">
+        <p className="text-xs text-gray-400">Was this summary helpful?</p>
+        <button onClick={() => saveFeedback(feedback === 'up' ? null : 'up')}
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${feedback === 'up' ? 'bg-green-100' : 'hover:bg-gray-100'}`}>
+          <ThumbsUp className={`w-4 h-4 ${feedback === 'up' ? 'text-green-600' : 'text-gray-400'}`} />
+        </button>
+        <button onClick={() => saveFeedback(feedback === 'down' ? null : 'down')}
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${feedback === 'down' ? 'bg-red-100' : 'hover:bg-gray-100'}`}>
+          <ThumbsDown className={`w-4 h-4 ${feedback === 'down' ? 'text-red-600' : 'text-gray-400'}`} />
+        </button>
+      </div>
 
       {/* Regenerate */}
       <button onClick={() => fetchSummary(true)}

@@ -1074,7 +1074,7 @@ async def generate_study_summary(request: Request):
     if topic_id and not regenerate:
         try:
             existing = supabase.table("study_summaries") \
-                .select("summary_json, updated_at") \
+                .select("summary_json, updated_at, feedback") \
                 .eq("user_id", user_id) \
                 .eq("topic_id", topic_id) \
                 .limit(1).execute()
@@ -1083,6 +1083,7 @@ async def generate_study_summary(request: Request):
                     "summary": existing.data[0]["summary_json"],
                     "cached": True,
                     "updated_at": existing.data[0]["updated_at"],
+                    "feedback": existing.data[0].get("feedback"),
                 }
         except Exception as check_err:
             import logging
@@ -1626,3 +1627,29 @@ async def get_study_progress(topic_id: str, request: Request):
             progress[key] = {"completed": False, "updated_at": None}
 
     return {"progress": progress}
+
+
+# ── POST /api/classes/study/feedback ───────────────────────────────────────
+
+@router.post("/study/feedback")
+async def save_study_feedback(request: Request):
+    """Save thumbs up/down feedback for a study summary."""
+    user_id = _get_user(request)
+    body = await request.json()
+    topic_id = body.get("topic_id", "")
+    feedback = body.get("feedback")  # 'up', 'down', or null
+
+    if not topic_id:
+        raise HTTPException(400, "topic_id required")
+    if feedback not in ('up', 'down', None):
+        raise HTTPException(400, "feedback must be 'up', 'down', or null")
+
+    try:
+        result = supabase.table("study_summaries") \
+            .update({"feedback": feedback}) \
+            .eq("user_id", user_id) \
+            .eq("topic_id", topic_id) \
+            .execute()
+        return {"saved": bool(result.data), "feedback": feedback}
+    except Exception as e:
+        return {"saved": False, "error": str(e)}
