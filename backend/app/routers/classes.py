@@ -1401,7 +1401,7 @@ async def generate_study_quiz(request: Request):
 
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=3000,
+            max_tokens=8192,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}]
         )
@@ -1544,7 +1544,7 @@ async def generate_targeted_practice(request: Request):
 
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=3000,
+            max_tokens=8192,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}]
         )
