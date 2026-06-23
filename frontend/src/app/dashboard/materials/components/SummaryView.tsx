@@ -19,10 +19,12 @@ interface Props {
   classId: string;
   topic: TopicItem;
   onBack: () => void;
-  onGenerateQuiz: () => void;
+  onFlashcards: () => void;
+  onQuiz: () => void;
+  onTargeted: () => void;
 }
 
-export default function SummaryView({ className, classId, topic, onBack, onGenerateQuiz }: Props) {
+export default function SummaryView({ className, classId, topic, onBack, onFlashcards, onQuiz, onTargeted }: Props) {
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -247,11 +249,37 @@ export default function SummaryView({ className, classId, topic, onBack, onGener
         <RefreshCw className="w-3.5 h-3.5" /> Regenerate Summary
       </button>
 
-      {/* Generate Quiz */}
-      <button onClick={onGenerateQuiz}
-        className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition-all text-sm">
-        Generate Quiz
-      </button>
+      {/* Study Options */}
+      <div className="space-y-2.5">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Continue Studying</p>
+        <button onClick={onFlashcards}
+          className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 hover:border-indigo-200 transition-all text-left">
+          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-lg flex-shrink-0">🗂️</div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-gray-900">Flashcards</p>
+            <p className="text-xs text-gray-400">Review key terms and definitions</p>
+          </div>
+          <ChevronLeft className="w-4 h-4 text-gray-300 rotate-180" />
+        </button>
+        <button onClick={onQuiz}
+          className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 hover:border-indigo-200 transition-all text-left">
+          <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-lg flex-shrink-0">❓</div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-gray-900">Practice Quiz</p>
+            <p className="text-xs text-gray-400">Test your understanding</p>
+          </div>
+          <ChevronLeft className="w-4 h-4 text-gray-300 rotate-180" />
+        </button>
+        <button onClick={onTargeted}
+          className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 hover:border-indigo-200 transition-all text-left">
+          <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-lg flex-shrink-0">🎯</div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-gray-900">Targeted Practice</p>
+            <p className="text-xs text-gray-400">Focus on weak areas</p>
+          </div>
+          <ChevronLeft className="w-4 h-4 text-gray-300 rotate-180" />
+        </button>
+      </div>
     </div>
   );
 }
