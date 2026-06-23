@@ -9,15 +9,14 @@ import { clearAuth } from '@/lib/api';
 const MENU_ITEMS = [
   { href: '/dashboard',              icon: Home,          label: '1. Home (Dashboard)'  },
   { href: '/dashboard/classes',      icon: BookOpen,      label: '2. Classes'           },
+
  
-  { href: '/dashboard/assignments',  icon: ClipboardList, label: '4. Assignments'       },
-  { href: '/dashboard/quizzes',      icon: BarChart3,     label: '5. Quizzes'           },
-  { href: '/dashboard/materials',    icon: BookOpen,      label: '6. Study Materials'   },
-  { href: '/dashboard/study-plan',   icon: Target,        label: '7. Study Plan'        },
-  { href: '/dashboard/calendar',     icon: Calendar,      label: '8. Calendar'          },
-  { href: '/dashboard/grades',       icon: BarChart3,     label: '9. Grade Details'     },
+  { href: '/dashboard/materials',    icon: BookOpen,      label: '3. Study Materials'   },
+  { href: '/dashboard/study-plan',   icon: Target,        label: '4. Study Plan'        },
+  { href: '/dashboard/calendar',     icon: Calendar,      label: '5. Calendar'          },
  
-  { href: '/dashboard/ai',           icon: Brain,         label: '11. AI Study Help'    },
+ 
+ 
  
 ];
 
@@ -193,7 +192,7 @@ export default function TopHeader({ title, showBack }: Props) {
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
 
           {/* Drawer */}
-          <div className="relative w-72 bg-white pb-14 h-full flex flex-col shadow-2xl">
+          <div className="relative w-64 bg-white pb-14 h-full flex flex-col shadow-2xl">
             {/* Drawer header */}
             <div className="bg-indigo-600 px-5 pt-4 pb-2">
               <div className="flex items-center justify-between mb-4">
