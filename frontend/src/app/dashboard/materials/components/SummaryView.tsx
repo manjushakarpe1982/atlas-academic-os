@@ -250,22 +250,26 @@ export default function SummaryView({
       </div>
 
       {/* AI Badge + Cache indicator */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-full">
-          <Sparkles className="w-3 h-3 text-indigo-600" />
-          <span className="text-[11px] font-bold text-indigo-600">
-            AI Generated
-          </span>
-        </div>
-        {cached && (
-          <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
-            <Clock className="w-3 h-3 text-green-600" />
-            <span className="text-[11px] font-bold text-green-600">Saved</span>
-          </div>
-        )}
-        <span className="text-[11px] text-gray-400">{timeLabel}</span>
-      </div>
+      <div className="flex items-center border border-gray-200 gap-2 p-2 rounded-lg mb-4">
+  <div className="flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-full">
+    <Sparkles className="w-3 h-3 text-indigo-600" />
+    <span className="text-[11px] font-bold text-indigo-600">
+      AI Generated
+    </span>
+  </div>
 
+  {cached && (
+    <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
+      <Clock className="w-3 h-3 text-green-600" />
+      <span className="text-[11px] font-bold text-green-600">Saved</span>
+    </div>
+  )}
+
+  {/* Time shifted to the end */}
+  <span className="text-[11px] text-gray-400 ml-auto">
+    {timeLabel}
+  </span>
+</div>
       {/* Key Concepts */}
       <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 mb-4">
         <h2 className="text-sm font-extrabold text-gray-900 mb-3">
@@ -369,7 +373,7 @@ export default function SummaryView({
       {/* Regenerate */}
       <button
         onClick={() => fetchSummary(true)}
-        className="w-full flex items-center justify-center gap-2 mb-3 text-sm font-semibold text-indigo-500 py-2  hover:text-indigo-600 transition-colors"
+        className="w-full flex items-center justify-center gap-2 mt-5 mb-4 text-sm border border-indigo-500 rounded-lg font-semibold text-indigo-500 py-2  hover:text-indigo-600 transition-colors"
       >
         <RefreshCw className="w-4 h-4" /> Regenerate Summary
       </button>
