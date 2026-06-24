@@ -553,18 +553,20 @@ export default function DashboardHome() {
               return (
                 <div
                   key={c.id}
-                  className="bg-white rounded-lg border border-gray-100 shadow-sm p-2 flex flex-col items-center text-center"
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-7 h-7 ${s.color} rounded-lg flex items-center justify-center text-base flex-shrink-0`}
-                    >
-                      {s.icon}
-                    </div>
-                    <p className="text-[12px] font-bold text-gray-700 leading-tight truncate">
-                      {c.name}
-                    </p>
-                  </div>
+className="bg-white rounded-lg border border-gray-100 shadow-sm p-2 flex flex-col items-center text-center w-full min-w-0"                >
+                
+  <div className="flex items-center gap-2 w-full min-w-0">
+    <div
+      className={`w-7 h-7 ${s.color} rounded-lg flex items-center justify-center shrink-0`}
+    >
+      {s.icon}
+    </div>
+
+    <p className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-bold text-gray-700 text-left">
+      {c.name}
+    </p>
+  
+</div>
                   <p
                     className={`text-sm font-extrabold ${gradeColor(c.grade)}`}
                   >
