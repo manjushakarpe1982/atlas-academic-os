@@ -67,7 +67,7 @@ export default function ChooseMaterial({ topic, onBack, onSelect ,className }: P
         </div>
 
         {/* About Topic skeleton */}
-        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-5">
+        <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-5">
           <p className="text-xs font-bold text-indigo-700 mb-1">About this topic</p>
           <p className="text-sm text-gray-700 leading-relaxed">
             {topic.description || `Study materials for ${topic.title}.`} 🧬
@@ -75,7 +75,7 @@ export default function ChooseMaterial({ topic, onBack, onSelect ,className }: P
         </div>
 
         {/* Progress skeleton */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-5 animate-pulse">
+        <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 mb-5 animate-pulse">
           <div className="flex items-center justify-between mb-2">
             <div className="h-3 w-24 bg-gray-200 rounded-full" />
             <div className="h-3 w-20 bg-gray-200 rounded-full" />
@@ -150,11 +150,11 @@ export default function ChooseMaterial({ topic, onBack, onSelect ,className }: P
                 done ? 'bg-green-50 border-green-200 hover:border-green-300' : 'bg-white border-gray-200 hover:border-indigo-200'
               }`}>
               <div className={`w-11 h-11 rounded-lg flex items-center justify-center text-xl flex-shrink-0 ${
-                done ? 'bg-green-100' : 'bg-gray-100'
+                done ? 'bg-green-100 border-green-200' : 'bg-violet-50 border-violet-200'
               }`}>{m.icon}</div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-extrabold text-gray-900">{m.title}</p>
+                  <p className="text-base font-bold text-gray-900">{m.title}</p>
                   {done && <CheckCircle2 className="w-4 h-4 text-green-500" />}
                 </div>
                 <p className="text-xs text-gray-400">{m.sub}</p>
