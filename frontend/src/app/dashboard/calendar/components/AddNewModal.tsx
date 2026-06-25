@@ -6,7 +6,7 @@ interface Props { onClose: () => void; onAddEvent: () => void; onAddStudy: () =>
 export default function AddNewModal({ onClose, onAddEvent, onAddStudy }: Props) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
-      <div className="bg-white rounded-t-3xl p-6 w-full max-w-md space-y-4 relative pb-10">
+      <div className="bg-white rounded-t-3xl p-6 w-full max-w-md space-y-4 relative pb-28">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-base font-extrabold text-gray-900">Add New</h2>
           <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>

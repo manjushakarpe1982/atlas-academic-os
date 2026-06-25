@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { ChevronLeft, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronDown } from 'lucide-react';
 
 interface Props { onBack: () => void; onSaved: () => void; }
 
@@ -12,48 +12,13 @@ export default function AddStudySession({ onBack, onSaved }: Props) {
   const [duration, setDuration] = useState('45 minutes');
   const [notes, setNotes] = useState('');
   const [repeat, setRepeat] = useState('Does not repeat');
-  const [saved, setSaved] = useState(false);
-
-  if (saved) {
-    return (
-      <div className="px-4 py-4 pb-24">
-        <div className="flex items-center justify-between mb-5">
-          <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
-          <h1 className="text-base font-extrabold text-gray-900">Add Study Session</h1>
-          <div className="w-5" />
-        </div>
-        <div className="flex flex-col items-center py-10 gap-4">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-            <CheckCircle2 className="w-12 h-12 text-green-600" />
-          </div>
-          <h2 className="text-xl font-extrabold text-gray-900">Study Session Added!</h2>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 w-full">
-            <p className="text-sm font-bold text-gray-900">{subject} - {topic}</p>
-            <p className="text-xs text-gray-400 mt-1">{date} at {time}</p>
-            <p className="text-xs text-gray-400">{duration}</p>
-          </div>
-          <p className="text-xs text-gray-500 text-center">You can view it in your calendar and upcoming list.</p>
-          <div className="flex gap-3 w-full mt-4">
-            <button onClick={onBack}
-              className="flex-1 border-2 border-indigo-200 text-indigo-600 font-bold py-3 rounded-xl text-sm">
-              Save Session
-            </button>
-            <button onClick={onSaved}
-              className="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl text-sm">
-              Done
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="px-4 py-4 pb-24">
       <div className="flex items-center justify-between mb-5">
         <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
         <h1 className="text-base font-extrabold text-gray-900">Add Study Session</h1>
-        <button onClick={() => setSaved(true)} className="text-sm font-bold text-indigo-600">Save</button>
+        <button onClick={onSaved} className="text-sm font-bold text-indigo-600">Save</button>
       </div>
 
       <div className="space-y-4">
@@ -114,7 +79,7 @@ export default function AddStudySession({ onBack, onSaved }: Props) {
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
-        <button onClick={() => setSaved(true)}
+        <button onClick={onSaved}
           className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition-all text-sm">
           Save Study Session
         </button>

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, ArrowRight } from 'lucide-react';
-import { DAYS, DATES, EVENTS, FILTER_CHIPS, getEventsForDate, getTypeBadge, getTypeIcon, CalEvent } from './shared';
+import { DAYS, EVENTS, FILTER_CHIPS, getEventsForDate, getTypeBadge, getTypeIcon, CalEvent } from './shared';
 
 interface Props {
   viewMode: 'Month' | 'Week' | 'Day';
@@ -11,8 +11,67 @@ interface Props {
 }
 
 export default function CalendarMain({ viewMode, onViewChange, onEventClick, onAddClick }: Props) {
-  const [selected, setSelected] = useState(16);
+  const [selected, setSelected] = useState(new Date().getDate());
   const [filter, setFilter] = useState('All');
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // Navigate months
+  const prevMonth = () => {
+    if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(currentYear - 1); }
+    else { setCurrentMonth(currentMonth - 1); }
+    setSelected(1);
+  };
+  const nextMonth = () => {
+    if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(currentYear + 1); }
+    else { setCurrentMonth(currentMonth + 1); }
+    setSelected(1);
+  };
+
+  // Generate calendar grid for current month
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+  const calendarDates: (number | null)[][] = [];
+  let day = 1;
+  let prevDay = daysInPrevMonth - firstDay + 1;
+  let nextDay = 1;
+
+  for (let week = 0; week < 6; week++) {
+    const row: (number | null)[] = [];
+    for (let col = 0; col < 7; col++) {
+      if (week === 0 && col < firstDay) {
+        row.push(null); prevDay++;
+      } else if (day > daysInMonth) {
+        row.push(null); nextDay++;
+      } else {
+        row.push(day); day++;
+      }
+    }
+    if (row.every(d => d === null)) break;
+    calendarDates.push(row);
+  }
+
+  // Week view range
+  const weekStart = new Date(currentYear, currentMonth, selected);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+  const prevWeek = () => { const d = selected - 7; if (d < 1) prevMonth(); else setSelected(d); };
+  const nextWeek = () => { const d = selected + 7; if (d > daysInMonth) nextMonth(); else setSelected(d); };
+
+  // Day view
+  const prevDayNav = () => { if (selected <= 1) prevMonth(); else setSelected(selected - 1); };
+  const nextDayNav = () => { if (selected >= daysInMonth) nextMonth(); else setSelected(selected + 1); };
+
+  const today = new Date();
+  const isToday = (d: number) => d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
   // Next important event
   const nextImportant = EVENTS.find(e => (e.type === 'quiz' || e.type === 'exam') && e.date >= 15);
@@ -40,11 +99,14 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
         ))}
       </div>
 
+      {/* ── MONTH VIEW ── */}
+      {viewMode === 'Month' && (
+        <>
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-3">
-        <button><ChevronLeft className="w-5 h-5 text-gray-400" /></button>
-        <h2 className="text-base font-extrabold text-gray-900">May 2025</h2>
-        <button><ChevronRight className="w-5 h-5 text-gray-400" /></button>
+        <button onClick={prevMonth}><ChevronLeft className="w-5 h-5 text-gray-400" /></button>
+        <h2 className="text-base font-extrabold text-gray-900">{MONTH_NAMES[currentMonth]} {currentYear}</h2>
+        <button onClick={nextMonth}><ChevronRight className="w-5 h-5 text-gray-400" /></button>
       </div>
 
       {/* Calendar Grid */}
@@ -54,21 +116,17 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
             <div key={d} className="text-center text-[10px] font-bold text-gray-400 py-1">{d}</div>
           ))}
         </div>
-        {DATES.map((week, wi) => (
+        {calendarDates.map((week, wi) => (
           <div key={wi} className="grid grid-cols-7">
             {week.map((d, di) => {
               if (!d) return <div key={di} />;
-              const isCurrentMonth = wi === 0 && d > 20 ? false : wi === 4 && d < 10 ? false : true;
-              const evts = isCurrentMonth ? getEventsForDate(d) : [];
-              const isSelected = d === selected && isCurrentMonth;
-              const isToday = d === 15 && isCurrentMonth;
+              const evts = getEventsForDate(d);
               return (
-                <button key={di} onClick={() => isCurrentMonth && setSelected(d)}
+                <button key={di} onClick={() => setSelected(d)}
                   className="flex flex-col items-center py-1 min-h-[40px]">
                   <span className={`w-7 h-7 flex items-center justify-center text-xs font-semibold rounded-full transition-all ${
-                    !isCurrentMonth ? 'text-gray-300' :
-                    isSelected ? 'bg-indigo-600 text-white' :
-                    isToday ? 'bg-indigo-100 text-indigo-600 font-extrabold' :
+                    d === selected ? 'bg-indigo-600 text-white' :
+                    isToday(d) ? 'bg-indigo-100 text-indigo-600 font-extrabold' :
                     'text-gray-700'
                   }`}>{d}</span>
                   {evts.length > 0 && (
@@ -90,6 +148,126 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
           </div>
         ))}
       </div>
+
+      {/* Event Type Legend */}
+      <div className="flex items-center justify-center gap-3 flex-wrap mb-4">
+        {[
+          { label: 'Quiz', color: 'bg-purple-500' },
+          { label: 'Assignment', color: 'bg-green-500' },
+          { label: 'Exam', color: 'bg-red-500' },
+          { label: 'Study Session', color: 'bg-indigo-500' },
+          { label: 'Class', color: 'bg-blue-500' },
+          { label: 'Personal', color: 'bg-gray-500' },
+        ].map(l => (
+          <div key={l.label} className="flex items-center gap-1">
+            <div className={`w-2 h-2 rounded-full ${l.color}`} />
+            <span className="text-[10px] text-gray-500">{l.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Next Important */}
+        </>
+      )}
+
+      {/* ── WEEK VIEW ── */}
+      {viewMode === 'Week' && (
+        <>
+          <div className="flex items-center justify-between mb-3">
+            <button onClick={prevWeek}><ChevronLeft className="w-5 h-5 text-gray-400" /></button>
+            <h2 className="text-sm font-extrabold text-gray-900">
+              {MONTH_NAMES[weekDays[0].getMonth()]} {weekDays[0].getDate()} – {MONTH_NAMES[weekDays[6].getMonth()]} {weekDays[6].getDate()}, {currentYear}
+            </h2>
+            <button onClick={nextWeek}><ChevronRight className="w-5 h-5 text-gray-400" /></button>
+          </div>
+          <div className="space-y-1 mb-4">
+            {weekDays.map(wd => {
+              const dayNum = wd.getDate();
+              const dayEvents = getEventsForDate(dayNum);
+              const dayNames = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+              return (
+                <div key={dayNum}>
+                  <div className="flex items-start gap-3 py-2">
+                    <div className="w-10 text-center flex-shrink-0">
+                      <p className="text-[10px] text-gray-400 font-bold">{dayNames[wd.getDay()]}</p>
+                      <p className={`text-lg font-extrabold ${isToday(dayNum) ? 'text-indigo-600' : 'text-gray-900'}`}>{dayNum}</p>
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      {dayEvents.length === 0 ? (
+                        <div className="h-8" />
+                      ) : (
+                        dayEvents.map(ev => {
+                        const badge = getTypeBadge(ev.type);
+                        return (
+                          <button key={ev.id} onClick={() => onEventClick(ev)}
+                            className={`w-full ${ev.color} rounded-lg px-3 py-2 flex items-center justify-between text-left`}>
+                            <div>
+                              <p className={`text-xs font-bold ${ev.textColor}`}>{ev.title}</p>
+                              <p className="text-[10px] text-gray-500">{ev.time}</p>
+                            </div>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${badge.color}`}>{badge.text}</span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+                <div className="border-b border-gray-100 ml-14" />
+              </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* ── DAY VIEW ── */}
+      {viewMode === 'Day' && (() => {
+        const dayEvents = getEventsForDate(selected).sort((a, b) => {
+          const toMin = (t: string) => { const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i); if (!m) return 0; let h = parseInt(m[1]); if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12; if (m[3].toUpperCase() === 'AM' && h === 12) h = 0; return h * 60 + parseInt(m[2]); };
+          return toMin(a.time) - toMin(b.time);
+        });
+        const dayName = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+        const dayOfWeek = new Date(currentYear, currentMonth, selected).getDay();
+        const hours = ['9 AM','10 AM','11 AM','12 PM','1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','7 PM'];
+
+        return (
+          <>
+            <div className="flex items-center justify-between mb-1">
+              <button onClick={prevDayNav}><ChevronLeft className="w-5 h-5 text-gray-400" /></button>
+              <div className="text-center">
+                <h2 className="text-base font-extrabold text-gray-900">{MONTH_NAMES[currentMonth]} {selected}, {currentYear}</h2>
+                <p className="text-[10px] text-gray-400 font-bold">{dayName[dayOfWeek]}</p>
+              </div>
+              <button onClick={nextDayNav}><ChevronRight className="w-5 h-5 text-gray-400" /></button>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 mb-4">
+              {hours.map(hour => {
+                const hourEvents = dayEvents.filter(ev => ev.time.replace(':00 ', ' ').startsWith(hour.replace(' ', ':00 ').split(':')[0]));
+                return (
+                  <div key={hour} className="flex min-h-[48px] border-b border-gray-50 last:border-0">
+                    <div className="w-12 text-[10px] text-gray-400 font-medium pt-1 flex-shrink-0">{hour}</div>
+                    <div className="flex-1 py-1 space-y-1">
+                      {hourEvents.map(ev => {
+                        const badge = getTypeBadge(ev.type);
+                        return (
+                          <button key={ev.id} onClick={() => onEventClick(ev)}
+                            className={`w-full ${ev.color} rounded-lg px-3 py-2 text-left`}>
+                            <div className="flex items-center justify-between">
+                              <p className={`text-xs font-bold ${ev.textColor}`}>{ev.title}</p>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${badge.color}`}>{badge.text}</span>
+                            </div>
+                            <p className="text-[10px] text-gray-500">{ev.time}{ev.endTime ? ` – ${ev.endTime}` : ''}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Next Important */}
       {nextImportant && (
