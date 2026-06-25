@@ -13,8 +13,13 @@ interface Props {
 export default function CalendarMain({ viewMode, onViewChange, onEventClick, onAddClick }: Props) {
   const [selected, setSelected] = useState(new Date().getDate());
   const [filter, setFilter] = useState('All');
+  const [showAllEvents, setShowAllEvents] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
+  const [showYearGrid, setShowYearGrid] = useState(false);
+  const yearStart = Math.floor(pickerYear / 12) * 12;
 
   const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -105,9 +110,74 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-3">
         <button onClick={prevMonth}><ChevronLeft className="w-5 h-5 text-gray-400" /></button>
-        <h2 className="text-base font-extrabold text-gray-900">{MONTH_NAMES[currentMonth]} {currentYear}</h2>
+        <button onClick={() => { setPickerYear(currentYear); setShowPicker(true); }}
+          className="text-base font-extrabold text-gray-900 hover:text-indigo-600 transition-colors">
+          {MONTH_NAMES[currentMonth]} {currentYear} ▾
+        </button>
         <button onClick={nextMonth}><ChevronRight className="w-5 h-5 text-gray-400" /></button>
       </div>
+
+      {/* Month/Year Picker Modal */}
+      {showPicker && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => { setShowPicker(false); setShowYearGrid(false); }} />
+          <div className="fixed inset-x-4 top-1/4 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 p-5 max-w-sm mx-auto">
+
+            {showYearGrid ? (
+              <>
+                {/* Year Grid View */}
+                <div className="flex items-center justify-between mb-4">
+                  <button onClick={() => setPickerYear(yearStart - 12)}><ChevronLeft className="w-5 h-5 text-gray-500" /></button>
+                  <p className="text-sm font-extrabold text-gray-900">{yearStart} – {yearStart + 11}</p>
+                  <button onClick={() => setPickerYear(yearStart + 12)}><ChevronRight className="w-5 h-5 text-gray-500" /></button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {Array.from({ length: 12 }, (_, i) => yearStart + i).map(y => (
+                    <button key={y} onClick={() => { setPickerYear(y); setShowYearGrid(false); }}
+                      className={`py-2.5 rounded-xl text-sm font-bold transition-all ${
+                        y === currentYear ? 'bg-indigo-600 text-white' :
+                        y === new Date().getFullYear() ? 'bg-indigo-100 text-indigo-700' :
+                        'text-gray-700 hover:bg-gray-100'
+                      }`}>{y}</button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Month Grid View */}
+                <div className="flex items-center justify-between mb-4">
+                  <button onClick={() => setPickerYear(pickerYear - 1)}><ChevronLeft className="w-5 h-5 text-gray-500" /></button>
+                  <button onClick={() => setShowYearGrid(true)}
+                    className="text-lg font-extrabold text-gray-900 hover:text-indigo-600 transition-colors">{pickerYear} ▾</button>
+                  <button onClick={() => setPickerYear(pickerYear + 1)}><ChevronRight className="w-5 h-5 text-gray-500" /></button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {MONTH_NAMES.map((m, i) => (
+                    <button key={m} onClick={() => { setCurrentMonth(i); setCurrentYear(pickerYear); setSelected(1); setShowPicker(false); setShowYearGrid(false); }}
+                      className={`py-2.5 rounded-xl text-sm font-bold transition-all ${
+                        i === currentMonth && pickerYear === currentYear
+                          ? 'bg-indigo-600 text-white'
+                          : 'text-gray-700 hover:bg-indigo-50'
+                      }`}>{m.slice(0, 3)}</button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Quick jumps */}
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => { setCurrentMonth(new Date().getMonth()); setCurrentYear(new Date().getFullYear()); setSelected(new Date().getDate()); setShowPicker(false); setShowYearGrid(false); }}
+                className="flex-1 border border-indigo-200 text-indigo-600 font-bold py-2 rounded-xl text-xs">
+                Today
+              </button>
+              <button onClick={() => { setShowPicker(false); setShowYearGrid(false); }}
+                className="flex-1 bg-gray-100 text-gray-600 font-bold py-2 rounded-xl text-xs">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Calendar Grid */}
       <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 mb-4">
@@ -302,7 +372,7 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
         {/* Filter Chips */}
         <div className="flex gap-1.5 overflow-x-auto mb-3" style={{ scrollbarWidth: 'none' }}>
           {FILTER_CHIPS.map(f => (
-            <button key={f} onClick={() => setFilter(f)}
+            <button key={f} onClick={() => { setFilter(f); setShowAllEvents(false); }}
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all ${
                 filter === f ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 border border-gray-200'
               }`}>{f}</button>
@@ -311,7 +381,7 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
 
         {/* Event List */}
         <div className="space-y-2.5">
-          {filtered.map(ev => {
+          {(showAllEvents ? filtered : filtered.slice(0, 5)).map(ev => {
             const badge = getTypeBadge(ev.type);
             return (
               <button key={ev.id} onClick={() => onEventClick(ev)}
@@ -330,6 +400,12 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
             );
           })}
         </div>
+        {filtered.length > 5 && (
+          <button onClick={() => setShowAllEvents(!showAllEvents)}
+            className="w-full mt-3 flex items-center justify-center gap-2 text-sm font-bold text-indigo-600 py-2.5 rounded-xl border border-indigo-200 hover:bg-indigo-50 transition-all">
+            {showAllEvents ? 'Show Less' : `Show More (${filtered.length - 5} more)`}
+          </button>
+        )}
       </div>
 
       {/* FAB Add Button */}
