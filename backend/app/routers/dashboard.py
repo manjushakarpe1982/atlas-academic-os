@@ -636,3 +636,318 @@ async def get_dashboard(request: Request):
         "weeklyProgress":     weekly_progress,
         "aiRecommendation":   ai_recommendation,
     }
+
+
+# ── GET /api/dashboard/study-plan ──────────────────────────────────────────
+
+@router.get("/study-plan")
+async def get_study_plan(request: Request):
+    """
+    Returns personalized study plan data:
+    - focusItem: highest priority class + topic to study
+    - sessions: recommended study sessions (incomplete topics)
+    - deadlines: upcoming deadlines across all classes
+    """
+    from datetime import datetime, timedelta
+
+    user_id = _get_user(request)
+
+    # Get user name
+    first_name = "Student"
+    try:
+        users_res = supabase.table("users").select("full_name").eq("id", user_id).limit(1).execute()
+        print(f"[STUDY PLAN] users query result: {users_res.data}")
+        if users_res.data and users_res.data[0].get("full_name"):
+            first_name = users_res.data[0]["full_name"].split()[0]
+    except Exception as e:
+        print(f"[STUDY PLAN] users query error: {e}")
+
+    # Fallback: try auth token metadata
+    if first_name == "Student":
+        try:
+            auth_header = request.headers.get("Authorization") or request.headers.get("authorization") or ""
+            token = auth_header.replace("Bearer ", "")
+            user_resp = supabase.auth.get_user(token)
+            meta = user_resp.user.user_metadata or {}
+            name = meta.get("full_name") or meta.get("name") or ""
+            if name:
+                first_name = name.split()[0]
+                print(f"[STUDY PLAN] got name from auth metadata: {first_name}")
+        except Exception as e:
+            print(f"[STUDY PLAN] auth metadata error: {e}")
+
+    today = datetime.utcnow().date()
+    today_str = today.isoformat()
+    week_str = (today + timedelta(days=7)).isoformat()
+
+    # ── Get all classes ──
+    classes_res = supabase.table("classes") \
+        .select("id, name, term") \
+        .eq("user_id", user_id).execute()
+    classes = classes_res.data or []
+    class_map = {c["id"]: c["name"] for c in classes}
+
+    if not classes:
+        return {
+            "firstName": first_name,
+            "focusItem": None,
+            "sessions": [],
+            "deadlines": [],
+        }
+
+    class_ids = [c["id"] for c in classes]
+
+    # ── Get grades per class (for current grade) ──
+    grades_res = supabase.table("grades") \
+        .select("class_id, score, max_score") \
+        .eq("user_id", user_id).execute()
+    grades = grades_res.data or []
+
+    class_grades: dict = {}
+    for g in grades:
+        cid = g.get("class_id")
+        if cid not in class_grades:
+            class_grades[cid] = []
+        try:
+            class_grades[cid].append(g["score"] / g["max_score"] * 100)
+        except (ZeroDivisionError, TypeError, KeyError):
+            pass
+
+    class_avg = {}
+    for cid, scores in class_grades.items():
+        if scores:
+            class_avg[cid] = round(sum(scores) / len(scores))
+
+    # ── Get upcoming assessments/calendar events ──
+    all_deadlines = []
+
+    # From assessments
+    for cid in class_ids:
+        assess_res = supabase.table("assessments") \
+            .select("title, category, due_date") \
+            .eq("class_id", cid).eq("user_id", user_id) \
+            .gte("due_date", today_str) \
+            .order("due_date").limit(5).execute()
+        for a in (assess_res.data or []):
+            due = a.get("due_date", "")
+            days_left = None
+            if due:
+                try:
+                    days_left = (datetime.strptime(due, "%Y-%m-%d").date() - today).days
+                except Exception:
+                    pass
+            all_deadlines.append({
+                "title": a.get("title", ""),
+                "category": a.get("category", ""),
+                "className": class_map.get(cid, ""),
+                "classId": cid,
+                "due_date": due,
+                "days_left": days_left,
+            })
+
+    # From calendar events
+    cal_res = supabase.table("calendar_events") \
+        .select("title, start_date, category") \
+        .eq("user_id", user_id) \
+        .gte("start_date", datetime.utcnow().isoformat()) \
+        .order("start_date").limit(30).execute()
+
+    existing_titles = {d["title"].lower().strip() for d in all_deadlines}
+    for ev in (cal_res.data or []):
+        ev_title = ev.get("title", "")
+        if ev_title.lower().strip() in existing_titles:
+            continue
+        due = (ev.get("start_date") or "")[:10]
+        days_left = None
+        try:
+            days_left = (datetime.strptime(due, "%Y-%m-%d").date() - today).days
+        except Exception:
+            pass
+        # Match to class (multi-pass: full name → first word → course code)
+        matched_class = ""
+        matched_cid = ""
+        ev_lower = ev_title.lower()
+        for cid, cname in class_map.items():
+            cname_lower = cname.lower()
+            # Pass 1: full class name in event title
+            if cname_lower in ev_lower:
+                matched_class = cname; matched_cid = cid; break
+            # Pass 2: event title contains first word of class name (if 4+ chars)
+            first_word = cname_lower.split()[0] if cname_lower else ""
+            if len(first_word) >= 4 and first_word in ev_lower:
+                matched_class = cname; matched_cid = cid; break
+            # Pass 3: class name words in event title (e.g., "BIOL" or "1107")
+            for word in cname_lower.split():
+                if len(word) >= 3 and word in ev_lower:
+                    matched_class = cname; matched_cid = cid; break
+            if matched_cid: break
+            # Pass 4: event title words in class name (e.g., "Math" in "Engineering Mathematics III")
+            for word in ev_lower.split():
+                if len(word) >= 4 and word in cname_lower:
+                    matched_class = cname; matched_cid = cid; break
+            if matched_cid: break
+        all_deadlines.append({
+            "title": ev_title,
+            "category": ev.get("category", ""),
+            "className": matched_class,
+            "classId": matched_cid,
+            "due_date": due,
+            "days_left": days_left,
+        })
+
+    all_deadlines.sort(key=lambda x: x.get("due_date") or "9999")
+
+    # ── Get grade weights per class ──
+    weights_res = supabase.table("grade_weights") \
+        .select("class_id, category, weight_pct") \
+        .eq("user_id", user_id).execute()
+    weights = weights_res.data or []
+    # Find max weight per class
+    class_max_weight: dict = {}
+    for w in weights:
+        cid = w.get("class_id")
+        pct = w.get("weight_pct", 0)
+        if cid not in class_max_weight or pct > class_max_weight[cid].get("weight_pct", 0):
+            class_max_weight[cid] = w
+
+    # ── Determine Focus Item (highest priority) ──
+    # Priority = closest exam + lowest grade + highest weight
+    focus = None
+    best_score = -1
+
+    for dl in all_deadlines:
+        cid = dl.get("classId") or ""
+        cat = (dl.get("category") or "").lower()
+        is_exam = "exam" in cat or "midterm" in cat or "final" in cat or "quiz" in cat
+        days = dl.get("days_left")
+        if days is None or days < 0:
+            continue
+
+        cid = dl.get("classId")
+        grade = class_avg.get(cid, 50)
+        urgency = max(0, 100 - days * 10) if days <= 10 else 0
+        need = max(0, 100 - grade)
+        exam_bonus = 30 if is_exam else 0
+        score = urgency + need + exam_bonus
+
+        if score > best_score:
+            best_score = score
+            # Find a topic for this class
+            topic_title = ""
+            if cid:
+                try:
+                    topics_res = supabase.table("topics") \
+                        .select("title") \
+                        .eq("class_id", cid).eq("user_id", user_id) \
+                        .order("created_at").limit(1).execute()
+                    if topics_res.data:
+                        topic_title = topics_res.data[0].get("title", "")
+                except Exception:
+                    pass
+
+            max_w = class_max_weight.get(cid, {}) if cid else {}
+            focus = {
+                "className": dl.get("className", "") or dl.get("title", "").split(" - ")[0],
+                "classId": cid,
+                "topic": topic_title,
+                "examTitle": dl.get("title", ""),
+                "examDate": dl.get("due_date", ""),
+                "daysLeft": days,
+                "currentGrade": class_avg.get(cid) if cid else None,
+                "potentialImpact": max_w.get("weight_pct", 0),
+            }
+
+    # ── Recommended Sessions (topics with incomplete study materials) ──
+    sessions = []
+    print(f"[STUDY PLAN] Building sessions for {len(class_ids)} classes: {class_ids[:3]}")
+    for cid in class_ids[:3]:
+        if not cid:
+            continue
+        try:
+            topics_res = supabase.table("topics") \
+                .select("id, title") \
+                .eq("class_id", cid).eq("user_id", user_id) \
+                .order("created_at").limit(3).execute()
+            print(f"[STUDY PLAN] Class {cid}: found {len(topics_res.data or [])} topics")
+
+            for t in (topics_res.data or []):
+                # Check if summary exists
+                try:
+                    sum_res = supabase.table("study_summaries") \
+                        .select("id") \
+                        .eq("user_id", user_id).eq("topic_id", t["id"]) \
+                        .limit(1).execute()
+                    has_summary = bool(sum_res.data)
+                except Exception:
+                    has_summary = False
+
+                # Check if quiz exists
+                try:
+                    quiz_res = supabase.table("study_quizzes") \
+                        .select("id") \
+                        .eq("user_id", user_id).eq("topic_id", t["id"]) \
+                        .limit(1).execute()
+                    has_quiz = bool(quiz_res.data)
+                except Exception:
+                    has_quiz = False
+
+            completed = 0
+            if has_summary: completed += 1
+            if has_quiz: completed += 1
+
+            # Find nearest deadline for this class
+            class_deadlines = [d for d in all_deadlines if d.get("classId") == cid and d.get("days_left") is not None and d.get("days_left", 99) >= 0]
+            nearest = class_deadlines[0] if class_deadlines else None
+            urgency_text = ""
+            if nearest:
+                dl = nearest.get("days_left", 99)
+                if dl <= 2:
+                    urgency_text = f"Exam in {dl} days"
+                elif dl <= 7:
+                    urgency_text = f"Due in {dl} days"
+                else:
+                    urgency_text = f"{dl} days left"
+
+            sessions.append({
+                "topicId": t["id"],
+                "title": t["title"],
+                "className": class_map.get(cid, ""),
+                "classId": cid,
+                "completed": completed,
+                "total": 4,
+                "urgencyText": urgency_text,
+                "isHighImpact": nearest and nearest.get("days_left", 99) <= 3,
+            })
+        except Exception as e:
+            print(f"[STUDY PLAN] Error building session for class {cid}: {e}")
+
+    # Sort sessions: high impact first, then least completed
+    sessions.sort(key=lambda s: (0 if s["isHighImpact"] else 1, s["completed"]))
+    sessions = sessions[:5]
+    print(f"[STUDY PLAN] Total sessions: {len(sessions)}")
+
+    # Top 5 deadlines
+    top_deadlines = []
+    for dl in all_deadlines[:5]:
+        due = dl.get("due_date", "")
+        month = ""
+        day = ""
+        if due:
+            try:
+                d = datetime.strptime(due, "%Y-%m-%d")
+                month = d.strftime("%b").upper()
+                day = str(d.day)
+            except Exception:
+                pass
+        top_deadlines.append({
+            **dl,
+            "month": month,
+            "day": day,
+        })
+
+    return {
+        "firstName": first_name,
+        "focusItem": focus,
+        "sessions": sessions,
+        "deadlines": top_deadlines,
+    }

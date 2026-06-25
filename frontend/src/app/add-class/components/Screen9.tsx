@@ -48,7 +48,7 @@ export default function Screen9({ onAddAnother }: Props) {
 
   return (
     <Phone>
-      <div className=" flex flex-col min-h-screen bg-white">
+      <div className=" flex flex-col  bg-white">
 
         {/* HEADER */}
         <div className="flex items-center justify-between mb-5">

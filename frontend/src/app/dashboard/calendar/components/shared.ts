@@ -1,54 +1,54 @@
-// Calendar shared data, types, and helpers
-
-export const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-export const DATES = [
-  [null,1,2,3,4,5,6],
-  [7,8,9,10,11,12,13],
-  [14,15,16,17,18,19,20],
-  [21,22,23,24,25,26,27],
-  [28,29,30,null,null,null,null],
-];
-
 export interface CalEvent {
-  id: string; title: string; category: string; className: string;
-  date: number; time: string; endTime: string; source: string;
-  description: string; color: string; dotColor: string; textColor: string;
+  id: string; title: string; type: 'quiz' | 'assignment' | 'exam' | 'study' | 'class' | 'personal';
+  className: string; date: number; month: string; time: string; endTime: string;
+  location: string; description: string; weight: number; currentGrade: number | null;
+  color: string; textColor: string;
 }
 
 export const EVENTS: CalEvent[] = [
-  { id:'1', title:'Quiz',        category:'Quiz',       className:'Bio 101',     date:4,  time:'9:00 AM',  endTime:'10:00 AM', source:'Canvas',         description:'Chapter 3 quiz covering cellular biology and organelle functions.', color:'bg-amber-100', dotColor:'bg-amber-500', textColor:'text-amber-700' },
-  { id:'2', title:'Lab Report',  category:'Lab',        className:'Chem 101',    date:5,  time:'2:00 PM',  endTime:'3:00 PM',  source:'Canvas',         description:'Submit lab report on titration experiment from Week 3.', color:'bg-red-100', dotColor:'bg-red-500', textColor:'text-red-600' },
-  { id:'3', title:'Reading',     category:'Assignment', className:'English 201', date:10, time:'',         endTime:'',         source:'Google Calendar', description:'Complete chapters 5-7 of The Great Gatsby.', color:'bg-green-100', dotColor:'bg-green-500', textColor:'text-green-700' },
-  { id:'4', title:'Exam',        category:'Exam',       className:'Calc 251',    date:17, time:'9:00 AM',  endTime:'11:00 AM', source:'Canvas',         description:'Final exam for Calculus 251. Covers Chapters 1-12 including integrals and applications.', color:'bg-red-100', dotColor:'bg-red-500', textColor:'text-red-600' },
-  { id:'5', title:'Essay',       category:'Assignment', className:'English 201', date:19, time:'11:59 PM', endTime:'',         source:'Google Calendar', description:'Submit 5-page literary analysis essay on symbolism in The Great Gatsby.', color:'bg-purple-100', dotColor:'bg-purple-500', textColor:'text-purple-700' },
-  { id:'6', title:'Project',     category:'Project',    className:'Bio 101',     date:23, time:'',         endTime:'',         source:'Canvas',         description:'Group presentation on genetics and hereditary patterns.', color:'bg-blue-100', dotColor:'bg-blue-500', textColor:'text-blue-700' },
-  { id:'7', title:'Quiz',        category:'Quiz',       className:'Physics 201', date:25, time:'9:30 PM',  endTime:'',         source:'Study Planner',  description:'Quiz on Newton\'s laws of motion and momentum.', color:'bg-amber-100', dotColor:'bg-amber-500', textColor:'text-amber-700' },
+  { id:'1', title:'Biology Quiz 1',       type:'quiz',       className:'Biology 1107',  date:16, month:'May', time:'10:00 AM', endTime:'11:00 AM', location:'Science Building, Room 304', description:'Covers Chapters 5, 6 & 7. Multiple choice (100 points).', weight:20, currentGrade:72, color:'bg-purple-100', textColor:'text-purple-700' },
+  { id:'2', title:'Lab Report 3',          type:'assignment', className:'Biology 1107',  date:16, month:'May', time:'11:59 PM', endTime:'',         location:'',                          description:'Submit lab report on cellular respiration experiment.',    weight:10, currentGrade:72, color:'bg-green-100',  textColor:'text-green-700' },
+  { id:'3', title:'Chemistry Quiz',        type:'quiz',       className:'Chemistry 101', date:17, month:'May', time:'9:30 AM',  endTime:'10:30 AM', location:'Chem Lab 201',              description:'Periodic table and chemical bonding quiz.',               weight:15, currentGrade:68, color:'bg-amber-100',  textColor:'text-amber-700' },
+  { id:'4', title:'Chemistry Midterm',     type:'exam',       className:'Chemistry 101', date:22, month:'May', time:'9:00 AM',  endTime:'11:00 AM', location:'Main Hall',                 description:'Covers all chapters from weeks 1-8.',                     weight:30, currentGrade:68, color:'bg-red-100',    textColor:'text-red-600' },
+  { id:'5', title:'Biology Lecture',       type:'class',      className:'Biology 1107',  date:16, month:'May', time:'12:00 PM', endTime:'1:00 PM',  location:'Science Building, Room 304', description:'Regular lecture session.',                                 weight:0,  currentGrade:null, color:'bg-blue-100', textColor:'text-blue-700' },
+  { id:'6', title:'Study Session',         type:'study',      className:'Biology 1107',  date:17, month:'May', time:'3:00 PM',  endTime:'4:30 PM',  location:'Library',                   description:'Review inheritance patterns and practice questions.',      weight:0,  currentGrade:null, color:'bg-indigo-100', textColor:'text-indigo-700' },
+  { id:'7', title:'Biology Midterm',       type:'exam',       className:'Biology 1107',  date:22, month:'May', time:'9:00 AM',  endTime:'11:00 AM', location:'Science Building, Room 304', description:'Covers all chapters from weeks 1-10.',                    weight:30, currentGrade:72, color:'bg-red-100',    textColor:'text-red-600' },
+  { id:'8', title:'Personal Event',        type:'personal',   className:'',              date:18, month:'May', time:'6:00 PM',  endTime:'',         location:'',                          description:'Personal event.',                                          weight:0,  currentGrade:null, color:'bg-gray-100',   textColor:'text-gray-700' },
 ];
 
-export const SOURCES = [
-  { name: 'Canvas Calendar',        sub: 'Connected',           icon: '🎓', connected: true },
-  { name: 'Google Calendar',        sub: 'Connected',           icon: '📅', connected: true },
-  { name: 'Study Planner (Manual)', sub: 'Your Personal Events', icon: '📖', connected: true },
+export const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+export const DATES: (number|null)[][] = [
+  [27,28,29,30,1,2,3],
+  [4,5,6,7,8,9,10],
+  [11,12,13,14,15,16,17],
+  [18,19,20,21,22,23,24],
+  [25,26,27,28,29,30,31],
 ];
+
+export const FILTER_CHIPS = ['All','Quiz','Assignment','Exam','Study','Class'];
 
 export function getEventsForDate(d: number): CalEvent[] {
   return EVENTS.filter(e => e.date === d);
 }
 
-export function getCategoryIcon(cat: string): string {
-  const c = cat.toLowerCase();
-  if (c.includes('quiz')) return '❓';
-  if (c.includes('exam')) return '📋';
-  if (c.includes('lab')) return '🧪';
-  if (c.includes('project')) return '📊';
-  return '📝';
+export function getTypeBadge(type: string): { text: string; color: string } {
+  switch(type) {
+    case 'quiz':       return { text:'Quiz',       color:'text-purple-700 bg-purple-100' };
+    case 'assignment': return { text:'Assignment', color:'text-green-700 bg-green-100' };
+    case 'exam':       return { text:'Exam',       color:'text-red-700 bg-red-100' };
+    case 'study':      return { text:'Study',      color:'text-indigo-700 bg-indigo-100' };
+    case 'class':      return { text:'Class',      color:'text-blue-700 bg-blue-100' };
+    default:           return { text:'Personal',   color:'text-gray-700 bg-gray-100' };
+  }
 }
 
-export function getCatColor(cat: string): { bg: string; text: string } {
-  const c = cat.toLowerCase();
-  if (c.includes('exam')) return { bg: 'bg-red-100', text: 'text-red-600' };
-  if (c.includes('quiz')) return { bg: 'bg-amber-100', text: 'text-amber-600' };
-  if (c.includes('lab')) return { bg: 'bg-blue-100', text: 'text-blue-600' };
-  if (c.includes('project')) return { bg: 'bg-blue-100', text: 'text-blue-600' };
-  return { bg: 'bg-green-100', text: 'text-green-600' };
+export function getTypeIcon(type: string): string {
+  switch(type) {
+    case 'quiz':       return '❓';
+    case 'assignment': return '📝';
+    case 'exam':       return '📋';
+    case 'study':      return '📖';
+    case 'class':      return '🏫';
+    default:           return '📌';
+  }
 }
