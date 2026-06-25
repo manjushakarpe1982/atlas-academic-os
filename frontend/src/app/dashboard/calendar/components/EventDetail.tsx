@@ -28,22 +28,22 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
   }
 
   return (
-    <div className="px-4 py-4 pb-24">
+    <div className="px-4 py-4 pb-22">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
-          <span className="text-sm font-bold text-gray-400">Event Details</span>
+          <span className="text-sm font-bold text-gray-600">Event Details</span>
         </div>
         <button onClick={onEdit} className="text-sm font-bold text-indigo-600 flex items-center gap-1">
-          <Edit2 className="w-3.5 h-3.5" /> Edit
+          <Edit2 className="w-4 h-4" /> Edit
         </button>
       </div>
 
       {/* Event Header Card */}
-      <div className={`${event.color} rounded-2xl p-5 mb-4`}>
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl">
+      <div className={`${event.color} rounded-lg p-3 mb-4`}>
+        <div className="flex items-center gap-3 ">
+          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-2xl">
             {getTypeIcon(event.type)}
           </div>
           <div>
@@ -54,11 +54,11 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
       </div>
 
       {/* Details */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50 mb-4">
-        <div className="flex items-center gap-3 px-4 py-3.5">
+      <div className="bg-white rounded-lg border border-gray-100 shadow-sm divide-y divide-gray-50 mb-4">
+        <div className="flex items-center gap-3 px-4 py-3">
           <Clock className="w-5 h-5 text-indigo-500" />
           <div>
-            <p className="text-xs text-gray-400">Date & Time</p>
+            <p className="text-[13px] text-gray-500">Date & Time</p>
             <p className="text-sm font-bold text-gray-900">Tomorrow, May {event.date}, 2025</p>
             <p className="text-xs text-gray-500">{event.time}{event.endTime ? ` – ${event.endTime}` : ''}</p>
           </div>
@@ -67,7 +67,7 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
           <div className="flex items-center gap-3 px-4 py-3.5">
             <MapPin className="w-5 h-5 text-indigo-500" />
             <div>
-              <p className="text-xs text-gray-400">Location</p>
+              <p className="text-[13px] text-gray-500">Location</p>
               <p className="text-sm font-bold text-gray-900">{event.location}</p>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
           <div className="flex items-center gap-3 px-4 py-3.5">
             <BookOpen className="w-5 h-5 text-indigo-500" />
             <div>
-              <p className="text-xs text-gray-400">Class</p>
+              <p className="text-[13px] text-gray-500">Class</p>
               <p className="text-sm font-bold text-gray-900">{event.className}</p>
             </div>
           </div>
@@ -85,8 +85,8 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
 
       {/* Description */}
       {event.description && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
-          <p className="text-xs font-bold text-gray-400 mb-1">Description</p>
+        <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 mb-4">
+          <p className="text-sm font-bold text-gray-600 mb-1">Description</p>
           <p className="text-sm text-gray-700 leading-relaxed">{event.description}</p>
         </div>
       )}
@@ -95,15 +95,15 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
       {(event.weight > 0 || event.currentGrade !== null) && (
         <div className="grid grid-cols-2 gap-3 mb-4">
           {event.weight > 0 && (
-            <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-center">
-              <p className="text-xs text-indigo-600 font-medium">Worth</p>
+            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 text-center">
+              <p className="text-[13px] text-indigo-600 font-medium">Worth</p>
               <p className="text-2xl font-extrabold text-indigo-700">{event.weight}%</p>
               <p className="text-[10px] text-indigo-400">of your grade</p>
             </div>
           )}
           {event.currentGrade !== null && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 text-center shadow-sm">
-              <p className="text-xs text-gray-400 font-medium">Current Grade</p>
+            <div className="bg-white border border-gray-100 rounded-lg p-4 text-center shadow-sm">
+              <p className="text-[13px] text-gray-400 font-medium">Current Grade</p>
               <p className={`text-2xl font-extrabold ${
                 event.currentGrade >= 80 ? 'text-green-600' : event.currentGrade >= 60 ? 'text-amber-600' : 'text-red-600'
               }`}>{event.currentGrade}%</p>
@@ -114,10 +114,10 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
 
       {/* Recommended Focus */}
       {event.type !== 'personal' && event.type !== 'class' && (
-        <div className="bg-green-50 border border-green-100 rounded-2xl p-4 mb-4">
+        <div className="bg-green-50 border border-green-100 rounded-lg p-4 mb-4">
           <div className="flex items-center gap-2 mb-2">
             <Target className="w-4 h-4 text-green-600" />
-            <p className="text-xs font-bold text-green-700">Recommended Focus</p>
+            <p className="text-[13px] font-bold text-green-700">Recommended Focus</p>
           </div>
           <p className="text-sm text-gray-700 font-semibold">{event.className || 'General'}</p>
           <p className="text-xs text-gray-500 mt-0.5">Based on your performance</p>
@@ -126,14 +126,14 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
 
       {/* Start Studying */}
       {event.type !== 'personal' && event.type !== 'class' && (
-        <button className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition-all text-sm flex items-center justify-center gap-2 mb-4">
+        <button className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all text-base flex items-center justify-center gap-2 mb-4">
           Start Studying <ArrowRight className="w-4 h-4" />
         </button>
       )}
 
       {/* Delete */}
       <button onClick={() => setShowDelete(true)}
-        className="w-full text-red-600 font-bold py-3 text-sm flex items-center justify-center gap-2">
+        className="w-full text-red-600 font-bold py-2.5 border border-red-300 rounded-lg text-base flex items-center justify-center gap-2">
         <Trash2 className="w-4 h-4" /> Delete Event
       </button>
 

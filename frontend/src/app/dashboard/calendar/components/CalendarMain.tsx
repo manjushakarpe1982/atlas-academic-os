@@ -95,10 +95,10 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
       </div>
 
       {/* View Toggle */}
-      <div className="flex bg-gray-100 rounded-full p-1 mb-4">
+      <div className="flex bg-gray-100 rounded-lg p-1 mb-4">
         {(['Month','Week','Day'] as const).map(v => (
           <button key={v} onClick={() => onViewChange(v)}
-            className={`flex-1 py-2 text-xs font-bold rounded-full transition-all ${
+            className={`flex-1 py-1.5 text-[13px] font-bold rounded-xl transition-all ${
               viewMode === v ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-500'
             }`}>{v}</button>
         ))}
@@ -109,19 +109,19 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
         <>
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-3">
-        <button onClick={prevMonth}><ChevronLeft className="w-5 h-5 text-gray-400" /></button>
+        <button onClick={prevMonth}><ChevronLeft className="w-5 h-5 text-gray-500" /></button>
         <button onClick={() => { setPickerYear(currentYear); setShowPicker(true); }}
           className="text-base font-extrabold text-gray-900 hover:text-indigo-600 transition-colors">
           {MONTH_NAMES[currentMonth]} {currentYear} ▾
         </button>
-        <button onClick={nextMonth}><ChevronRight className="w-5 h-5 text-gray-400" /></button>
+        <button onClick={nextMonth}><ChevronRight className="w-5 h-5 text-gray-500" /></button>
       </div>
 
       {/* Month/Year Picker Modal */}
       {showPicker && (
         <>
           <div className="fixed inset-0 bg-black/40 z-40" onClick={() => { setShowPicker(false); setShowYearGrid(false); }} />
-          <div className="fixed inset-x-4 top-1/4 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 p-5 max-w-sm mx-auto">
+          <div className="fixed inset-x-4 top-1/4 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 p-5 max-w-sm mx-auto">
 
             {showYearGrid ? (
               <>
@@ -180,10 +180,10 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
       )}
 
       {/* Calendar Grid */}
-      <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 mb-4">
+      <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200 mb-4">
         <div className="grid grid-cols-7 mb-1">
           {DAYS.map(d => (
-            <div key={d} className="text-center text-[10px] font-bold text-gray-400 py-1">{d}</div>
+            <div key={d} className="text-center text-[12px] font-bold text-gray-600 py-1">{d}</div>
           ))}
         </div>
         {calendarDates.map((week, wi) => (
@@ -193,8 +193,8 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
               const evts = getEventsForDate(d);
               return (
                 <button key={di} onClick={() => setSelected(d)}
-                  className="flex flex-col items-center py-1 min-h-[40px]">
-                  <span className={`w-7 h-7 flex items-center justify-center text-xs font-semibold rounded-full transition-all ${
+                  className="flex flex-col items-center py-1 min-h-[45px]">
+                  <span className={`w-7 h-7 flex items-center justify-center text-[14px] font-semibold rounded-full transition-all ${
                     d === selected ? 'bg-indigo-600 text-white' :
                     isToday(d) ? 'bg-indigo-100 text-indigo-600 font-extrabold' :
                     'text-gray-700'
@@ -220,7 +220,7 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
       </div>
 
       {/* Event Type Legend */}
-      <div className="flex items-center justify-center gap-3 flex-wrap mb-4">
+      <div className="flex items-center justify-center gap-1.5 flex-wrap mb-4">
         {[
           { label: 'Quiz', color: 'bg-purple-500' },
           { label: 'Assignment', color: 'bg-green-500' },
@@ -230,7 +230,7 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
           { label: 'Personal', color: 'bg-gray-500' },
         ].map(l => (
           <div key={l.label} className="flex items-center gap-1">
-            <div className={`w-2 h-2 rounded-full ${l.color}`} />
+            <div className={`w-1.5 h-1.5 rounded-full ${l.color}`} />
             <span className="text-[10px] text-gray-500">{l.label}</span>
           </div>
         ))}
@@ -259,8 +259,8 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
                 <div key={dayNum}>
                   <div className="flex items-start gap-3 py-2">
                     <div className="w-10 text-center flex-shrink-0">
-                      <p className="text-[10px] text-gray-400 font-bold">{dayNames[wd.getDay()]}</p>
-                      <p className={`text-lg font-extrabold ${isToday(dayNum) ? 'text-indigo-600' : 'text-gray-900'}`}>{dayNum}</p>
+                      <p className="text-[11px] text-gray-400 font-bold">{dayNames[wd.getDay()]}</p>
+                      <p className={`text-base font-bold ${isToday(dayNum) ? 'text-indigo-600' : 'text-gray-900'}`}>{dayNum}</p>
                     </div>
                     <div className="flex-1 space-y-1.5">
                       {dayEvents.length === 0 ? (
@@ -306,16 +306,16 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
               <button onClick={prevDayNav}><ChevronLeft className="w-5 h-5 text-gray-400" /></button>
               <div className="text-center">
                 <h2 className="text-base font-extrabold text-gray-900">{MONTH_NAMES[currentMonth]} {selected}, {currentYear}</h2>
-                <p className="text-[10px] text-gray-400 font-bold">{dayName[dayOfWeek]}</p>
+                <p className="text-[11px] text-gray-400 font-bold">{dayName[dayOfWeek]}</p>
               </div>
               <button onClick={nextDayNav}><ChevronRight className="w-5 h-5 text-gray-400" /></button>
             </div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 mb-4">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 mb-4">
               {hours.map(hour => {
                 const hourEvents = dayEvents.filter(ev => ev.time.replace(':00 ', ' ').startsWith(hour.replace(' ', ':00 ').split(':')[0]));
                 return (
                   <div key={hour} className="flex min-h-[48px] border-b border-gray-50 last:border-0">
-                    <div className="w-12 text-[10px] text-gray-400 font-medium pt-1 flex-shrink-0">{hour}</div>
+                    <div className="w-12 text-[11px] text-gray-500 font-medium pt-1 flex-shrink-0">{hour}</div>
                     <div className="flex-1 py-1 space-y-1">
                       {hourEvents.map(ev => {
                         const badge = getTypeBadge(ev.type);
@@ -341,14 +341,14 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
 
       {/* Next Important */}
       {nextImportant && (
-        <div className="bg-indigo-600 rounded-2xl p-4 mb-4 text-white">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-indigo-200 mb-2">Next Important</p>
+        <div className="bg-orange-50 border border-orange-100 rounded-lg p-4 mb-7 text-black">
+          <p className="text-[13px] font-bold uppercase tracking-wide text-orange-600 mb-1">Next Important</p>
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-base font-extrabold">{nextImportant.title}</p>
-              <p className="text-xs text-indigo-200 mt-0.5">Tomorrow • {nextImportant.time}</p>
-              <p className="text-xs text-indigo-200 mt-1">
-                Worth {nextImportant.weight}% • Current Grade: {nextImportant.currentGrade ?? '—'}%
+              <p className="text-xs text-black mt-0.5">Tomorrow • {nextImportant.time}</p>
+              <p className="text-xs text-indigo-600 mt-1">
+                Worth   {nextImportant.weight}%  <span className="text-black">• Current Grade: {nextImportant.currentGrade ?? '—'}%</span>  
               </p>
             </div>
             <button onClick={() => onEventClick(nextImportant)}
@@ -365,7 +365,7 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
       {/* Upcoming Events */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-extrabold text-gray-900 uppercase tracking-wide">Upcoming (All Events)</h2>
+          <h2 className="text-base font-extrabold text-gray-900 ">Upcoming (All Events)</h2>
           <button className="text-xs text-indigo-600 font-semibold">View All</button>
         </div>
 
@@ -373,7 +373,7 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
         <div className="flex gap-1.5 overflow-x-auto mb-3" style={{ scrollbarWidth: 'none' }}>
           {FILTER_CHIPS.map(f => (
             <button key={f} onClick={() => { setFilter(f); setShowAllEvents(false); }}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all ${
+              className={`flex-shrink-0 px-3 py-1 rounded-lg text-[13px] font-semibold transition-all ${
                 filter === f ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 border border-gray-200'
               }`}>{f}</button>
           ))}
@@ -385,7 +385,7 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
             const badge = getTypeBadge(ev.type);
             return (
               <button key={ev.id} onClick={() => onEventClick(ev)}
-                className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 flex items-center gap-3 text-left hover:border-indigo-200 transition-all">
+                className="w-full bg-white rounded-lg border border-gray-200 shadow-sm p-3.5 flex items-center gap-3 text-left hover:border-indigo-200 transition-all">
                 <div className={`w-10 h-10 ${ev.color} rounded-xl flex items-center justify-center text-lg flex-shrink-0`}>
                   {getTypeIcon(ev.type)}
                 </div>
@@ -402,7 +402,7 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
         </div>
         {filtered.length > 5 && (
           <button onClick={() => setShowAllEvents(!showAllEvents)}
-            className="w-full mt-3 flex items-center justify-center gap-2 text-sm font-bold text-indigo-600 py-2.5 rounded-xl border border-indigo-200 hover:bg-indigo-50 transition-all">
+            className="w-full mt-3 flex items-center justify-center gap-2 text-sm font-bold text-indigo-600 py-2 rounded-lg border-2 border-indigo-200 hover:bg-indigo-50 transition-all">
             {showAllEvents ? 'Show Less' : `Show More (${filtered.length - 5} more)`}
           </button>
         )}
@@ -410,7 +410,7 @@ export default function CalendarMain({ viewMode, onViewChange, onEventClick, onA
 
       {/* FAB Add Button */}
       <button onClick={onAddClick}
-        className="fixed bottom-24 right-6 w-14 h-14 bg-indigo-600 rounded-full shadow-xl flex items-center justify-center hover:bg-indigo-700 transition-all z-30">
+        className="fixed bottom-24 right-6 w-11 h-11 bg-indigo-600 rounded-full shadow-xl flex items-center justify-center hover:bg-indigo-700 transition-all z-30">
         <Plus className="w-6 h-6 text-white" />
       </button>
     </div>
