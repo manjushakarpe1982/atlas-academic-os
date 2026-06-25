@@ -15,7 +15,7 @@ function EventCard({ ev, onClick }: { ev: CalEvent; onClick: (ev: CalEvent) => v
   const badge = getTypeBadge(ev.type);
   return (
     <button onClick={() => onClick(ev)}
-      className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 flex items-center gap-3 text-left hover:border-indigo-200 transition-all">
+      className="w-full bg-white rounded-lg border border-gray-100 shadow-sm p-3.5 flex items-center gap-3 text-left hover:border-indigo-200 transition-all">
       <div className={`w-10 h-10 ${getTypeBgColor(ev.type)} rounded-xl flex items-center justify-center text-lg flex-shrink-0`}>
         {getTypeIcon(ev.type)}
       </div>
@@ -101,16 +101,16 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
   const noDate = allFiltered.filter(e => !e.date);
 
   return (
-    <div className="px-4 py-4 pb-28 relative">
+    <div className="px-4 py-4 pb-12 relative">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-extrabold text-gray-900">Calendar</h1>
       </div>
 
       {/* View Toggle */}
-      <div className="flex bg-gray-100 rounded-full p-1 mb-4">
+      <div className="flex bg-gray-100 rounded-lg p-1 mb-4">
         {(['Month','Week','Day'] as const).map(v => (
           <button key={v} onClick={() => onViewChange(v)}
-            className={`flex-1 py-2 text-xs font-bold rounded-full transition-all ${viewMode === v ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-500'}`}>{v}</button>
+            className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${viewMode === v ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-500'}`}>{v}</button>
         ))}
       </div>
 
@@ -118,19 +118,19 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
       {viewMode === 'Month' && (
         <>
           <div className="flex items-center justify-between mb-3">
-            <button onClick={prevMonth}><ChevronLeft className="w-5 h-5 text-gray-400" /></button>
+            <button onClick={prevMonth}><ChevronLeft className="w-5 h-5 text-gray-500" /></button>
             <button onClick={() => { setPickerYear(currentYear); setShowPicker(true); }}
               className="text-base font-extrabold text-gray-900 hover:text-indigo-600 transition-colors">
               {MONTH_NAMES[currentMonth]} {currentYear} ▾
             </button>
-            <button onClick={nextMonth}><ChevronRight className="w-5 h-5 text-gray-400" /></button>
+            <button onClick={nextMonth}><ChevronRight className="w-5 h-5 text-gray-500" /></button>
           </div>
 
           {/* Picker Modal */}
           {showPicker && (
             <>
               <div className="fixed inset-0 bg-black/40 z-40" onClick={() => { setShowPicker(false); setShowYearGrid(false); }} />
-              <div className="fixed inset-x-4 top-1/4 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 p-5 max-w-sm mx-auto">
+              <div className="fixed inset-x-4 top-1/4 bg-white rounded-2xl shadow-lg border border-gray-200 z-50 p-5 max-w-sm mx-auto">
                 {showYearGrid ? (
                   <>
                     <div className="flex items-center justify-between mb-4">
@@ -162,18 +162,18 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
                 )}
                 <div className="flex gap-2 mt-4">
                   <button onClick={() => { setCurrentMonth(today.getMonth()); setCurrentYear(today.getFullYear()); setSelected(today.getDate()); setShowPicker(false); setShowYearGrid(false); }}
-                    className="flex-1 border border-indigo-200 text-indigo-600 font-bold py-2 rounded-xl text-xs">Today</button>
+                    className="flex-1 border border-indigo-200 text-indigo-600 font-bold py-2 rounded-xl text-sm">Today</button>
                   <button onClick={() => { setShowPicker(false); setShowYearGrid(false); }}
-                    className="flex-1 bg-gray-100 text-gray-600 font-bold py-2 rounded-xl text-xs">Cancel</button>
+                    className="flex-1 bg-gray-100 text-gray-600 font-bold py-2 rounded-xl text-sm">Cancel</button>
                 </div>
               </div>
             </>
           )}
 
           {/* Calendar Grid */}
-          <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 mb-4">
+          <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200 mb-4">
             <div className="grid grid-cols-7 mb-1">
-              {DAYS.map(d => <div key={d} className="text-center text-[10px] font-bold text-gray-400 py-1">{d}</div>)}
+              {DAYS.map(d => <div key={d} className="text-center text-[12px] font-bold text-gray-500 py-1">{d}</div>)}
             </div>
             {calendarDates.map((week, wi) => (
               <div key={wi} className="grid grid-cols-7">
@@ -181,8 +181,8 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
                   if (!d) return <div key={di} />;
                   const evts = getEventsForDate(events, currentYear, currentMonth, d);
                   return (
-                    <button key={di} onClick={() => setSelected(d)} className="flex flex-col items-center py-1 min-h-[40px]">
-                      <span className={`w-7 h-7 flex items-center justify-center text-xs font-semibold rounded-full transition-all ${
+                    <button key={di} onClick={() => setSelected(d)} className="flex flex-col items-center py-1 min-h-[47px]">
+                      <span className={`w-7 h-7 flex items-center justify-center text-sm font-semibold rounded-full transition-all ${
                         d === selected ? 'bg-indigo-600 text-white' : isToday(d) ? 'bg-indigo-100 text-indigo-600 font-extrabold' : 'text-gray-700'
                       }`}>{d}</span>
                       {evts.length > 0 && (
@@ -198,10 +198,10 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
           </div>
 
           {/* Legend */}
-          <div className="flex items-center justify-center gap-3 flex-wrap mb-4">
+          <div className="flex items-center justify-center gap-1.5 flex-wrap mb-7">
             {[{ label:'Quiz', color:'bg-purple-500' },{ label:'Assignment', color:'bg-green-500' },{ label:'Exam', color:'bg-red-500' },{ label:'Study Session', color:'bg-indigo-500' },{ label:'Class', color:'bg-blue-500' },{ label:'Personal', color:'bg-gray-500' }].map(l => (
               <div key={l.label} className="flex items-center gap-1">
-                <div className={`w-2 h-2 rounded-full ${l.color}`} />
+                <div className={`w-1.5 h-1.5 rounded-full ${l.color}`} />
                 <span className="text-[10px] text-gray-500">{l.label}</span>
               </div>
             ))}
@@ -228,8 +228,8 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
                 <div key={dayNum}>
                   <div className="flex items-start gap-3 py-2">
                     <div className="w-10 text-center flex-shrink-0">
-                      <p className="text-[10px] text-gray-400 font-bold">{dayNames[wd.getDay()]}</p>
-                      <p className={`text-lg font-extrabold ${isToday(dayNum) ? 'text-indigo-600' : 'text-gray-900'}`}>{dayNum}</p>
+                      <p className="text-[12px] text-gray-500 font-bold">{dayNames[wd.getDay()]}</p>
+                      <p className={`text-base font-bold ${isToday(dayNum) ? 'text-indigo-600' : 'text-gray-900'}`}>{dayNum}</p>
                     </div>
                     <div className="flex-1 space-y-1.5">
                       {dayEvents.length === 0 ? <div className="h-8" /> : dayEvents.map(ev => {
@@ -286,7 +286,7 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
                         <p className={`text-sm font-bold ${getTypeTextColor(ev.type)}`}>{ev.title}</p>
                         <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${badge.color}`}>{badge.text}</span>
                       </div>
-                      <p className="text-[10px] text-gray-500 mt-0.5">{ev.time ? `${ev.time}${ev.endTime ? ` – ${ev.endTime}` : ''}` : 'All day'}</p>
+                      <p className="text-[12px] text-gray-500 mt-0.5">{ev.time ? `${ev.time}${ev.endTime ? ` – ${ev.endTime}` : ''}` : 'All day'}</p>
                     </button>
                   );
                 })}
@@ -298,14 +298,14 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
 
       {/* Next Important */}
       {nextImportant && (
-        <div className="bg-indigo-600 rounded-2xl p-4 mb-4 text-white">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-indigo-200 mb-2">Next Important</p>
+        <div className="bg-orange-50  border border-orange-200 rounded-lg p-3 mb-7 text-black">
+          <p className="text-[15px] font-bold  text-orange-600 mb-2">Next Important</p>
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-base font-extrabold">{nextImportant.title}</p>
-              <p className="text-xs text-indigo-200 mt-0.5">{formatEventDate(nextImportant.date)}{nextImportant.time ? ` • ${nextImportant.time}` : ''}</p>
+              <p className="text-xs text-indigo-600 mt-0.5">{formatEventDate(nextImportant.date)}{nextImportant.time ? ` • ${nextImportant.time}` : ''}</p>
               {(nextImportant.weight > 0 || nextImportant.currentGrade !== null) && (
-                <p className="text-xs text-indigo-200 mt-1">
+                <p className="text-xs text-orange-600 mt-1">
                   {nextImportant.weight > 0 ? `Worth ${nextImportant.weight}%` : ''}{nextImportant.weight > 0 && nextImportant.currentGrade !== null ? ' • ' : ''}{nextImportant.currentGrade !== null ? `Current Grade: ${nextImportant.currentGrade}%` : ''}
                 </p>
               )}
@@ -314,7 +314,7 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          <button className="w-full bg-white text-indigo-600 font-bold py-2.5 rounded-xl mt-3 text-sm flex items-center justify-center gap-2">
+          <button className="w-full bg-white text-indigo-600 font-bold py-2.5 rounded-lg border border-indigo-200 mt-3 text-sm flex items-center justify-center gap-2">
             Start Studying <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -325,12 +325,12 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
         <div className="flex gap-1.5 overflow-x-auto mb-4" style={{ scrollbarWidth: 'none' }}>
           {FILTER_CHIPS.map(f => (
             <button key={f} onClick={() => { setFilter(f); setShowAllEvents({}); }}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all ${filter === f ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}>{f}</button>
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all ${filter === f ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}>{f}</button>
           ))}
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className="grid grid-cols-4 gap-2 mb-6">
           {[
             { label: 'Overdue', count: overdue.length, bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-700', ref: overdueRef },
             { label: 'Today', count: todayEvents.length, bg: 'bg-green-50', border: 'border-green-100', text: 'text-green-700', ref: todayRef },
@@ -338,9 +338,9 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
             { label: 'No Date', count: noDate.length, bg: 'bg-gray-50', border: 'border-gray-100', text: 'text-gray-600', ref: noDateRef },
           ].map(s => (
             <button key={s.label} onClick={() => s.count > 0 && scrollTo(s.ref)}
-              className={`${s.bg} border ${s.border} rounded-xl p-2 text-center transition-all ${s.count > 0 ? 'hover:opacity-80 cursor-pointer' : 'opacity-50 cursor-default'}`}>
+              className={`${s.bg} border ${s.border} rounded-lg p-1 text-center transition-all ${s.count > 0 ? 'hover:opacity-80 cursor-pointer' : 'opacity-50 cursor-default'}`}>
               <p className={`text-lg font-extrabold ${s.text}`}>{s.count}</p>
-              <p className="text-[9px] text-gray-500 font-semibold">{s.label}</p>
+              <p className="text-[10px] text-gray-500 font-semibold">{s.label}</p>
             </button>
           ))}
         </div>
@@ -354,13 +354,13 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
           <div className="space-y-4">
             {overdue.length > 0 && (
               <div ref={overdueRef}>
-                <h3 className="text-xs font-extrabold text-red-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                <h3 className="text-sm font-bold text-red-600  mb-2 flex items-center gap-1.5">
                   <span className="w-2 h-2 bg-red-500 rounded-full" /> Overdue ({overdue.length})
                 </h3>
                 <div className="space-y-2">{(showAllEvents.overdue ? overdue : overdue.slice(0, 3)).map(ev => <EventCard key={ev.id} ev={ev} onClick={onEventClick} />)}</div>
                 {overdue.length > 3 && (
                   <button onClick={() => setShowAllEvents(p => ({ ...p, overdue: !p.overdue }))}
-                    className="w-full mt-2 flex items-center justify-center gap-2 text-xs font-bold text-red-600 py-2 rounded-xl border border-red-200 hover:bg-red-50 transition-all">
+                    className="w-full mt-2 flex items-center justify-center gap-2 text-sm font-bold text-red-600 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-all">
                     {showAllEvents.overdue ? 'Show Less' : `Show More (${overdue.length - 3} more)`}
                   </button>
                 )}
@@ -368,13 +368,13 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
             )}
             {todayEvents.length > 0 && (
               <div ref={todayRef}>
-                <h3 className="text-xs font-extrabold text-green-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                <h3 className="text-sm font-bold text-green-600  mb-2 flex items-center gap-1.5">
                   <span className="w-2 h-2 bg-green-500 rounded-full" /> Today ({todayEvents.length})
                 </h3>
                 <div className="space-y-2">{(showAllEvents.today ? todayEvents : todayEvents.slice(0, 3)).map(ev => <EventCard key={ev.id} ev={ev} onClick={onEventClick} />)}</div>
                 {todayEvents.length > 3 && (
                   <button onClick={() => setShowAllEvents(p => ({ ...p, today: !p.today }))}
-                    className="w-full mt-2 flex items-center justify-center gap-2 text-xs font-bold text-green-600 py-2 rounded-xl border border-green-200 hover:bg-green-50 transition-all">
+                    className="w-full mt-2 flex items-center justify-center gap-2 text-sm font-bold text-green-600 py-2 rounded-lg border border-green-200 hover:bg-green-50 transition-all">
                     {showAllEvents.today ? 'Show Less' : `Show More (${todayEvents.length - 3} more)`}
                   </button>
                 )}
@@ -382,7 +382,7 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
             )}
             {upcoming.length > 0 && (
               <div ref={upcomingRef}>
-                <h3 className="text-xs font-extrabold text-indigo-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                <h3 className="text-sm font-bold text-indigo-600  mb-2 flex items-center gap-1.5">
                   <span className="w-2 h-2 bg-indigo-500 rounded-full" /> Upcoming ({upcoming.length})
                 </h3>
                 <div className="space-y-2">
@@ -390,7 +390,7 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
                 </div>
                 {upcoming.length > 3 && (
                   <button onClick={() => setShowAllEvents(p => ({ ...p, upcoming: !p.upcoming }))}
-                    className="w-full mt-2 flex items-center justify-center gap-2 text-xs font-bold text-indigo-600 py-2 rounded-xl border border-indigo-200 hover:bg-indigo-50 transition-all">
+                    className="w-full mt-2 flex items-center justify-center gap-2 text-sm font-bold text-indigo-600 py-2 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-all">
                     {showAllEvents.upcoming ? 'Show Less' : `Show More (${upcoming.length - 3} more)`}
                   </button>
                 )}
@@ -398,13 +398,13 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
             )}
             {noDate.length > 0 && (
               <div ref={noDateRef}>
-                <h3 className="text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                <h3 className="text-sm font-bold text-gray-500  mb-2 flex items-center gap-1.5">
                   <span className="w-2 h-2 bg-gray-400 rounded-full" /> No Due Date ({noDate.length})
                 </h3>
                 <div className="space-y-2">{(showAllEvents.nodate ? noDate : noDate.slice(0, 3)).map(ev => <EventCard key={ev.id} ev={ev} onClick={onEventClick} />)}</div>
                 {noDate.length > 3 && (
                   <button onClick={() => setShowAllEvents(p => ({ ...p, nodate: !p.nodate }))}
-                    className="w-full mt-2 flex items-center justify-center gap-2 text-xs font-bold text-gray-500 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">
+                    className="w-full mt-2 flex items-center justify-center gap-2 text-sm font-bold text-gray-500 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all">
                     {showAllEvents.nodate ? 'Show Less' : `Show More (${noDate.length - 3} more)`}
                   </button>
                 )}
