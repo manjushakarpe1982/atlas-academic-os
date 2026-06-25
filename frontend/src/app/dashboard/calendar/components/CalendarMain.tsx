@@ -416,7 +416,7 @@ export default function CalendarMain({ events, viewMode, onViewChange, onEventCl
 
       {/* FAB */}
       <button onClick={onAddClick}
-        className="fixed bottom-24 right-6 w-14 h-14 bg-indigo-600 rounded-full shadow-xl flex items-center justify-center hover:bg-indigo-700 transition-all z-30">
+        className="fixed bottom-24 right-6 w-11 h-11 bg-indigo-600 rounded-full shadow-xl flex items-center justify-center hover:bg-indigo-700 transition-all z-30">
         <Plus className="w-6 h-6 text-white" />
       </button>
     </div>

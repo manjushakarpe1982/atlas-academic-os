@@ -35,7 +35,7 @@ export default function AddStudySession({ onBack, onSaved }: Props) {
   };
 
   return (
-    <div className="px-4 py-4 pb-24">
+    <div className="px-4 py-4 pb-12">
       <div className="flex items-center justify-between mb-5">
         <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
         <h1 className="text-base font-extrabold text-gray-900">Add Study Session</h1>
@@ -46,17 +46,17 @@ export default function AddStudySession({ onBack, onSaved }: Props) {
       {error && <p className="text-xs text-red-600 mb-3 text-center">{error}</p>}
       <div className="space-y-4">
         <div>
-          <label className="text-xs font-bold text-gray-500 block mb-1.5">Subject</label>
+          <label className="text-sm font-bold text-gray-600 block mb-1.5">Subject</label>
           <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. Biology 1107"
             className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none" />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 block mb-1.5">Topic</label>
+          <label className="text-sm font-bold text-gray-600 block mb-1.5">Topic</label>
           <input value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g. Genetics"
             className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none" />
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 block mb-1.5">Date</label>
+          <label className="text-sm font-bold text-gray-600 block mb-1.5">Date</label>
           <input type="date" value={date} onChange={e => { setDate(e.target.value); if (e.target.value < todayStr) setError('Cannot select a past date. Please choose today or a future date.'); else setError(''); }}
             min={todayStr}
             className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none" />
@@ -66,12 +66,12 @@ export default function AddStudySession({ onBack, onSaved }: Props) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-bold text-gray-500 block mb-1.5">Time</label>
+            <label className="text-sm font-bold text-gray-600 block mb-1.5">Time</label>
             <input type="time" value={time} onChange={e => setTime(e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm bg-white focus:border-indigo-500 focus:outline-none" />
           </div>
           <div>
-            <label className="text-xs font-bold text-gray-500 block mb-1.5">Duration</label>
+            <label className="text-sm font-bold text-gray-600 block mb-1.5">Duration</label>
             <div className="relative">
               <select value={duration} onChange={e => setDuration(e.target.value)}
                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm bg-white appearance-none focus:border-indigo-500 focus:outline-none">
@@ -83,15 +83,15 @@ export default function AddStudySession({ onBack, onSaved }: Props) {
           </div>
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 block mb-1.5">Notes <span className="font-normal text-gray-400">(Optional)</span></label>
+          <label className="text-sm font-bold text-gray-600 block mb-1.5">Notes <span className="font-normal text-gray-400">(Optional)</span></label>
           <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Review topics and practice questions..."
             rows={3} className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none resize-none" />
         </div>
         <button onClick={handleSave} disabled={saving}
-          className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition-all text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+          className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all text-sm disabled:opacity-50 flex items-center justify-center gap-2">
           {saving && <Loader2 className="w-4 h-4 animate-spin" />} Save Study Session
         </button>
-        <button onClick={onBack} className="w-full text-gray-500 font-semibold py-2 text-sm">Cancel</button>
+        <button onClick={onBack} className="w-full text-gray-500 border-2 rounded-lg border-red-200 font-semibold py-2 text-sm">Cancel</button>
       </div>
     </div>
   );
