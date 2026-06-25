@@ -1,31 +1,29 @@
 'use client';
 import { useState } from 'react';
 import { ChevronLeft, Clock, MapPin, BookOpen, Target, ArrowRight, Trash2, Edit2, CheckCircle2 } from 'lucide-react';
-import { CalEvent, getTypeBadge, getTypeIcon } from './shared';
+import { CalEvent, getTypeBadge, getTypeIcon, getTypeBgColor, formatEventDate } from './shared';
 
-interface Props { event: CalEvent; onBack: () => void; onEdit: () => void; }
+import { API_BASE, getToken } from '@/lib/api';
 
-export default function EventDetail({ event, onBack, onEdit }: Props) {
+interface Props { event: CalEvent; onBack: () => void; onEdit: () => void; onDeleted: () => void; }
+
+export default function EventDetail({ event, onBack, onEdit, onDeleted }: Props) {
   const [showDelete, setShowDelete] = useState(false);
-  const [deleted, setDeleted] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const badge = getTypeBadge(event.type);
 
-  // Delete success
-  if (deleted) {
-    return (
-      <div className="px-4 py-4 pb-24">
-        <div className="flex flex-col items-center justify-center py-16 gap-4">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-            <CheckCircle2 className="w-12 h-12 text-green-600" />
-          </div>
-          <h2 className="text-xl font-extrabold text-gray-900">Event Deleted Successfully!</h2>
-          <p className="text-sm text-gray-500 text-center">The event has been removed from your calendar and upcoming list.</p>
-          <button onClick={onBack}
-            className="mt-4 bg-indigo-600 text-white font-bold px-8 py-3 rounded-xl text-sm">Done</button>
-        </div>
-      </div>
-    );
-  }
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const token = getToken();
+      await fetch(`${API_BASE}/api/calendar/delete-event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: event.id, source: event.source || 'calendar' }),
+      });
+      onDeleted();
+    } catch {} finally { setDeleting(false); }
+  };
 
   return (
     <div className="px-4 py-4 pb-22">
@@ -41,7 +39,7 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
       </div>
 
       {/* Event Header Card */}
-      <div className={`${event.color} rounded-lg p-3 mb-4`}>
+      <div className={`${getTypeBgColor(event.type)} rounded-lg p-3 mb-4`}>
         <div className="flex items-center gap-3 ">
           <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-2xl">
             {getTypeIcon(event.type)}
@@ -59,7 +57,7 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
           <Clock className="w-5 h-5 text-indigo-500" />
           <div>
             <p className="text-[13px] text-gray-500">Date & Time</p>
-            <p className="text-sm font-bold text-gray-900">Tomorrow, May {event.date}, 2025</p>
+            <p className="text-sm font-bold text-gray-900">{formatEventDate(event.date)}</p>
             <p className="text-xs text-gray-500">{event.time}{event.endTime ? ` – ${event.endTime}` : ''}</p>
           </div>
         </div>
@@ -149,7 +147,7 @@ export default function EventDetail({ event, onBack, onEdit }: Props) {
             <div className="flex gap-3">
               <button onClick={() => setShowDelete(false)}
                 className="flex-1 border-2 border-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm">Cancel</button>
-              <button onClick={() => { setShowDelete(false); setDeleted(true); }}
+              <button onClick={() => { setShowDelete(false); handleDelete(); }}
                 className="flex-1 bg-red-600 text-white font-bold py-2.5 rounded-xl text-sm">Delete</button>
             </div>
           </div>
