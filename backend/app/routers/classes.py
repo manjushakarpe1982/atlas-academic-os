@@ -1653,3 +1653,81 @@ async def save_study_feedback(request: Request):
         return {"saved": bool(result.data), "feedback": feedback}
     except Exception as e:
         return {"saved": False, "error": str(e)}
+
+
+# ── POST /api/classes/study/save-attempt ───────────────────────────────────
+
+@router.post("/study/save-attempt")
+async def save_study_attempt(request: Request):
+    """Save a study attempt with score and content for history tracking."""
+    user_id = _get_user(request)
+    body = await request.json()
+    topic_id = body.get("topic_id", "")
+    class_id = body.get("class_id", "")
+    material_type = body.get("material_type", "")
+    content_json = body.get("content_json", {})
+    score = body.get("score", 0)
+    total = body.get("total", 0)
+
+    if not topic_id or not material_type:
+        raise HTTPException(400, "topic_id and material_type required")
+
+    try:
+        # Get next attempt number
+        existing = supabase.table("study_attempts") \
+            .select("attempt_number") \
+            .eq("user_id", user_id) \
+            .eq("topic_id", topic_id) \
+            .eq("material_type", material_type) \
+            .order("attempt_number", desc=True) \
+            .limit(1).execute()
+
+        next_num = 1
+        if existing.data:
+            next_num = existing.data[0]["attempt_number"] + 1
+
+        result = supabase.table("study_attempts").insert({
+            "user_id": user_id,
+            "topic_id": topic_id,
+            "class_id": class_id,
+            "material_type": material_type,
+            "attempt_number": next_num,
+            "content_json": content_json,
+            "score": score,
+            "total": total,
+        }).execute()
+
+        return {"success": True, "attempt_number": next_num}
+    except Exception as e:
+        print(f"[SAVE ATTEMPT] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── GET /api/classes/study/attempts/{topic_id}/{material_type} ─────────────
+
+@router.get("/study/attempts/{topic_id}/{material_type}")
+async def get_study_attempts(topic_id: str, material_type: str, request: Request):
+    """Get all attempts for a topic and material type."""
+    user_id = _get_user(request)
+
+    try:
+        result = supabase.table("study_attempts") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .eq("topic_id", topic_id) \
+            .eq("material_type", material_type) \
+            .order("attempt_number", desc=True) \
+            .execute()
+
+        attempts = result.data or []
+        best_score = max((a["score"] for a in attempts), default=0)
+        best_pct = max((round(a["score"] / a["total"] * 100) if a["total"] > 0 else 0 for a in attempts), default=0)
+
+        return {
+            "attempts": attempts,
+            "total_attempts": len(attempts),
+            "best_score": best_score,
+            "best_percentage": best_pct,
+        }
+    except Exception as e:
+        return {"attempts": [], "total_attempts": 0, "error": str(e)}

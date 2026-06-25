@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, AlertTriangle, CheckCircle2, XCircle, Loader2, Sparkles, RefreshCw, Clock, Target } from 'lucide-react';
+import { ChevronLeft, AlertTriangle, CheckCircle2, XCircle, Loader2, Sparkles, RefreshCw, Clock, Target, TrendingUp } from 'lucide-react';
 import { API_BASE, getToken } from '@/lib/api';
 import { TopicItem } from './shared';
+import AttemptHistory from './AttemptHistory';
 
 interface Question { id: number; question: string; options: string[]; correctIndex: number; explanation: string; }
 interface WeakArea { id: number; name: string; confidence: number; description: string; questions: Question[]; }
@@ -18,6 +19,25 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cached, setCached] = useState(false);
+  const [checkingAttempts, setCheckingAttempts] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+  const [userAnswers, setUserAnswers] = useState<number[]>([]);
+
+  // Check for existing attempts on mount
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/api/classes/study/attempts/${topic.id}/targeted`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const d = await res.json();
+        if (d.attempts && d.attempts.length > 0) { setShowHistory(true); }
+      } catch {}
+      finally { setCheckingAttempts(false); }
+    };
+    check();
+  }, [topic.id]);
   const [difficulty, setDifficulty] = useState<'easy'|'medium'|'hard'>('medium');
 
   // Flatten questions from all weak areas
@@ -29,6 +49,34 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
   const [showAnswer, setShowAnswer] = useState(false);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [attempts, setAttempts] = useState<any[]>([]);
+  const [attemptSaved, setAttemptSaved] = useState(false);
+
+  // Save attempt when finished
+  useEffect(() => {
+    if (!finished || attemptSaved || !data) return;
+    setAttemptSaved(true);
+    const save = async () => {
+      try {
+        const token = getToken();
+        const allQs = data.weakAreas.flatMap((wa: any) => wa.questions);
+        await fetch(`${API_BASE}/api/classes/study/save-attempt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            topic_id: topic.id, class_id: classId, material_type: 'targeted',
+            content_json: { questions: allQs, userAnswers }, score, total: allQs.length,
+          }),
+        });
+        const res = await fetch(`${API_BASE}/api/classes/study/attempts/${topic.id}/targeted`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const d = await res.json();
+        setAttempts(d.attempts || []);
+      } catch {}
+    };
+    save();
+  }, [finished]);
 
   const fetchTargeted = async (regenerate = false, diff = difficulty) => {
     setLoading(true); setError('');
@@ -79,6 +127,38 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
   const changeDifficulty = (d: 'easy'|'medium'|'hard') => { setDifficulty(d); fetchTargeted(true, d); };
 
   // Loading
+  if (checkingAttempts) {
+    return (
+      <div className="px-4 py-4 pb-24">
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
+          <h1 className="text-base font-extrabold text-gray-900">Targeted Practice</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (showHistory) {
+    return (
+      <AttemptHistory
+        topicId={topic.id} topicTitle={topic.title} classId={classId} className={className}
+        materialType="targeted" onBack={onBack}
+        onStartNew={(regenerate: boolean) => { setShowHistory(false); if (regenerate) fetchTargeted(true); }}
+        onRetake={(content: any) => {
+          const qs = content?.questions || content || [];
+          const weakAreas = [{ area: topic.title, confidence: 0, questions: qs }];
+          setData({ weakAreas });
+          setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false); setAttemptSaved(false); setUserAnswers([]);
+          setLoading(false);
+          setShowHistory(false);
+        }}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <div className="px-4 py-4 pb-24">
@@ -162,16 +242,45 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
             </div>
           )}
         </div>
+        {/* Attempt History */}
+        {attempts.length > 0 && (
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="w-4 h-4 text-indigo-600" />
+              <h3 className="text-sm font-extrabold text-gray-900">Attempt History</h3>
+            </div>
+            <div className="space-y-2">
+              {attempts.map((a: any) => {
+                const aPct = a.total > 0 ? Math.round(a.score / a.total * 100) : 0;
+                const isLatest = a.attempt_number === attempts[0]?.attempt_number;
+                return (
+                  <div key={a.id} className={`rounded-xl border p-3 flex items-center gap-3 ${isLatest ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-100'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold ${isLatest ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}`}>{a.attempt_number}</div>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-gray-900">Attempt #{a.attempt_number} {isLatest && <span className="text-indigo-600">\u00b7 Latest</span>}</p>
+                      <p className="text-[10px] text-gray-400">{new Date(a.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-sm font-extrabold ${aPct >= 70 ? 'text-green-600' : aPct >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{aPct}%</p>
+                      <p className="text-[10px] text-gray-400">{a.score}/{a.total}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-3 mt-4">
-          <button onClick={() => { setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false); }}
+          <button onClick={() => { setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false); setAttemptSaved(false); }}
             className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-lg hover:bg-indigo-700 transition-all text-sm">
             Retake Practice
           </button>
-          <button onClick={() => fetchTargeted(true)}
+          <button onClick={() => { fetchTargeted(true); setAttemptSaved(false); }}
             className="w-full bg-violet-100 border border-violet-200 text-violet-600 font-bold py-3 rounded-lg hover:bg-indigo-50 transition-all text-sm">
             Generate New Practice
           </button>
-          <button onClick={onDone} className="w-full border border-indigo-200 text-indigo-600  rounded-lg  font-bold py-2.5 text-sm">Done</button>
+          <button onClick={onDone} className="w-full border border-indigo-200 text-indigo-600 rounded-lg font-bold py-2.5 text-sm">Done</button>
         </div>
       </div>
     );
@@ -180,7 +289,7 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
   // Questions
   const q = allQuestions[qIndex];
   const isCorrect = selected === q.correctIndex;
-  const handleSelect = (i: number) => { if (!showAnswer) { setSelected(i); setShowAnswer(true); if (i === q.correctIndex) setScore(score + 1); } };
+  const handleSelect = (i: number) => { if (!showAnswer) { setSelected(i); setShowAnswer(true); if (i === q.correctIndex) setScore(score + 1); setUserAnswers(prev => { const copy = [...prev]; copy[qIndex] = i; return copy; }); } };
   const next = () => {
     if (qIndex < total - 1) { setQIndex(qIndex + 1); setSelected(null); setShowAnswer(false); }
     else { setFinished(true); }
