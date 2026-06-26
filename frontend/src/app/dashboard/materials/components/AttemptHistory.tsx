@@ -119,7 +119,7 @@ export default function AttemptHistory({ topicId, topicTitle, classId, className
           const completedRetakes = g.retakes.filter(r => !isIncomplete(r));
 
           return (
-            <div key={g.attempt_number} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+            <div key={g.attempt_number} className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               {/* Header */}
               <div className="flex items-center gap-3 mb-1">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-extrabold ${
