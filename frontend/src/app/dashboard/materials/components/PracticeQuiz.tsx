@@ -27,6 +27,7 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
   const [checkingAttempts, setCheckingAttempts] = useState(true);
   const [hasAttempts, setHasAttempts] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [retakeOfAttempt, setRetakeOfAttempt] = useState<number | null>(null);
   const skipFetchRef = useRef(false);
 
   // Check for existing attempts on mount
@@ -84,7 +85,7 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
           body: JSON.stringify({
             topic_id: topic.id, class_id: classId, material_type: 'quiz',
             content_json: { questions: data.questions, userAnswers },
-            score, total: data.questions.length,
+            score, total: data.questions.length, is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
           }),
         });
       } catch {}
@@ -114,12 +115,13 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
         topicId={topic.id} topicTitle={topic.title} classId={classId} className={className}
         materialType="quiz"
         onBack={onBack}
-        onStartNew={(regenerate: boolean) => { setShowHistory(false); setData(null); if (regenerate) { setLoading(true); setTimeout(() => fetchQuiz(true), 100); } }}
-        onRetake={(content: any) => {
+        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); setData(null); setLoading(true); setTimeout(() => fetchQuiz(true), 100); }}
+        onRetake={(content: any, attemptNumber: number) => {
           const qs = content?.questions || content || [];
           skipFetchRef.current = true;
           setData({ title: topic.title, totalQuestions: qs.length, questions: qs });
           setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false); setUserAnswers([]);
+          setRetakeOfAttempt(attemptNumber);
           setLoading(false);
           setShowHistory(false);
         }}
@@ -203,14 +205,14 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
         </div>
         <div className="space-y-3 mt-4">
           <button onClick={() => { setShowHistory(true); setFinished(false); }}
-            className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all text-sm">
-            View All Attempts
+            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all text-sm">
+            Review Attempt History
           </button>
-          <button onClick={() => { setData(null); fetchQuiz(true); }}
-            className="w-full bg-violet-100 border border-violet-200 text-indigo-600 font-bold py-2.5 rounded-lg text-sm">
-            Generate New Quiz
+          <button onClick={() => { setData(null); setRetakeOfAttempt(null); fetchQuiz(true); }}
+            className="w-full border-2 border-indigo-200 text-indigo-600 font-bold py-2.5 rounded-xl hover:bg-indigo-50 transition-all text-sm">
+            Regenerate
           </button>
-          <button onClick={onDone} className="w-full border border-indigo-200 text-indigo-600 rounded-lg font-bold py-2.5 text-sm">Done</button>
+          <button onClick={onDone} className="w-full border border-gray-200 text-gray-600 rounded-xl font-bold py-2.5 text-sm hover:bg-gray-50">Done</button>
         </div>
       </div>
     );

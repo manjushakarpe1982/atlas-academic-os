@@ -48,6 +48,7 @@ export default function FlashcardsView({
   const [cached, setCached] = useState(false);
   const [checkingAttempts, setCheckingAttempts] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+  const [retakeOfAttempt, setRetakeOfAttempt] = useState<number | null>(null);
 
   // Check for existing attempts on mount
   useEffect(() => {
@@ -85,7 +86,7 @@ export default function FlashcardsView({
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             topic_id: topic.id, class_id: classId, material_type: 'flashcards',
-            content_json: data.cards, score: known.size, total: data.cards.length,
+            content_json: data.cards, score: known.size, total: data.cards.length, is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
           }),
         });
         const res = await fetch(`${API_BASE}/api/classes/study/attempts/${topic.id}/flashcards`, {
@@ -200,11 +201,12 @@ export default function FlashcardsView({
       <AttemptHistory
         topicId={topic.id} topicTitle={topic.title} classId={classId} className={className}
         materialType="flashcards" onBack={onBack}
-        onStartNew={(regenerate: boolean) => { setShowHistory(false); if (regenerate) fetchFlashcards(true); }}
-        onRetake={(content: any) => {
+        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); fetchFlashcards(true); }}
+        onRetake={(content: any, attemptNumber: number) => {
           const cards = content?.cards || content || [];
-          setData({ title: topic.title, cards });
+          setData({ title: topic.title, totalCards: cards.length, cards });
           setIndex(0); setFlipped(false); setKnown(new Set()); setReview(new Set()); setFinished(false); setAttemptSaved(false);
+          setRetakeOfAttempt(attemptNumber);
           setLoading(false);
           setShowHistory(false);
         }}
@@ -331,15 +333,15 @@ export default function FlashcardsView({
         )}
 
         <div className="space-y-3 mt-4">
-          <button onClick={() => { setIndex(0); setFlipped(false); setKnown(new Set()); setReview(new Set()); setFinished(false); setAttemptSaved(false); }}
+          <button onClick={() => { setShowHistory(true); setFinished(false); }}
             className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all text-sm">
-            Practice Again
+            Review Attempt History
           </button>
-          <button onClick={() => { fetchFlashcards(true); setAttemptSaved(false); }}
+          <button onClick={() => { fetchFlashcards(true); setAttemptSaved(false); setRetakeOfAttempt(null); }}
             className="w-full border-2 border-indigo-200 text-indigo-600 font-bold py-2.5 rounded-xl hover:bg-indigo-50 transition-all text-sm">
-            Regenerate Flashcards
+            Regenerate
           </button>
-          <button onClick={onDone} className="w-full text-gray-500 font-semibold py-2 text-sm">Done</button>
+          <button onClick={onDone} className="w-full border border-gray-200 text-gray-600 rounded-xl font-bold py-2.5 text-sm hover:bg-gray-50">Done</button>
         </div>
       </div>
     );

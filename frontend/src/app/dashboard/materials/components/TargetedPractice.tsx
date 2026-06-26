@@ -21,6 +21,7 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
   const [cached, setCached] = useState(false);
   const [checkingAttempts, setCheckingAttempts] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+  const [retakeOfAttempt, setRetakeOfAttempt] = useState<number | null>(null);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
 
   // Check for existing attempts on mount
@@ -65,7 +66,7 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             topic_id: topic.id, class_id: classId, material_type: 'targeted',
-            content_json: { questions: allQs, userAnswers }, score, total: allQs.length,
+            content_json: { questions: allQs, userAnswers }, score, total: allQs.length, is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
           }),
         });
         const res = await fetch(`${API_BASE}/api/classes/study/attempts/${topic.id}/targeted`, {
@@ -146,12 +147,13 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
       <AttemptHistory
         topicId={topic.id} topicTitle={topic.title} classId={classId} className={className}
         materialType="targeted" onBack={onBack}
-        onStartNew={(regenerate: boolean) => { setShowHistory(false); if (regenerate) fetchTargeted(true); }}
-        onRetake={(content: any) => {
+        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); fetchTargeted(true); }}
+        onRetake={(content: any, attemptNumber: number) => {
           const qs = content?.questions || content || [];
-          const weakAreas = [{ area: topic.title, confidence: 0, questions: qs }];
-          setData({ weakAreas });
+          const weakAreas = [{ id: 1, name: topic.title, confidence: 0, description: '', questions: qs }];
+          setData({ title: topic.title, difficulty: 'medium', weakAreas, totalQuestions: qs.length, studyAdvice: '' });
           setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false); setAttemptSaved(false); setUserAnswers([]);
+          setRetakeOfAttempt(attemptNumber);
           setLoading(false);
           setShowHistory(false);
         }}
@@ -272,15 +274,15 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
         )}
 
         <div className="space-y-3 mt-4">
-          <button onClick={() => { setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false); setAttemptSaved(false); }}
-            className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-lg hover:bg-indigo-700 transition-all text-sm">
-            Retake Practice
+          <button onClick={() => { setShowHistory(true); setFinished(false); }}
+            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all text-sm">
+            Review Attempt History
           </button>
-          <button onClick={() => { fetchTargeted(true); setAttemptSaved(false); }}
-            className="w-full bg-violet-100 border border-violet-200 text-violet-600 font-bold py-3 rounded-lg hover:bg-indigo-50 transition-all text-sm">
-            Generate New Practice
+          <button onClick={() => { fetchTargeted(true); setAttemptSaved(false); setRetakeOfAttempt(null); }}
+            className="w-full border-2 border-indigo-200 text-indigo-600 font-bold py-2.5 rounded-xl hover:bg-indigo-50 transition-all text-sm">
+            Regenerate
           </button>
-          <button onClick={onDone} className="w-full border border-indigo-200 text-indigo-600 rounded-lg font-bold py-2.5 text-sm">Done</button>
+          <button onClick={onDone} className="w-full border border-gray-200 text-gray-600 rounded-xl font-bold py-2.5 text-sm hover:bg-gray-50">Done</button>
         </div>
       </div>
     );

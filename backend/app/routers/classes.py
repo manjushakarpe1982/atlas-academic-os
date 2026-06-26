@@ -1659,7 +1659,10 @@ async def save_study_feedback(request: Request):
 
 @router.post("/study/save-attempt")
 async def save_study_attempt(request: Request):
-    """Save a study attempt with score and content for history tracking."""
+    """Save a study attempt with score and content for history tracking.
+    is_retake=true: same attempt_number, increment retake_number
+    is_retake=false: new attempt_number, retake_number=0
+    """
     user_id = _get_user(request)
     body = await request.json()
     topic_id = body.get("topic_id", "")
@@ -1668,36 +1671,48 @@ async def save_study_attempt(request: Request):
     content_json = body.get("content_json", {})
     score = body.get("score", 0)
     total = body.get("total", 0)
+    is_retake = body.get("is_retake", False)
+    retake_attempt = body.get("attempt_number", None)
 
     if not topic_id or not material_type:
         raise HTTPException(400, "topic_id and material_type required")
 
+    is_retake = body.get("is_retake", False)
+    parent_attempt = body.get("parent_attempt", None)
+
     try:
-        # Get next attempt number
-        existing = supabase.table("study_attempts") \
-            .select("attempt_number") \
-            .eq("user_id", user_id) \
-            .eq("topic_id", topic_id) \
-            .eq("material_type", material_type) \
-            .order("attempt_number", desc=True) \
-            .limit(1).execute()
-
-        next_num = 1
-        if existing.data:
-            next_num = existing.data[0]["attempt_number"] + 1
-
-        result = supabase.table("study_attempts").insert({
-            "user_id": user_id,
-            "topic_id": topic_id,
-            "class_id": class_id,
-            "material_type": material_type,
-            "attempt_number": next_num,
-            "content_json": content_json,
-            "score": score,
-            "total": total,
-        }).execute()
-
-        return {"success": True, "attempt_number": next_num}
+        if is_retake and parent_attempt:
+            # Re-Take: same attempt_number, next retake_number
+            existing_r = supabase.table("study_attempts") \
+                .select("retake_number") \
+                .eq("user_id", user_id).eq("topic_id", topic_id) \
+                .eq("material_type", material_type).eq("attempt_number", parent_attempt) \
+                .order("retake_number", desc=True).limit(1).execute()
+            next_r = (existing_r.data[0].get("retake_number", 0) + 1) if existing_r.data else 1
+            supabase.table("study_attempts").insert({
+                "user_id": user_id, "topic_id": topic_id, "class_id": class_id,
+                "material_type": material_type, "attempt_number": parent_attempt,
+                "retake_number": next_r, "content_json": content_json,
+                "score": score, "total": total,
+            }).execute()
+            print(f"[SAVE ATTEMPT] Saved retake #{next_r} of attempt #{parent_attempt}")
+            return {"success": True, "attempt_number": parent_attempt, "retake_number": next_r}
+        else:
+            # Regenerate: new attempt_number
+            existing = supabase.table("study_attempts") \
+                .select("attempt_number") \
+                .eq("user_id", user_id).eq("topic_id", topic_id) \
+                .eq("material_type", material_type) \
+                .order("attempt_number", desc=True).limit(1).execute()
+            next_num = (existing.data[0]["attempt_number"] + 1) if existing.data else 1
+            supabase.table("study_attempts").insert({
+                "user_id": user_id, "topic_id": topic_id, "class_id": class_id,
+                "material_type": material_type, "attempt_number": next_num,
+                "retake_number": 0, "content_json": content_json,
+                "score": score, "total": total,
+            }).execute()
+            print(f"[SAVE ATTEMPT] Saved new attempt #{next_num}")
+            return {"success": True, "attempt_number": next_num}
     except Exception as e:
         print(f"[SAVE ATTEMPT] ERROR: {e}")
         return {"success": False, "error": str(e)}
@@ -1707,7 +1722,7 @@ async def save_study_attempt(request: Request):
 
 @router.get("/study/attempts/{topic_id}/{material_type}")
 async def get_study_attempts(topic_id: str, material_type: str, request: Request):
-    """Get all attempts for a topic and material type."""
+    """Get all attempts as a simple flat list, sorted newest first."""
     user_id = _get_user(request)
 
     try:
@@ -1716,18 +1731,35 @@ async def get_study_attempts(topic_id: str, material_type: str, request: Request
             .eq("user_id", user_id) \
             .eq("topic_id", topic_id) \
             .eq("material_type", material_type) \
-            .order("attempt_number", desc=True) \
+            .order("attempt_number").order("retake_number") \
             .execute()
 
-        attempts = result.data or []
-        best_score = max((a["score"] for a in attempts), default=0)
-        best_pct = max((round(a["score"] / a["total"] * 100) if a["total"] > 0 else 0 for a in attempts), default=0)
+        all_rows = result.data or []
+        # Group by attempt_number
+        grouped: dict = {}
+        for row in all_rows:
+            an = row.get("attempt_number", 1)
+            if an not in grouped:
+                grouped[an] = []
+            grouped[an].append(row)
+
+        attempts = []
+        for an in sorted(grouped.keys()):
+            rows = sorted(grouped[an], key=lambda r: r.get("retake_number", 0))
+            attempts.append({
+                "attempt_number": an,
+                "original": rows[0],
+                "retakes": rows[1:],
+                "retake_count": len(rows) - 1,
+            })
+
+        best_pct = max((round(r["score"] / r["total"] * 100) if r["total"] > 0 else 0 for r in all_rows), default=0)
+        print(f"[GET ATTEMPTS] topic={topic_id} type={material_type} groups={len(attempts)} rows={len(all_rows)} best={best_pct}")
 
         return {
             "attempts": attempts,
             "total_attempts": len(attempts),
-            "best_score": best_score,
             "best_percentage": best_pct,
         }
     except Exception as e:
-        return {"attempts": [], "total_attempts": 0, "error": str(e)}
+        return {"attempts": [], "all_rows": [], "total_attempts": 0, "error": str(e)}

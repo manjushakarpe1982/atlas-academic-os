@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS study_attempts (
     class_id UUID NOT NULL,
     material_type TEXT NOT NULL,
     attempt_number INTEGER NOT NULL DEFAULT 1,
+    retake_number INTEGER NOT NULL DEFAULT 0,
     content_json JSONB NOT NULL,
     score INTEGER NOT NULL DEFAULT 0,
     total INTEGER NOT NULL DEFAULT 0,
