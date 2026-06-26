@@ -1129,6 +1129,9 @@ async def generate_study_summary(request: Request):
         )
 
         user_message = f"Generate a study summary for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        if regenerate:
+            import random
+            user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Create a COMPLETELY DIFFERENT summary with different key concepts, different examples, and different explanations. Variation seed: {random.randint(1000,9999)}"
         if topic_description:
             user_message += f"\n\nTopic description: {topic_description}"
 
@@ -1263,6 +1266,9 @@ async def generate_study_flashcards(request: Request):
         )
 
         user_message = f"Generate study flashcards for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        if regenerate:
+            import random
+            user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT flashcards covering different aspects. Use different questions and angles. Variation seed: {random.randint(1000,9999)}"
         if topic_description:
             user_message += f"\n\nTopic description: {topic_description}"
 
@@ -1397,6 +1403,9 @@ async def generate_study_quiz(request: Request):
         )
 
         user_message = f"Generate a practice quiz for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        if regenerate:
+            import random
+            user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT questions from any previous version. Use different angles, different examples, different scenarios. Variation seed: {random.randint(1000,9999)}"
         if topic_description:
             user_message += f"\n\nTopic description: {topic_description}"
 
@@ -1540,6 +1549,9 @@ async def generate_targeted_practice(request: Request):
         )
 
         user_message = f"Generate targeted practice for the topic \"{topic_title}\" in the class \"{class_name}\" at {difficulty} difficulty."
+        if regenerate:
+            import random
+            user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT questions focusing on different weak areas. Variation seed: {random.randint(1000,9999)}"
         if topic_description:
             user_message += f"\n\nTopic description: {topic_description}"
 
