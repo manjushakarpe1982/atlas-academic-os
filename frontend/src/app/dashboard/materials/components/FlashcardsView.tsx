@@ -598,13 +598,8 @@ export default function FlashcardsView({
         </button>
       </div>
 
-      {/* Regenerate */}
-      <button
-        onClick={() => fetchFlashcards(true)}
-        className="w-full flex items-center justify-center gap-2  mb-4 text-sm border border-indigo-500 rounded-lg font-semibold text-indigo-500 py-2  hover:text-indigo-600 transition-colors"
-      >
-        <RefreshCw className="w-3 h-3" /> Regenerate Flashcards
-      </button>
+
+     
     </div>
   );
 }

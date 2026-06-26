@@ -206,10 +206,10 @@ export default function AttemptHistory({ topicId, topicTitle, classId, className
 
       {/* Regenerate — disabled if any incomplete exists */}
       <button onClick={onRegenerate}
-        className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition-all text-sm flex items-center justify-center gap-2">
+        className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all text-base flex items-center justify-center gap-2">
         <RefreshCw className="w-4 h-4" /> Regenerate New Test
       </button>
-      <button onClick={onBack} className="w-full text-gray-500 font-semibold py-3 text-sm mt-2">Back</button>
+      <button onClick={onBack} className="w-full text-gray-500  font-semibold py-2.5 border-2 border-gray-200 rounded-lg text-base mt-2">Back</button>
     </div>
   );
 }
