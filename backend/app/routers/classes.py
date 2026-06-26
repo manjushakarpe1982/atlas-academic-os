@@ -1105,7 +1105,7 @@ async def generate_study_summary(request: Request):
             "- Prioritize accuracy — never fabricate facts, formulas, or definitions.\n"
             "- If information is missing or uncertain, say so instead of guessing.\n"
             "- Highlight key definitions, important facts, formulas, and concepts.\n"
-            "- Include 5-8 key concepts ordered from foundational to advanced.\n"
+            "- Include key concepts ordered from foundational to advanced. The number of concepts should match the topic depth.\n"
             "- Each definition should be concise (1-2 sentences) but complete enough to study from.\n"
             "- The 'remember' field should contain the single most critical takeaway.\n"
             "- The 'connections' field should link this topic to related concepts in the same course.\n"
@@ -1128,7 +1128,7 @@ async def generate_study_summary(request: Request):
             "}"
         )
 
-        user_message = f"Generate a study summary for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        user_message = f"Generate a study summary for the topic \"{topic_title}\" in the class \"{class_name}\". Include as many key concepts as the topic requires."
         if regenerate:
             import random
             user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Create a COMPLETELY DIFFERENT summary with different key concepts, different examples, and different explanations. Variation seed: {random.randint(1000,9999)}"
@@ -1138,6 +1138,7 @@ async def generate_study_summary(request: Request):
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=1500,
+            temperature=1.0,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}]
         )
@@ -1248,7 +1249,7 @@ async def generate_study_flashcards(request: Request):
             "- Answers should be short and easy to memorize (1-2 sentences max).\n"
             "- Avoid duplicate flashcards.\n"
             "- Use simple, student-friendly language.\n"
-            "- Generate between 10 and 20 flashcards depending on topic complexity.\n"
+            "- Generate flashcards based on topic complexity. More complex topics need more cards.\n"
             "- Do not invent information not present in the source material.\n"
             "- If information is uncertain, skip it rather than guessing.\n"
             "- Each flashcard should test ONE concept only.\n"
@@ -1265,7 +1266,7 @@ async def generate_study_flashcards(request: Request):
             "}"
         )
 
-        user_message = f"Generate study flashcards for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        user_message = f"Generate study flashcards for the topic \"{topic_title}\" in the class \"{class_name}\". Generate as many flashcards as needed to cover all important concepts."
         if regenerate:
             import random
             user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT flashcards covering different aspects. Use different questions and angles. Variation seed: {random.randint(1000,9999)}"
@@ -1275,6 +1276,7 @@ async def generate_study_flashcards(request: Request):
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=2000,
+            temperature=1.0,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}]
         )
@@ -1379,7 +1381,7 @@ async def generate_study_quiz(request: Request):
             "- Include a brief explanation for the correct answer.\n"
             "- Avoid duplicate questions.\n"
             "- Use simple, student-friendly language.\n"
-            "- Generate between 10 and 15 questions depending on topic complexity.\n"
+            "- Generate questions based on topic complexity. More complex topics need more questions.\n"
             "- Do not invent information that is not present in the source material.\n"
             "- Distractors (wrong options) should be plausible but clearly wrong.\n"
             "- Avoid 'all of the above' or 'none of the above' options.\n"
@@ -1402,7 +1404,7 @@ async def generate_study_quiz(request: Request):
             "}"
         )
 
-        user_message = f"Generate a practice quiz for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        user_message = f"Generate practice quiz questions for the topic \"{topic_title}\" in the class \"{class_name}\". Generate as many questions as needed to properly cover the topic."
         if regenerate:
             import random
             user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT questions from any previous version. Use different angles, different examples, different scenarios. Variation seed: {random.randint(1000,9999)}"
@@ -1412,6 +1414,7 @@ async def generate_study_quiz(request: Request):
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=8192,
+            temperature=1.0,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}]
         )
@@ -1548,7 +1551,7 @@ async def generate_targeted_practice(request: Request):
             "}"
         )
 
-        user_message = f"Generate targeted practice for the topic \"{topic_title}\" in the class \"{class_name}\" at {difficulty} difficulty."
+        user_message = f"Generate targeted practice questions for the topic \"{topic_title}\" in the class \"{class_name}\" at {difficulty} difficulty. Generate as many questions as needed based on topic complexity."
         if regenerate:
             import random
             user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT questions focusing on different weak areas. Variation seed: {random.randint(1000,9999)}"
@@ -1558,6 +1561,7 @@ async def generate_targeted_practice(request: Request):
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=8192,
+            temperature=1.0,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}]
         )
