@@ -1,9 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Eye, RefreshCw, Loader2, CheckCircle2, XCircle, Download, RotateCcw } from 'lucide-react';
+import { ChevronLeft, Eye, RefreshCw, Loader2, CheckCircle2, XCircle, Download, RotateCcw, Play } from 'lucide-react';
 import { API_BASE, getToken } from '@/lib/api';
 
-interface Row { id: string; attempt_number: number; retake_number?: number; score: number; total: number; content_json: any; completed_at: string; }
+interface Row {
+  id: string; attempt_number: number; retake_number?: number;
+  score: number; total: number; content_json: any; completed_at: string;
+  status?: string; current_index?: number; answers_so_far?: number[]; score_so_far?: number;
+}
 interface Group { attempt_number: number; original: Row; retakes: Row[]; retake_count: number; }
 
 interface Props {
@@ -12,13 +16,14 @@ interface Props {
   onBack: () => void;
   onRegenerate: () => void;
   onRetake: (content: any, attemptNumber: number) => void;
+  onResume: (row: Row) => void;
 }
 
-export default function AttemptHistory({ topicId, topicTitle, classId, className, materialType, onBack, onRegenerate, onRetake }: Props) {
+export default function AttemptHistory({ topicId, topicTitle, classId, className, materialType, onBack, onRegenerate, onRetake, onResume }: Props) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewGroup, setPreviewGroup] = useState<Group | null>(null);
-  const [previewPill, setPreviewPill] = useState(0); // 0=original, 1=retake1, etc.
+  const [previewPill, setPreviewPill] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -38,9 +43,12 @@ export default function AttemptHistory({ topicId, topicTitle, classId, className
   const pctColor = (p: number) => p >= 70 ? 'text-green-600' : p >= 50 ? 'text-amber-600' : 'text-red-600';
   const dateStr = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+  const isIncomplete = (r: Row) => r.status === 'incomplete' || (r.status !== 'completed' && r.score === 0 && (r.current_index || 0) > 0);
+
   // ── PREVIEW with pills ──
   if (previewGroup) {
-    const allRows = [previewGroup.original, ...previewGroup.retakes];
+    const completedRows = [previewGroup.original, ...previewGroup.retakes].filter(r => r.status === 'completed' || (!r.status && r.score > 0));
+    const allRows = completedRows.length > 0 ? completedRows : [previewGroup.original];
     const activeRow = allRows[previewPill] || allRows[0];
     const questions = activeRow.content_json?.questions || activeRow.content_json || [];
     const userAnswers = activeRow.content_json?.userAnswers || [];
@@ -58,29 +66,22 @@ export default function AttemptHistory({ topicId, topicTitle, classId, className
 
     return (
       <div className="px-4 py-4 pb-24">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => { setPreviewGroup(null); setPreviewPill(0); }}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
           <div className="flex-1">
             <h1 className="text-base font-extrabold text-gray-900">Attempt #{previewGroup.attempt_number}</h1>
-            <p className="text-xs text-gray-400">Score: {activeRow.score}/{activeRow.total} ({pct}%) · {dateStr(activeRow.completed_at)}</p>
+            <p className="text-xs text-gray-400">Score: {activeRow.score}/{activeRow.total} ({pct}%)</p>
           </div>
           <button onClick={downloadDoc} className="flex items-center gap-1.5 bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-200"><Download className="w-3.5 h-3.5" /> DOC</button>
         </div>
-
-        {/* Pills */}
         <div className="flex gap-1.5 overflow-x-auto mb-4 pb-1" style={{ scrollbarWidth: 'none' }}>
           {allRows.map((r, i) => (
             <button key={r.id} onClick={() => setPreviewPill(i)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all ${
-                previewPill === i ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 border border-gray-200'
-              }`}>
-              {i === 0 ? `Original · ${pctOf(r)}%` : `Retake ${i} · ${pctOf(r)}%`}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all ${previewPill === i ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}>
+              {(r.retake_number || 0) === 0 ? `Original · ${pctOf(r)}%` : `Retake ${r.retake_number} · ${pctOf(r)}%`}
             </button>
           ))}
         </div>
-
-        {/* Questions */}
         {materialType === 'flashcards' ? (
           <div className="space-y-3">{(Array.isArray(questions)?questions:[]).map((card:any,i:number)=>(<div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><p className="text-xs font-bold text-gray-400 mb-1">Card {i+1}</p><p className="text-sm font-bold text-gray-900 mb-2">{card.question||card.front}</p><div className="bg-indigo-50 rounded-lg p-3"><p className="text-xs font-bold text-indigo-600 mb-0.5">Answer</p><p className="text-sm text-gray-800">{card.answer||card.back}</p></div></div>))}</div>
         ) : (
@@ -108,42 +109,102 @@ export default function AttemptHistory({ topicId, topicTitle, classId, className
         <div><h1 className="text-base font-extrabold text-gray-900">{label}</h1><p className="text-xs text-gray-400">{topicTitle}</p></div>
       </div>
 
-      {/* Attempt Cards */}
       <div className="space-y-3 mb-5">
         {groups.map(g => {
+          const origComplete = !isIncomplete(g.original);
           const pct = pctOf(g.original);
+
+          // Check if any retake is incomplete
+          const incompleteRetakes = g.retakes.filter(r => isIncomplete(r));
+          const completedRetakes = g.retakes.filter(r => !isIncomplete(r));
+
           return (
             <div key={g.attempt_number} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+              {/* Header */}
               <div className="flex items-center gap-3 mb-1">
-                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-sm font-extrabold text-indigo-600">#{g.attempt_number}</div>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-extrabold ${
+                  origComplete ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600'
+                }`}>#{g.attempt_number}</div>
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-gray-900">Attempt #{g.attempt_number}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-gray-900">Attempt #{g.attempt_number}</p>
+                    {origComplete ? (
+                      <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">✅ Completed</span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">🟡 Incomplete</span>
+                    )}
+                  </div>
                   <p className="text-[10px] text-gray-400">{dateStr(g.original.completed_at)}</p>
                 </div>
-                <div className="text-right">
-                  <p className={`text-lg font-extrabold ${pctColor(pct)}`}>{pct}%</p>
-                  <p className="text-[10px] text-gray-400">{g.original.score}/{g.original.total}</p>
+                {origComplete && (
+                  <div className="text-right">
+                    <p className={`text-lg font-extrabold ${pctColor(pct)}`}>{pct}%</p>
+                    <p className="text-[10px] text-gray-400">{g.original.score}/{g.original.total}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Incomplete original — compact */}
+              {!origComplete && (
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-[10px] text-amber-600 font-semibold">{g.original.current_index || 0}/{g.original.total} answered</p>
+                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-500 rounded-full" style={{ width: `${g.original.total > 0 ? ((g.original.current_index || 0) / g.original.total * 100) : 0}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={() => onResume(g.original)}
+                    className="flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-100 px-3 py-1.5 rounded-lg hover:bg-amber-200">
+                    <Play className="w-3 h-3" /> Resume
+                  </button>
                 </div>
-              </div>
-              {g.retake_count > 0 && (
-                <p className="text-[11px] text-indigo-600 font-semibold ml-13 mb-2 ml-[52px]">{g.retake_count} retake{g.retake_count > 1 ? 's' : ''}</p>
               )}
-              <div className="flex gap-2 mt-2">
-                <button onClick={() => { setPreviewGroup(g); setPreviewPill(0); }}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-100 py-2.5 rounded-lg hover:bg-indigo-200">
-                  <Eye className="w-3.5 h-3.5" /> Preview
-                </button>
-                <button onClick={() => onRetake(g.original.content_json, g.attempt_number)}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-green-600 bg-green-100 py-2.5 rounded-lg hover:bg-green-200">
-                  <RotateCcw className="w-3.5 h-3.5" /> Re-Take
-                </button>
-              </div>
+
+              {/* Retake count */}
+              {origComplete && completedRetakes.length > 0 && (
+                <p className="text-[11px] text-indigo-600 font-semibold ml-[52px] mb-1">{completedRetakes.length} retake{completedRetakes.length > 1 ? 's' : ''}</p>
+              )}
+
+              {/* Incomplete retakes — compact */}
+              {origComplete && incompleteRetakes.length > 0 && (
+                <div className="space-y-1.5 mt-2">
+                  {incompleteRetakes.map(ir => (
+                    <div key={ir.id} className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      <span className="text-[9px] font-bold text-amber-600">🟡 Retake {ir.retake_number || '?'}</span>
+                      <span className="text-[10px] text-gray-500">{ir.current_index || 0}/{ir.total}</span>
+                      <div className="flex-1 h-1.5 bg-amber-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-500 rounded-full" style={{ width: `${ir.total > 0 ? ((ir.current_index || 0) / ir.total * 100) : 0}%` }} />
+                      </div>
+                      <button onClick={() => onResume(ir)}
+                        className="flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-lg hover:bg-amber-200">
+                        <Play className="w-3 h-3" /> Resume
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Buttons for completed attempts */}
+              {origComplete && (
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => { setPreviewGroup(g); setPreviewPill(0); }}
+                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-100 py-2.5 rounded-lg hover:bg-indigo-200">
+                    <Eye className="w-3.5 h-3.5" /> Preview
+                  </button>
+                    <button onClick={() => onRetake(g.original.content_json, g.attempt_number)}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-green-600 bg-green-100 py-2.5 rounded-lg hover:bg-green-200">
+                      <RotateCcw className="w-3.5 h-3.5" /> Re-Take
+                    </button>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      {/* Regenerate */}
+      {/* Regenerate — disabled if any incomplete exists */}
       <button onClick={onRegenerate}
         className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition-all text-sm flex items-center justify-center gap-2">
         <RefreshCw className="w-4 h-4" /> Regenerate New Test

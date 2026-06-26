@@ -1779,3 +1779,111 @@ async def get_study_attempts(topic_id: str, material_type: str, request: Request
         }
     except Exception as e:
         return {"attempts": [], "all_rows": [], "total_attempts": 0, "error": str(e)}
+
+
+# ── POST /api/classes/study/start-attempt ──────────────────────────────────
+
+@router.post("/study/start-attempt")
+async def start_study_attempt(request: Request):
+    """Create an incomplete attempt when a test starts."""
+    user_id = _get_user(request)
+    body = await request.json()
+    topic_id = body.get("topic_id", "")
+    class_id = body.get("class_id", "")
+    material_type = body.get("material_type", "")
+    content_json = body.get("content_json", {})
+    is_retake = body.get("is_retake", False)
+    parent_attempt = body.get("parent_attempt", None)
+    total = body.get("total", 0)
+
+    if not topic_id or not material_type:
+        raise HTTPException(400, "topic_id and material_type required")
+
+    try:
+        if is_retake and parent_attempt:
+            # Always create new retake
+            pass
+
+        # New attempts (Regenerate) always create a new row
+        if is_retake and parent_attempt:
+            attempt_number = parent_attempt
+            existing_r = supabase.table("study_attempts") \
+                .select("retake_number") \
+                .eq("user_id", user_id).eq("topic_id", topic_id) \
+                .eq("material_type", material_type).eq("attempt_number", parent_attempt) \
+                .order("retake_number", desc=True).limit(1).execute()
+            retake_number = (existing_r.data[0].get("retake_number", 0) + 1) if existing_r.data else 1
+        else:
+            existing = supabase.table("study_attempts") \
+                .select("attempt_number") \
+                .eq("user_id", user_id).eq("topic_id", topic_id) \
+                .eq("material_type", material_type) \
+                .order("attempt_number", desc=True).limit(1).execute()
+            attempt_number = (existing.data[0]["attempt_number"] + 1) if existing.data else 1
+            retake_number = 0
+
+        result = supabase.table("study_attempts").insert({
+            "user_id": user_id, "topic_id": topic_id, "class_id": class_id,
+            "material_type": material_type, "attempt_number": attempt_number,
+            "retake_number": retake_number, "content_json": content_json,
+            "score": 0, "total": total, "status": "incomplete",
+            "current_index": 0, "answers_so_far": [], "score_so_far": 0,
+        }).execute()
+
+        return {"success": True, "id": result.data[0]["id"] if result.data else None, "existing": False}
+    except Exception as e:
+        print(f"[START ATTEMPT] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/study/update-progress ────────────────────────────────
+
+@router.post("/study/update-progress")
+async def update_study_progress(request: Request):
+    """Update progress after each answer."""
+    user_id = _get_user(request)
+    body = await request.json()
+    attempt_id = body.get("attempt_id", "")
+    current_index = body.get("current_index", 0)
+    answers_so_far = body.get("answers_so_far", [])
+    score_so_far = body.get("score_so_far", 0)
+
+    if not attempt_id:
+        raise HTTPException(400, "attempt_id required")
+
+    try:
+        supabase.table("study_attempts").update({
+            "current_index": current_index,
+            "answers_so_far": answers_so_far,
+            "score_so_far": score_so_far,
+        }).eq("id", attempt_id).eq("user_id", user_id).execute()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/study/complete-attempt ───────────────────────────────
+
+@router.post("/study/complete-attempt")
+async def complete_study_attempt(request: Request):
+    """Mark an incomplete attempt as completed."""
+    user_id = _get_user(request)
+    body = await request.json()
+    attempt_id = body.get("attempt_id", "")
+    score = body.get("score", 0)
+    total = body.get("total", 0)
+    content_json = body.get("content_json", {})
+
+    if not attempt_id:
+        raise HTTPException(400, "attempt_id required")
+
+    try:
+        supabase.table("study_attempts").update({
+            "status": "completed",
+            "score": score,
+            "total": total,
+            "content_json": content_json,
+        }).eq("id", attempt_id).eq("user_id", user_id).execute()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}

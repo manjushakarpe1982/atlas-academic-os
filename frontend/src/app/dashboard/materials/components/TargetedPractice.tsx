@@ -52,31 +52,58 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
   const [finished, setFinished] = useState(false);
   const [attempts, setAttempts] = useState<any[]>([]);
   const [attemptSaved, setAttemptSaved] = useState(false);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
 
-  // Save attempt when finished
+  // Start attempt when data loads
   useEffect(() => {
-    if (!finished || attemptSaved || !data) return;
-    setAttemptSaved(true);
-    const save = async () => {
+    if (!data || attemptId || finished || showHistory || loading) return;
+    const startAttempt = async () => {
       try {
         const token = getToken();
         const allQs = data.weakAreas.flatMap((wa: any) => wa.questions);
-        await fetch(`${API_BASE}/api/classes/study/save-attempt`, {
+        const res = await fetch(`${API_BASE}/api/classes/study/start-attempt`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             topic_id: topic.id, class_id: classId, material_type: 'targeted',
-            content_json: { questions: allQs, userAnswers }, score, total: allQs.length, is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
+            content_json: { questions: allQs }, total: allQs.length,
+            is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
           }),
         });
-        const res = await fetch(`${API_BASE}/api/classes/study/attempts/${topic.id}/targeted`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
         const d = await res.json();
-        setAttempts(d.attempts || []);
+        if (d.id) setAttemptId(d.id);
       } catch {}
     };
-    save();
+    startAttempt();
+  }, [data, attemptId, finished, showHistory, loading, retakeOfAttempt]);
+
+  // Complete attempt when finished
+  useEffect(() => {
+    if (!finished || attemptSaved || !data) return;
+    setAttemptSaved(true);
+    const complete = async () => {
+      try {
+        const token = getToken();
+        const allQs = data.weakAreas.flatMap((wa: any) => wa.questions);
+        if (attemptId) {
+          await fetch(`${API_BASE}/api/classes/study/complete-attempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ attempt_id: attemptId, score, total: allQs.length, content_json: { questions: allQs, userAnswers } }),
+          });
+        } else {
+          await fetch(`${API_BASE}/api/classes/study/save-attempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              topic_id: topic.id, class_id: classId, material_type: 'targeted',
+              content_json: { questions: allQs, userAnswers }, score, total: allQs.length,
+            }),
+          });
+        }
+      } catch {}
+    };
+    complete();
   }, [finished]);
 
   const fetchTargeted = async (regenerate = false, diff = difficulty) => {
@@ -147,7 +174,16 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
       <AttemptHistory
         topicId={topic.id} topicTitle={topic.title} classId={classId} className={className}
         materialType="targeted" onBack={onBack}
-        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); fetchTargeted(true); }}
+        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); setAttemptId(null); fetchTargeted(true); }}
+        onResume={(row: any) => {
+          const qs = row.content_json?.questions || row.content_json || [];
+          const weakAreas = [{ id: 1, name: topic.title, confidence: 0, description: '', questions: qs }];
+          setData({ title: topic.title, difficulty: 'medium', weakAreas, totalQuestions: qs.length, studyAdvice: '' });
+          setQIndex(row.current_index || 0); setSelected(null); setShowAnswer(false);
+          setScore(row.score_so_far || 0); setFinished(false); setAttemptSaved(false);
+          setUserAnswers(row.answers_so_far || []);
+          setAttemptId(row.id); setLoading(false); setShowHistory(false);
+        }}
         onRetake={(content: any, attemptNumber: number) => {
           const qs = content?.questions || content || [];
           const weakAreas = [{ id: 1, name: topic.title, confidence: 0, description: '', questions: qs }];
@@ -291,7 +327,23 @@ export default function TargetedPractice({ className, classId, topic, onBack, on
   // Questions
   const q = allQuestions[qIndex];
   const isCorrect = selected === q.correctIndex;
-  const handleSelect = (i: number) => { if (!showAnswer) { setSelected(i); setShowAnswer(true); if (i === q.correctIndex) setScore(score + 1); setUserAnswers(prev => { const copy = [...prev]; copy[qIndex] = i; return copy; }); } };
+  const handleSelect = (i: number) => {
+    if (!showAnswer) {
+      setSelected(i); setShowAnswer(true);
+      const newScore = i === q.correctIndex ? score + 1 : score;
+      if (i === q.correctIndex) setScore(newScore);
+      const newAnswers = [...userAnswers]; newAnswers[qIndex] = i;
+      setUserAnswers(newAnswers);
+      if (attemptId) {
+        const token = getToken();
+        fetch(`${API_BASE}/api/classes/study/update-progress`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ attempt_id: attemptId, current_index: qIndex + 1, answers_so_far: newAnswers, score_so_far: newScore }),
+        }).catch(() => {});
+      }
+    }
+  };
   const next = () => {
     if (qIndex < total - 1) { setQIndex(qIndex + 1); setSelected(null); setShowAnswer(false); }
     else { setFinished(true); }

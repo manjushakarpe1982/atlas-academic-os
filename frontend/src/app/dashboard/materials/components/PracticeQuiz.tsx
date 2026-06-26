@@ -28,6 +28,7 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
   const [hasAttempts, setHasAttempts] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [retakeOfAttempt, setRetakeOfAttempt] = useState<number | null>(null);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
   const skipFetchRef = useRef(false);
 
   // Check for existing attempts on mount
@@ -67,30 +68,61 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
     } catch { setError('Network error'); }
     finally { setLoading(false); }
   };
-
   // Load quiz when not showing history
   useEffect(() => {
     if (!checkingAttempts && !showHistory && !data && !skipFetchRef.current) { fetchQuiz(); }
   }, [checkingAttempts, showHistory]);
 
-  // Save attempt when finished
+  // Start attempt when quiz data is ready (not from resume)
   useEffect(() => {
-    if (!finished || !data) return;
-    const save = async () => {
+    if (!data || attemptId || finished || showHistory || loading) return;
+    const startAttempt = async () => {
       try {
         const token = getToken();
-        await fetch(`${API_BASE}/api/classes/study/save-attempt`, {
+        const res = await fetch(`${API_BASE}/api/classes/study/start-attempt`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             topic_id: topic.id, class_id: classId, material_type: 'quiz',
-            content_json: { questions: data.questions, userAnswers },
-            score, total: data.questions.length, is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
+            content_json: { questions: data.questions }, total: data.questions.length,
+            is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
           }),
         });
+        const d = await res.json();
+        if (d.id) setAttemptId(d.id);
       } catch {}
     };
-    save();
+    startAttempt();
+  }, [data, attemptId, finished, showHistory, loading, retakeOfAttempt]);
+
+  // Complete attempt when finished
+  useEffect(() => {
+    if (!finished || !data) return;
+    const complete = async () => {
+      try {
+        const token = getToken();
+        if (attemptId) {
+          // Complete existing attempt
+          await fetch(`${API_BASE}/api/classes/study/complete-attempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ attempt_id: attemptId, score, total: data.questions.length, content_json: { questions: data.questions, userAnswers } }),
+          });
+        } else {
+          // Start + complete in one go (fallback)
+          await fetch(`${API_BASE}/api/classes/study/save-attempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              topic_id: topic.id, class_id: classId, material_type: 'quiz',
+              content_json: { questions: data.questions, userAnswers },
+              score, total: data.questions.length, is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
+            }),
+          });
+        }
+      } catch {}
+    };
+    complete();
   }, [finished]);
 
   // Checking attempts
@@ -115,15 +147,24 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
         topicId={topic.id} topicTitle={topic.title} classId={classId} className={className}
         materialType="quiz"
         onBack={onBack}
-        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); setData(null); setLoading(true); setTimeout(() => fetchQuiz(true), 100); }}
+        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); setAttemptId(null); setData(null); setLoading(true); setTimeout(() => fetchQuiz(true), 100); }}
+        onResume={(row: any) => {
+          const qs = row.content_json?.questions || row.content_json || [];
+          skipFetchRef.current = true;
+          setData({ title: topic.title, totalQuestions: qs.length, questions: qs });
+          setQIndex(row.current_index || 0); setSelected(null); setShowAnswer(false);
+          setScore(row.score_so_far || 0); setFinished(false);
+          setUserAnswers(row.answers_so_far || []);
+          setAttemptId(row.id);
+          setLoading(false); setShowHistory(false);
+        }}
         onRetake={(content: any, attemptNumber: number) => {
           const qs = content?.questions || content || [];
           skipFetchRef.current = true;
           setData({ title: topic.title, totalQuestions: qs.length, questions: qs });
           setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false); setUserAnswers([]);
-          setRetakeOfAttempt(attemptNumber);
-          setLoading(false);
-          setShowHistory(false);
+          setRetakeOfAttempt(attemptNumber); setAttemptId(null);
+          setLoading(false); setShowHistory(false);
         }}
       />
     );
@@ -224,8 +265,20 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
   const handleSelect = (i: number) => {
     if (!showAnswer) {
       setSelected(i); setShowAnswer(true);
-      if (i === q.correctIndex) setScore(score + 1);
-      setUserAnswers(prev => { const copy = [...prev]; copy[qIndex] = i; return copy; });
+      const newScore = i === q.correctIndex ? score + 1 : score;
+      if (i === q.correctIndex) setScore(newScore);
+      const newAnswers = [...userAnswers]; newAnswers[qIndex] = i;
+      setUserAnswers(newAnswers);
+
+      // Auto-save progress
+      if (attemptId) {
+        const token = getToken();
+        fetch(`${API_BASE}/api/classes/study/update-progress`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ attempt_id: attemptId, current_index: qIndex + 1, answers_so_far: newAnswers, score_so_far: newScore }),
+        }).catch(() => {});
+      }
     }
   };
   const next = () => {

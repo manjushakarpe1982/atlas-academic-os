@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronLeft,
   RotateCcw,
@@ -73,30 +73,58 @@ export default function FlashcardsView({
   const [finished, setFinished] = useState(false);
   const [attempts, setAttempts] = useState<any[]>([]);
   const [attemptSaved, setAttemptSaved] = useState(false);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const attemptIdRef = useRef<string | null>(null);
+  useEffect(() => { attemptIdRef.current = attemptId; }, [attemptId]);
 
-  // Save attempt when finished
+  // Start attempt when data loads (not from resume)
   useEffect(() => {
-    if (!finished || attemptSaved || !data) return;
-    setAttemptSaved(true);
-    const save = async () => {
+    if (!data || attemptId || attemptIdRef.current || finished || showHistory || loading) return;
+    const startAttempt = async () => {
       try {
         const token = getToken();
-        await fetch(`${API_BASE}/api/classes/study/save-attempt`, {
+        const res = await fetch(`${API_BASE}/api/classes/study/start-attempt`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             topic_id: topic.id, class_id: classId, material_type: 'flashcards',
-            content_json: data.cards, score: known.size, total: data.cards.length, is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
+            content_json: { cards: data.cards }, total: data.cards.length,
+            is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
           }),
         });
-        const res = await fetch(`${API_BASE}/api/classes/study/attempts/${topic.id}/flashcards`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
         const d = await res.json();
-        setAttempts(d.attempts || []);
+        if (d.id) setAttemptId(d.id);
       } catch {}
     };
-    save();
+    startAttempt();
+  }, [data, attemptId, finished, showHistory, loading, retakeOfAttempt]);
+
+  // Complete attempt when finished
+  useEffect(() => {
+    if (!finished || attemptSaved || !data) return;
+    setAttemptSaved(true);
+    const complete = async () => {
+      try {
+        const token = getToken();
+        if (attemptId) {
+          await fetch(`${API_BASE}/api/classes/study/complete-attempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ attempt_id: attemptId, score: known.size, total: data.cards.length, content_json: { cards: data.cards } }),
+          });
+        } else {
+          await fetch(`${API_BASE}/api/classes/study/save-attempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              topic_id: topic.id, class_id: classId, material_type: 'flashcards',
+              content_json: { cards: data.cards }, score: known.size, total: data.cards.length,
+            }),
+          });
+        }
+      } catch {}
+    };
+    complete();
   }, [finished]);
 
   const fetchFlashcards = async (regenerate = false) => {
@@ -201,14 +229,35 @@ export default function FlashcardsView({
       <AttemptHistory
         topicId={topic.id} topicTitle={topic.title} classId={classId} className={className}
         materialType="flashcards" onBack={onBack}
-        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); fetchFlashcards(true); }}
-        onRetake={(content: any, attemptNumber: number) => {
+        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); setAttemptId(null); attemptIdRef.current = null; fetchFlashcards(true); }}
+        onResume={(row: any) => {
+          const cards = row.content_json?.cards || row.content_json || [];
+          setData({ title: topic.title, totalCards: cards.length, cards });
+          setIndex(row.current_index || 0); setFlipped(false);
+          setKnown(new Set()); setReview(new Set()); setFinished(false); setAttemptSaved(false);
+          setAttemptId(row.id); attemptIdRef.current = row.id; setLoading(false); setShowHistory(false);
+        }}
+        onRetake={async (content: any, attemptNumber: number) => {
           const cards = content?.cards || content || [];
+          setRetakeOfAttempt(attemptNumber);
+          // Create incomplete row BEFORE showing UI
+          try {
+            const token = getToken();
+            const res = await fetch(`${API_BASE}/api/classes/study/start-attempt`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                topic_id: topic.id, class_id: classId, material_type: 'flashcards',
+                content_json: { cards }, total: cards.length,
+                is_retake: true, parent_attempt: attemptNumber,
+              }),
+            });
+            const d = await res.json();
+            if (d.id) { setAttemptId(d.id); attemptIdRef.current = d.id; }
+          } catch {}
           setData({ title: topic.title, totalCards: cards.length, cards });
           setIndex(0); setFlipped(false); setKnown(new Set()); setReview(new Set()); setFinished(false); setAttemptSaved(false);
-          setRetakeOfAttempt(attemptNumber);
-          setLoading(false);
-          setShowHistory(false);
+          setLoading(false); setShowHistory(false);
         }}
       />
     );
@@ -349,12 +398,41 @@ export default function FlashcardsView({
 
   const progress = Math.round(((known.size + review.size) / total) * 100);
 
+  const saveProgress = async (nextIndex: number, newKnownSize: number) => {
+    const token = getToken();
+    // If no attemptId yet, create one first
+    if (!attemptIdRef.current) {
+      try {
+        const res = await fetch(`${API_BASE}/api/classes/study/start-attempt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            topic_id: topic.id, class_id: classId, material_type: 'flashcards',
+            content_json: { cards: data?.cards || [] }, total: data?.cards?.length || 0,
+            is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
+          }),
+        });
+        const d = await res.json();
+        if (d.id) { setAttemptId(d.id); attemptIdRef.current = d.id; }
+      } catch {}
+    }
+    if (attemptIdRef.current) {
+      fetch(`${API_BASE}/api/classes/study/update-progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ attempt_id: attemptIdRef.current, current_index: nextIndex, answers_so_far: [], score_so_far: newKnownSize }),
+      }).catch(() => {});
+    }
+  };
   const handleKnow = () => {
-    setKnown(new Set(known).add(card.id));
+    const newKnown = new Set(known).add(card.id);
+    setKnown(newKnown);
+    saveProgress(index + 1, newKnown.size);
     next();
   };
   const handleReview = () => {
     setReview(new Set(review).add(card.id));
+    saveProgress(index + 1, known.size);
     next();
   };
   const next = () => {
