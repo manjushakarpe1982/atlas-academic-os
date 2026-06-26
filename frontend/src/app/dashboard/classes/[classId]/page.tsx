@@ -5,7 +5,7 @@ import { ArrowLeft, MoreVertical, Loader2, BookOpen } from 'lucide-react';
 import { api } from '@/lib/api';
 import OverviewTab from './components/OverviewTab';
 import GradesTab from './components/GradesTab';
-import TopicsTab from './components/TopicsTab';
+
 import AssignmentsTab from './components/AssignmentsTab';
 
 interface OverviewData {
@@ -22,7 +22,7 @@ function gradeColor(g: number | null): string {
   return 'text-red-600';
 }
 
-const TABS = ['Overview', 'Grades', 'Topics', 'Assignments'] as const;
+const TABS = ['Overview', 'Grades',  'Assignments'] as const;
 type Tab = typeof TABS[number];
 
 function PageContent() {
@@ -53,7 +53,6 @@ function PageContent() {
   const content: Record<Tab, React.ReactNode> = {
     Overview: <OverviewTab classId={classId} />,
     Grades: <GradesTab classId={classId} />,
-    Topics: <TopicsTab classId={classId} />,
     Assignments: <AssignmentsTab classId={classId} />,
   };
 
