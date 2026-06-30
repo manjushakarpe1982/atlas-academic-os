@@ -50,7 +50,7 @@ export default function AttemptHistory({ topicId, topicTitle, classId, className
     const completedRows = [previewGroup.original, ...previewGroup.retakes].filter(r => r.status === 'completed' || (!r.status && r.score > 0));
     const allRows = completedRows.length > 0 ? completedRows : [previewGroup.original];
     const activeRow = allRows[previewPill] || allRows[0];
-    const questions = activeRow.content_json?.questions || activeRow.content_json || [];
+    const questions = activeRow.content_json?.questions || activeRow.content_json?.cards || (Array.isArray(activeRow.content_json) ? activeRow.content_json : []);
     const userAnswers = activeRow.content_json?.userAnswers || [];
     const pct = pctOf(activeRow);
 
@@ -115,7 +115,7 @@ export default function AttemptHistory({ topicId, topicTitle, classId, className
           const pct = pctOf(g.original);
 
           // Check if any retake is incomplete
-          const incompleteRetakes = g.retakes.filter(r => isIncomplete(r));
+          const incompleteRetakes = g.retakes.filter(r => isIncomplete(r) && (r.current_index || 0) > 0);
           const completedRetakes = g.retakes.filter(r => !isIncomplete(r));
 
           return (
@@ -145,7 +145,7 @@ export default function AttemptHistory({ topicId, topicTitle, classId, className
               </div>
 
               {/* Incomplete original — compact */}
-              {!origComplete && (
+              {!origComplete && (g.original.current_index || 0) > 0 && (
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -209,7 +209,7 @@ export default function AttemptHistory({ topicId, topicTitle, classId, className
         className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all text-base flex items-center justify-center gap-2">
         <RefreshCw className="w-4 h-4" /> Regenerate New Test
       </button>
-      <button onClick={onBack} className="w-full text-gray-500  font-semibold py-2.5 border-2 border-gray-200 rounded-lg text-base mt-2">Back</button>
+      <button onClick={onBack} className="w-full text-gray-500 font-semibold py-2.5 text-base mt-2 rounded-lg hover:bg-gray-100">Back</button>
     </div>
   );
 }
