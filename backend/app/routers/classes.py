@@ -634,7 +634,7 @@ async def get_assignments(class_id: str, request: Request):
 
     # Fetch assessments for this class
     assess_res = supabase.table("assessments") \
-        .select("id, title, category, due_date") \
+        .select("id, title, category, due_date, date_note") \
         .eq("class_id", class_id).eq("user_id", user_id) \
         .order("due_date").execute()
     assessments = assess_res.data or []
@@ -724,6 +724,7 @@ async def get_assignments(class_id: str, request: Request):
             "title":     title,
             "category":  category,
             "due_date":  due_date,
+            "date_note": a.get("date_note", ""),
             "days_left": days_left,
             "weight":    weight,
             "priority":  priority,
