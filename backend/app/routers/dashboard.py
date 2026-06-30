@@ -951,3 +951,34 @@ async def get_study_plan(request: Request):
         "sessions": sessions,
         "deadlines": top_deadlines,
     }
+
+
+# ── POST /api/dashboard/recommendation-feedback ───────────────────────────
+
+@router.post("/recommendation-feedback")
+async def save_recommendation_feedback(request: Request):
+    """Save helpful/not-helpful feedback for study recommendations."""
+    user_id = _get_user(request)
+    body = await request.json()
+
+    feedback_type = body.get("feedback_type", "")
+    reason = body.get("reason", None)
+    focus_task_title = body.get("focus_task_title", "")
+    focus_task_category = body.get("focus_task_category", "")
+
+    if not feedback_type:
+        raise HTTPException(400, "feedback_type required")
+
+    try:
+        supabase.table("recommendation_feedback").insert({
+            "user_id": user_id,
+            "feedback_type": feedback_type,
+            "reason": reason,
+            "focus_task_title": focus_task_title,
+            "focus_task_category": focus_task_category,
+        }).execute()
+
+        return {"success": True}
+    except Exception as e:
+        print(f"[FEEDBACK] ERROR: {e}")
+        return {"success": False, "error": str(e)}
