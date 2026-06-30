@@ -146,20 +146,26 @@ export default function SignupPage() {
                 {show ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            {pw && (
-              <div className="mt-2 grid grid-cols-2 gap-1">
-                {[
-                  { ok: hasUpper, l: 'Uppercase letter' },
-                  { ok: hasLower, l: 'Lowercase letter' },
-                  { ok: hasNum,   l: 'Number'           },
-                  { ok: long,     l: '8+ characters'    },
-                ].map(r => (
-                  <div key={r.l} className={`flex items-center gap-1 text-xs ${r.ok ? 'text-green-600' : 'text-gray-400'}`}>
-                    {r.ok ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />} {r.l}
+            {pw && (() => {
+              const checks = [hasUpper, hasLower, hasNum, long];
+              const strength = checks.filter(Boolean).length;
+              const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+              const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500'];
+              const textColors = ['text-red-500', 'text-orange-500', 'text-yellow-500', 'text-green-500'];
+              const label = strength === 0 ? '' : labels[strength - 1];
+              return (
+                <div className="mt-2">
+                  <div className="flex gap-1.5">
+                    {[0, 1, 2, 3].map(i => (
+                      <div key={i} className={`flex-1 h-1.5 rounded-full transition-all ${i < strength ? colors[strength - 1] : 'bg-gray-200'}`} />
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                  {strength > 0 && (
+                    <p className={`text-[11px] font-semibold mt-1 ${textColors[strength - 1]}`}>{label}</p>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Confirm Password */}
