@@ -22,7 +22,7 @@ function EventCard({ ev, onClick }: { ev: CalEvent; onClick: (ev: CalEvent) => v
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold text-gray-900 truncate">{ev.title}</p>
         <p className="text-xs text-gray-400 mt-0.5">
-          {ev.date ? formatEventDate(ev.date) : 'No due date'}
+         {ev.date ? formatEventDate(ev.date) : (ev.date_note || 'No due date')}
           {ev.time ? ` • ${ev.time}` : ''}
         </p>
       </div>

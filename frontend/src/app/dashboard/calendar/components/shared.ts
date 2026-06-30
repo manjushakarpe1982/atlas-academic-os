@@ -4,6 +4,7 @@ export interface CalEvent {
   time: string; endTime: string; location: string;
   description: string; weight: number;
   currentGrade: number | null; source: string;
+  date_note?: string;
 }
 
 export const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];

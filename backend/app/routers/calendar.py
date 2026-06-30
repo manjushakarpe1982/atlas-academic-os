@@ -252,7 +252,7 @@ async def get_all_calendar_events(request: Request):
     for cid in class_map:
         try:
             assess_res = supabase.table("assessments") \
-                .select("id, title, category, due_date") \
+                .select("id, title, category, due_date, date_note") \
                 .eq("class_id", cid).eq("user_id", user_id) \
                 .order("due_date").execute()
             for a in (assess_res.data or []):
@@ -277,6 +277,7 @@ async def get_all_calendar_events(request: Request):
                     "weight": weight,
                     "currentGrade": class_avg.get(cid),
                     "source": "syllabus",
+                    "date_note": a.get("date_note", ""),
                 })
         except Exception:
             pass
