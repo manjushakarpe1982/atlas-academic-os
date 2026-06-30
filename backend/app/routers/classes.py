@@ -47,6 +47,7 @@ STRICT RULES:
 * Grade weights should sum to approximately 100. If they do not, set confidence of uncertain items to "low".
 * Dates must use YYYY-MM-DD format.
 * If a date is missing a year, infer the year from the academic term if clearly available. Otherwise return null.
+* For date_note: store the original date text from the syllabus (e.g. "Weekly", "See Lab Schedule", "Thursday, September 27, 7:30-9:30pm"). If due_date is null, date_note is especially important to preserve the schedule info.
 * If multiple instructors exist, return the primary instructor.
 * If week information is unavailable, set week_hint to null.
 * Never guess dates, percentages, instructor names, or grade weights.
@@ -62,7 +63,7 @@ Return this exact JSON schema:
     { "category": string, "weight_pct": number | null, "confidence": "high" | "medium" | "low" }
   ],
   "assessments": [
-    { "title": string, "category": string | null, "due_date": "YYYY-MM-DD" | null, "confidence": "high" | "medium" | "low" }
+    { "title": string, "category": string | null, "due_date": "YYYY-MM-DD" | null, "date_note": string | null, "confidence": "high" | "medium" | "low" }
   ],
   "topics": [
     { "title": string, "week_hint": number | null, "chapter_ref": string | null, "confidence": "high" | "medium" | "low" }
@@ -425,7 +426,8 @@ async def confirm_class(class_id: str, request: Request):
             supabase.table("assessments").insert({
                 "class_id":   class_id, "user_id": user_id,
                 "title":      a["title"], "category": a.get("category"),
-                "due_date":   a.get("due_date"), "confidence": a.get("confidence", "medium"),
+                "due_date":   a.get("due_date"), "date_note": a.get("date_note"),
+                "confidence": a.get("confidence", "medium"),
                 "source":     "syllabus",
             }).execute()
 
@@ -1845,6 +1847,9 @@ async def update_study_progress(request: Request):
     body = await request.json()
     attempt_id = body.get("attempt_id", "")
     current_index = body.get("current_index", 0)
+    answers_so_far = body.get("answers_so_far", [])
+    score_so_far = body.get("score_so_far", 0)
+    print(f"[UPDATE PROGRESS] attempt={attempt_id} index={current_index} score={score_so_far}")
     answers_so_far = body.get("answers_so_far", [])
     score_so_far = body.get("score_so_far", 0)
 
