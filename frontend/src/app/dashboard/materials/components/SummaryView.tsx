@@ -11,6 +11,7 @@ import {
   Clock,
   ThumbsUp,
   ThumbsDown,
+  Download,
 } from "lucide-react";
 import { API_BASE, getToken } from "@/lib/api";
 import { TopicItem } from "./shared";
@@ -269,6 +270,18 @@ export default function SummaryView({
   <span className="text-[11px] text-gray-400 ml-auto">
     {timeLabel}
   </span>
+  <button onClick={() => {
+    if (!summary) return;
+    let html = `<html><head><meta charset="utf-8"><style>body{font-family:Calibri;padding:20px;color:#333}h1{color:#4F46E5;font-size:22px}h2{color:#6B7280;font-size:14px;font-weight:normal}.concept{border-left:3px solid #4F46E5;padding:8px 12px;margin-bottom:12px;background:#F9FAFB;border-radius:0 8px 8px 0}.concept b{color:#1F2937}.takeaway{border:1px solid #E5E7EB;border-radius:8px;padding:10px;margin-bottom:8px}</style></head><body>`;
+    html += `<h1>${summary.title || topic.title}</h1><h2>${className}</h2>`;
+    if (summary.keyConcepts?.length) { html += `<h3>Key Concepts</h3>`; summary.keyConcepts.forEach((c: any, i: number) => { html += `<div class="concept"><b>${i+1}. ${c.term || ''}</b><br>${c.definition || ''}</div>`; }); }
+    if (summary.keyTakeaways?.length) { html += `<h3>Key Takeaways</h3>`; summary.keyTakeaways.forEach((t: string) => { html += `<div class="takeaway">${t}</div>`; }); }
+    html += `</body></html>`;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], {type:'application/msword'}));
+    a.download = `Summary_${(topic.title || 'summary').replace(/\s+/g, '_')}.doc`; a.click();
+  }} className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg hover:bg-indigo-100">
+    <Download className="w-5 h-5" />
+  </button>
 </div>
       {/* Key Concepts */}
       <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 mb-4">
