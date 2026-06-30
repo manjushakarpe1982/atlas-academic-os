@@ -59,10 +59,16 @@ export default function StudyPlanPage() {
   }
 
   return (
-    <StudyPlanMain
-      data={data}
-      onStartStudying={() => setView('session')}
-      onSessionClick={() => setView('session')}
-    />
+    // <StudyPlanMain
+    //   data={data}
+    //   onStartStudying={() => setView('session')}
+    //   onSessionClick={() => setView('session')}
+    // />
+    <>
+    
+    <div className="px-4 py-4 pb-12">
+      <p className="text-sm flex justify-center bg-orange-50 border border-orange-100 text-orange-600 py-2 ">This feature is coming soon</p>
+    </div>
+    </>
   );
 }
