@@ -354,18 +354,24 @@ export default function SummaryView({
         </p>
         <button
           onClick={() => saveFeedback(feedback === "up" ? null : "up")}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${feedback === "up" ? "bg-green-100" : "hover:bg-gray-100"}`}
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${feedback === "up" ? "bg-green-100 scale-110" : "hover:bg-gray-100 scale-100"}`}
+          style={{ transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
         >
           <ThumbsUp
-            className={`w-5 h-5 ${feedback === "up" ? "text-green-600" : "text-gray-400"}`}
+            className={`w-5 h-5 transition-all duration-300 ${feedback === "up" ? "text-green-600" : "text-gray-400"}`}
+            fill={feedback === "up" ? "currentColor" : "none"}
+            strokeWidth={feedback === "up" ? 0 : 2}
           />
         </button>
         <button
           onClick={() => saveFeedback(feedback === "down" ? null : "down")}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${feedback === "down" ? "bg-red-100" : "hover:bg-gray-100"}`}
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${feedback === "down" ? "bg-red-100 scale-110" : "hover:bg-gray-100 scale-100"}`}
+          style={{ transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
         >
           <ThumbsDown
-            className={`w-5 h-5 ${feedback === "down" ? "text-red-600" : "text-gray-400"}`}
+            className={`w-5 h-5 transition-all duration-300 ${feedback === "down" ? "text-red-600" : "text-gray-400"}`}
+            fill={feedback === "down" ? "currentColor" : "none"}
+            strokeWidth={feedback === "down" ? 0 : 2}
           />
         </button>
       </div>

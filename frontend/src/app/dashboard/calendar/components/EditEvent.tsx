@@ -1,26 +1,62 @@
 'use client';
-import { ChevronLeft, ChevronDown, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronLeft, ChevronDown, Loader2 } from 'lucide-react';
+import { API_BASE, getToken } from '@/lib/api';
 import { CalEvent } from './shared';
 
 interface Props { event: CalEvent; onBack: () => void; onSaved: () => void; }
 
 export default function EditEvent({ event, onBack, onSaved }: Props) {
+  const [title, setTitle] = useState(event.title);
+  const [type, setType] = useState(event.type);
+  const [date, setDate] = useState(event.date);
+  const [startTime, setStartTime] = useState(event.time || '');
+  const [endTime, setEndTime] = useState(event.endTime || '');
+  const [notes, setNotes] = useState(event.description || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    if (!title.trim() || !date) { setError('Title and date are required'); return; }
+    setSaving(true); setError('');
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/api/calendar/update-event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          id: event.id, source: event.source || 'calendar',
+          title, type, date, startTime, endTime, notes,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) { onSaved(); }
+      else { setError(data.detail || 'Failed to update'); }
+    } catch { setError('Network error'); }
+    finally { setSaving(false); }
+  };
+
   return (
     <div className="px-4 py-4 pb-12">
       <div className="flex items-center justify-between mb-5">
         <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
         <h1 className="text-base font-extrabold text-gray-900">Edit Event</h1>
-        <button  className="text-sm font-bold text-indigo-600"></button>
+        <button onClick={handleSave} disabled={saving} className="text-sm font-bold text-indigo-600 disabled:opacity-50">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+        </button>
       </div>
+      {error && <p className="text-xs text-red-600 mb-3 text-center">{error}</p>}
       <div className="space-y-4">
         <div>
           <label className="text-sm font-bold text-gray-600 block mb-1.5">Title</label>
-          <input defaultValue={event.title} className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none" />
+          <input value={title} onChange={e => setTitle(e.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none" />
         </div>
         <div>
           <label className="text-sm font-bold text-gray-600 block mb-1.5">Type</label>
           <div className="relative">
-            <select defaultValue={event.type} className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm bg-white appearance-none focus:border-indigo-500 focus:outline-none capitalize">
+            <select value={type} onChange={e => setType(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm bg-white appearance-none focus:border-indigo-500 focus:outline-none capitalize">
               <option value="quiz">Quiz</option><option value="assignment">Assignment</option><option value="exam">Exam</option>
               <option value="study">Study</option><option value="class">Class</option><option value="personal">Personal</option>
             </select>
@@ -29,24 +65,31 @@ export default function EditEvent({ event, onBack, onSaved }: Props) {
         </div>
         <div>
           <label className="text-sm font-bold text-gray-600 block mb-1.5">Date</label>
-          <input type="date" defaultValue="2025-05-16" className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none" />
+          <input type="date" value={date} onChange={e => setDate(e.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-bold text-gray-600 block mb-1.5">Start Time</label>
-            <input defaultValue={event.time} className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm bg-white" />
+            <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm bg-white focus:border-indigo-500 focus:outline-none" />
           </div>
           <div>
             <label className="text-sm font-bold text-gray-600 block mb-1.5">End Time</label>
-            <input defaultValue={event.endTime || ''} className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm bg-white" />
+            <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm bg-white focus:border-indigo-500 focus:outline-none" />
           </div>
         </div>
-        <button onClick={onSaved} className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all text-base">
-          Save Changes
+        <div>
+          <label className="text-sm font-bold text-gray-600 block mb-1.5">Notes</label>
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Add details..."
+            rows={3} className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none resize-none" />
+        </div>
+        <button onClick={handleSave} disabled={saving}
+          className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all text-base disabled:opacity-50 flex items-center justify-center gap-2">
+          {saving && <Loader2 className="w-4 h-4 animate-spin" />} Save Changes
         </button>
-        <button onClick={onBack} className="w-full text-red-600 font-bold py-2.5 border border-red-300 rounded-lg text-base flex items-center justify-center gap-2">
-          <Trash2 className="w-4 h-4" /> Delete Event
-        </button>
+        <button onClick={onBack} className="w-full text-gray-500 border-2 rounded-lg border-red-200 font-semibold py-2 text-sm">Cancel</button>
       </div>
     </div>
   );

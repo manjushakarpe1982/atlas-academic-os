@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 interface Props { onNext: () => void; onBack: () => void; classId: string | null; }
 
 interface GradeWeight { category: string; weight_pct: number | null; confidence: string; }
-interface Assessment  { title: string; due_date: string | null; confidence: string; category?: string; }
+interface Assessment  { title: string; due_date: string | null; confidence: string; category?: string; date_note?: string; }
 interface Topic       { title: string; week_hint: number | null; confidence: string; }
 
 interface Draft {
@@ -302,8 +302,8 @@ export default function Screen5({ onNext, onBack, classId }: Props) {
             </div>
           )}
 
-          {/* ── ASSESSMENTS (No Due Date / TBD) ── */}
-          {(draft?.assessments?.filter(a => !a.due_date)?.length ?? 0) > 0 && (
+          {/* ── ASSESSMENTS (All) ── */}
+          {(draft?.assessments?.length ?? 0) > 0 && (
             <div className="border border-gray-100 rounded-xl overflow-hidden">
               <div className="flex items-center justify-between px-3 py-2 bg-orange-50 border-b border-orange-100">
                 <div className="flex items-center gap-1.5">
@@ -328,7 +328,7 @@ export default function Screen5({ onNext, onBack, classId }: Props) {
                 )}
               </div>
               <div className="px-4 py-2">
-                {draft!.assessments.map((a, idx) => !a.due_date && (
+                {draft!.assessments.map((a, idx) => (
                   <div key={idx} className="flex items-center gap-2 py-2 border-b overflow-x-hidden w-full border-gray-50 last:border-0">
                     {editDates ? (
                       <>
@@ -343,10 +343,13 @@ export default function Screen5({ onNext, onBack, classId }: Props) {
                       </>
                     ) : (
                       <>
-                        
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-800 truncate">{a.title}</p>
-                       
+                          {(a.date_note || a.due_date) && (
+                            <p className="text-[11px] text-gray-400">
+                              {a.date_note || new Date(a.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                          )}
                         </div>
                         <ConfBadge level={a.confidence} />
                       </>
@@ -357,84 +360,6 @@ export default function Screen5({ onNext, onBack, classId }: Props) {
                   <button onClick={addAssessment}
                     className="flex items-center gap-1 text-sm text-indigo-600 font-semibold mt-2 hover:text-indigo-800">
                     <Plus className="w-3.5 h-3.5" /> Add Assessment
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ── IMPORTANT DATES (With Due Date) ── */}
-          {(draft?.assessments?.filter(a => a.due_date)?.length ?? 0) > 0 && (
-            <div className="border border-gray-100 rounded-xl overflow-hidden">
-              <div className="flex items-center justify-between px-3 py-2 bg-orange-50 border-b border-orange-100">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm">📅</span>
-                  <p className="text-[12px] font-extrabold text-gray-700 uppercase tracking-widest">Important Dates</p>
-                </div>
-                {editDates ? (
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => save(() => setEditDates(false))}
-                      className="flex items-center gap-0.5 text-sm text-green-600 font-bold">
-                      <Save className="w-4 h-4" /> Save
-                    </button>
-                    <button onClick={() => setEditDates(false)} className="text-gray-400">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => setEditDates(true)}
-                    className="flex items-center gap-1 text-xs text-indigo-600 font-semibold">
-                    <Edit2 className="w-4 h-4" /> Edit All
-                  </button>
-                )}
-              </div>
-              <div className="px-4 py-2">
-                {draft!.assessments.map((a, idx) => a.due_date && (
-                  <div key={idx} className="py-2 border-b border-gray-50 last:border-0 overflow-x-hidden">
-                    {editDates ? (
-                      <div className="flex items-center gap-2">
-                        <input 
-                          className="w-32 flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded outline-none focus:border-indigo-500 bg-white"
-                          value={a.title} 
-                          placeholder="Assessment name"
-                          onChange={e => setAssessment(idx, 'title', e.target.value)} />
-                        <input 
-                          className="w-32 px-2 py-1.5 text-sm border border-gray-300 rounded outline-none focus:border-indigo-500 bg-white"
-                          type="date" 
-                          value={a.due_date || ''}
-                          onChange={e => setAssessment(idx, 'due_date', e.target.value || null)} />
-                        <button onClick={() => removeAssessment(idx)} className="text-red-400 hover:text-red-600 flex-shrink-0">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const badge = formatDateBadge(a.due_date);
-                          return badge ? (
-                            <div className="flex-shrink-0 w-9 text-center">
-                              <p className="text-[10px] font-extrabold text-red-500 uppercase leading-none">{badge.month}</p>
-                              <p className="text-sm font-extrabold text-gray-900 leading-tight">{badge.day}</p>
-                            </div>
-                          ) : (
-                            <div className="w-9 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <span className="text-[8px] text-gray-400">TBD</span>
-                            </div>
-                          );
-                        })()}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">{a.title}</p>
-                          <p className="text-[11px] text-gray-400">{a.due_date || 'TBD'}</p>
-                        </div>
-                        <ConfBadge level={a.confidence} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {editDates && (
-                  <button onClick={addAssessment}
-                    className="flex items-center gap-1 text-sm text-indigo-600 font-semibold mt-2 hover:text-indigo-800">
-                    <Plus className="w-3.5 h-3.5" /> Add Date
                   </button>
                 )}
               </div>

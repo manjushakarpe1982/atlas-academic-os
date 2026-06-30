@@ -263,19 +263,21 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
                             <div className="flex items-center gap-1 flex-shrink-0">
                               <input
                                 type="number"
-                                value={g.score}
+                                value={g.score || ''}
                                 onChange={(e) =>
-                                  update(g.id, "score", Number(e.target.value))
+                                  update(g.id, "score", e.target.value === '' ? 0 : Number(e.target.value))
                                 }
+                                onFocus={(e) => e.target.select()}
                                 className="w-10 border border-gray-300 rounded px-1 py-1 text-xs text-center"
                               />
                               <span className="text-gray-400 text-sm">/</span>
                               <input
                                 type="number"
-                                value={g.total}
+                                value={g.total || ''}
                                 onChange={(e) =>
-                                  update(g.id, "total", Number(e.target.value))
+                                  update(g.id, "total", e.target.value === '' ? 0 : Number(e.target.value))
                                 }
+                                onFocus={(e) => e.target.select()}
                                 className="w-10 border border-gray-300 rounded px-1 py-1 text-xs text-center"
                               />
                             </div>

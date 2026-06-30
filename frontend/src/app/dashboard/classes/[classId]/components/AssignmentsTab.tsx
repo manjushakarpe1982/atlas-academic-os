@@ -18,6 +18,7 @@ interface Assignment {
   title: string;
   category: string;
   due_date: string;
+  date_note: string;
   days_left: number | null;
   weight: number;
   priority: string;
@@ -141,7 +142,7 @@ function getActionStyle(p: string): string {
 }
 function formatDueText(a: Assignment): string {
   if (a.completed) return "Completed";
-  if (a.days_left === null || a.days_left === undefined) return "No due date";
+  if (a.days_left === null || a.days_left === undefined) return a.date_note || "No due date";
   if (a.days_left === 0) return "Due today";
   if (a.days_left === 1) return "Due tomorrow";
   if (a.days_left > 0) return `Due in ${a.days_left} days`;

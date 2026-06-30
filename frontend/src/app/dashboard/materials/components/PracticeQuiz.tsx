@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, CheckCircle2, XCircle, Loader2, Sparkles, RefreshCw, Clock, Trophy } from 'lucide-react';
 import { API_BASE, getToken } from '@/lib/api';
 import { TopicItem } from './shared';
+import AttemptHistory from './AttemptHistory';
 
 interface Question { id: number; question: string; options: string[]; correctIndex: number; explanation: string; difficulty?: string; }
 interface QuizData { title: string; totalQuestions: number; questions: Question[]; }
@@ -17,58 +18,159 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cached, setCached] = useState(false);
-
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [userAnswers, setUserAnswers] = useState<number[]>([]);
+  const [checkingAttempts, setCheckingAttempts] = useState(true);
+  const [hasAttempts, setHasAttempts] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [retakeOfAttempt, setRetakeOfAttempt] = useState<number | null>(null);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const skipFetchRef = useRef(false);
+
+  // Check for existing attempts on mount
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/api/classes/study/attempts/${topic.id}/quiz`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const d = await res.json();
+        if (d.attempts && d.attempts.length > 0) {
+          setHasAttempts(true);
+          setShowHistory(true);
+        }
+      } catch {}
+      finally { setCheckingAttempts(false); }
+    };
+    check();
+  }, [topic.id]);
 
   const fetchQuiz = async (regenerate = false) => {
-    setLoading(true); setError('');
+    setLoading(true); setError(''); setData(null);
     try {
       const token = getToken();
       const res = await fetch(`${API_BASE}/api/classes/study/quiz`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          class_name: className, class_id: classId, topic_id: topic.id,
-          topic_title: topic.title, topic_description: topic.description || '', regenerate,
-        }),
+        body: JSON.stringify({ topic_id: topic.id, class_id: classId, topic_title: topic.title, class_name: className, regenerate }),
       });
       const d = await res.json();
-      if (d.quiz) { setData(d.quiz); setCached(d.cached || false); setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false); }
-      else { setError(d.error || 'Failed to generate quiz'); }
+      if (d.quiz) {
+        setData(d.quiz); setCached(d.cached || false);
+        setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false);
+        setUserAnswers([]);
+      } else { setError(d.error || 'Failed to generate quiz'); }
     } catch { setError('Network error'); }
     finally { setLoading(false); }
   };
-
+  // Load quiz when not showing history
   useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true); setError('');
+    if (!checkingAttempts && !showHistory && !data && !skipFetchRef.current) { fetchQuiz(); }
+  }, [checkingAttempts, showHistory]);
+
+  // Start attempt when quiz data is ready (not from resume)
+  useEffect(() => {
+    if (!data || attemptId || finished || showHistory || loading) return;
+    const startAttempt = async () => {
       try {
         const token = getToken();
-        const res = await fetch(`${API_BASE}/api/classes/study/quiz`, {
+        const res = await fetch(`${API_BASE}/api/classes/study/start-attempt`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
-            class_name: className, class_id: classId, topic_id: topic.id,
-            topic_title: topic.title, topic_description: topic.description || '', regenerate: false,
+            topic_id: topic.id, class_id: classId, material_type: 'quiz',
+            content_json: { questions: data.questions }, total: data.questions.length,
+            is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
           }),
         });
         const d = await res.json();
-        if (cancelled) return;
-        if (d.quiz) { setData(d.quiz); setCached(d.cached || false); }
-        else { setError(d.error || 'Failed'); }
-      } catch { if (!cancelled) setError('Network error'); }
-      finally { if (!cancelled) setLoading(false); }
+        if (d.id) setAttemptId(d.id);
+      } catch {}
     };
-    load();
-    return () => { cancelled = true; };
-  }, []);
+    startAttempt();
+  }, [data, attemptId, finished, showHistory, loading, retakeOfAttempt]);
 
-  // Loading
+  // Complete attempt when finished
+  useEffect(() => {
+    if (!finished || !data) return;
+    const complete = async () => {
+      try {
+        const token = getToken();
+        if (attemptId) {
+          // Complete existing attempt
+          await fetch(`${API_BASE}/api/classes/study/complete-attempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ attempt_id: attemptId, score, total: data.questions.length, content_json: { questions: data.questions, userAnswers } }),
+          });
+        } else {
+          // Start + complete in one go (fallback)
+          await fetch(`${API_BASE}/api/classes/study/save-attempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              topic_id: topic.id, class_id: classId, material_type: 'quiz',
+              content_json: { questions: data.questions, userAnswers },
+              score, total: data.questions.length, is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
+            }),
+          });
+        }
+      } catch {}
+    };
+    complete();
+  }, [finished]);
+
+  // Checking attempts
+  if (checkingAttempts) {
+    return (
+      <div className="px-4 py-4 pb-24">
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
+          <h1 className="text-base font-extrabold text-gray-900">Practice Quiz</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show attempt history
+  if (showHistory) {
+    return (
+      <AttemptHistory
+        topicId={topic.id} topicTitle={topic.title} classId={classId} className={className}
+        materialType="quiz"
+        onBack={onBack}
+        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); setAttemptId(null); setData(null); setLoading(true); setTimeout(() => fetchQuiz(true), 100); }}
+        onResume={(row: any) => {
+          const qs = row.content_json?.questions || row.content_json || [];
+          skipFetchRef.current = true;
+          setData({ title: topic.title, totalQuestions: qs.length, questions: qs });
+          setQIndex(row.current_index || 0); setSelected(null); setShowAnswer(false);
+          setScore(row.score_so_far || 0); setFinished(false);
+          setUserAnswers(row.answers_so_far || []);
+          setAttemptId(row.id);
+          setLoading(false); setShowHistory(false);
+        }}
+        onRetake={(content: any, attemptNumber: number) => {
+          const qs = content?.questions || content || [];
+          skipFetchRef.current = true;
+          setData({ title: topic.title, totalQuestions: qs.length, questions: qs });
+          setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false); setUserAnswers([]);
+          setRetakeOfAttempt(attemptNumber); setAttemptId(null);
+          setLoading(false); setShowHistory(false);
+        }}
+      />
+    );
+  }
+
+  // Loading quiz
   if (loading) {
     return (
       <div className="px-4 py-4 pb-24">
@@ -76,22 +178,18 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
           <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
           <h1 className="text-base font-extrabold text-gray-900">Practice Quiz</h1>
         </div>
-        <div className="flex flex-col items-center justify-center py-16 gap-4">
-          <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center animate-pulse">
-            <Sparkles className="w-8 h-8 text-indigo-600" />
+        <div className="flex flex-col items-center gap-4 py-10">
+          <div className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center">
+            <Sparkles className="w-7 h-7 text-indigo-600 animate-pulse" />
           </div>
-          <div className="text-center">
-            <p className="text-sm font-bold text-gray-900">Generating Quiz...</p>
-            <p className="text-xs text-gray-400 mt-1">Atlas AI is creating questions for</p>
-            <p className="text-xs text-indigo-600 font-semibold">{topic.title} · {className}</p>
-          </div>
-          <Loader2 className="w-5 h-5 text-indigo-500 animate-spin" />
+          <p className="text-sm font-bold text-gray-900">Generating your quiz...</p>
+          <p className="text-xs text-gray-400">AI is creating questions for {topic.title}</p>
+          <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
         </div>
       </div>
     );
   }
 
-  // Error
   if (error || !data) {
     return (
       <div className="px-4 py-4 pb-24">
@@ -99,12 +197,9 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
           <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
           <h1 className="text-base font-extrabold text-gray-900">Practice Quiz</h1>
         </div>
-        <div className="flex flex-col items-center justify-center py-12 gap-4">
-          <p className="text-sm text-red-600 font-medium">{error || 'Failed'}</p>
-          <button onClick={() => fetchQuiz(true)}
-            className="flex items-center gap-2 text-sm font-bold text-indigo-600 border border-indigo-200 px-4 py-2 rounded-lg hover:bg-indigo-50">
-            <RefreshCw className="w-4 h-4" /> Retry
-          </button>
+        <div className="text-center py-10">
+          <p className="text-sm text-red-600 font-medium">{error || 'Failed to load quiz'}</p>
+          <button onClick={() => fetchQuiz()} className="mt-3 text-sm text-indigo-600 font-bold">Retry</button>
         </div>
       </div>
     );
@@ -150,18 +245,15 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
           </div>
         </div>
         <div className="space-y-3 mt-4">
-          <button onClick={() => { setQIndex(0); setSelected(null); setShowAnswer(false); setScore(0); setFinished(false); }}
-            className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all text-sm">
-            Retake Quiz
+          <button onClick={() => { setShowHistory(true); setFinished(false); }}
+            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all text-sm">
+            Review Attempt History
           </button>
-          <button onClick={() => fetchQuiz(true)}
-            className="w-full bg-violet-100 border border-violet-200 text-indigo-600 font-bold py-2.5 rounded-lg hover:bg-indigo-50 transition-all text-sm">
-            Generate New Quiz
+          <button onClick={() => { setData(null); setRetakeOfAttempt(null); fetchQuiz(true); }}
+            className="w-full border-2 border-indigo-200 text-indigo-600 font-bold py-2.5 rounded-xl hover:bg-indigo-50 transition-all text-sm">
+            Regenerate
           </button>
-          <button onClick={onDone}
-            className="w-full  border border-indigo-200 text-indigo-600 rounded-lg  font-bold py-2.5 text-sm hover:text-gray-700">
-            Done
-          </button>
+          <button onClick={onDone} className="w-full border border-gray-200 text-gray-600 rounded-xl font-bold py-2.5 text-sm hover:bg-gray-50">Done</button>
         </div>
       </div>
     );
@@ -170,7 +262,25 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
   // Quiz questions
   const q = questions[qIndex];
   const isCorrect = selected === q.correctIndex;
-  const handleSelect = (i: number) => { if (!showAnswer) { setSelected(i); setShowAnswer(true); if (i === q.correctIndex) setScore(score + 1); } };
+  const handleSelect = (i: number) => {
+    if (!showAnswer) {
+      setSelected(i); setShowAnswer(true);
+      const newScore = i === q.correctIndex ? score + 1 : score;
+      if (i === q.correctIndex) setScore(newScore);
+      const newAnswers = [...userAnswers]; newAnswers[qIndex] = i;
+      setUserAnswers(newAnswers);
+
+      // Auto-save progress
+      if (attemptId) {
+        const token = getToken();
+        fetch(`${API_BASE}/api/classes/study/update-progress`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ attempt_id: attemptId, current_index: qIndex + 1, answers_so_far: newAnswers, score_so_far: newScore }),
+        }).catch(() => {});
+      }
+    }
+  };
   const next = () => {
     if (qIndex < total - 1) { setQIndex(qIndex + 1); setSelected(null); setShowAnswer(false); }
     else { setFinished(true); }
@@ -179,7 +289,6 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
 
   return (
     <div className="px-4 py-4 pb-24">
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
@@ -188,15 +297,8 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
             <p className="text-xs text-gray-400">{topic.title} · {className}</p>
           </div>
         </div>
-        {cached && (
-          <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
-            <Clock className="w-3 h-3 text-green-600" />
-            <span className="text-[10px] font-bold text-green-600">Saved</span>
-          </div>
-        )}
       </div>
 
-      {/* Progress */}
       <div className="flex items-center border border-gray-200 p-2 rounded-lg gap-3 mb-4">
         <p className="text-xs text-gray-600">Question {qIndex + 1} of {total}</p>
         <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -205,7 +307,6 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
         {q.difficulty && <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${diffColor}`}>{q.difficulty}</span>}
       </div>
 
-      {/* Question */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5 mb-4">
         <p className="text-base font-bold text-gray-900 mb-5">{q.question}</p>
         <div className="space-y-3">
@@ -226,7 +327,6 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
         </div>
       </div>
 
-      {/* Explanation */}
       {showAnswer && (
         <div className={`${isCorrect ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'} border rounded-lg p-4 mb-4`}>
           <p className={`text-xs font-bold ${isCorrect ? 'text-green-700' : 'text-red-700'} mb-1`}>
@@ -237,13 +337,10 @@ export default function PracticeQuiz({ className, classId, topic, onBack, onDone
         </div>
       )}
 
-      {/* Next */}
       <button onClick={next} disabled={!showAnswer}
         className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-all text-sm disabled:opacity-40">
         {qIndex === total - 1 ? 'Finish Quiz' : 'Next Question'}
       </button>
-
-      {/* Score */}
       <p className="text-xs text-gray-500 text-center mt-3">Score: {score}/{qIndex + (showAnswer ? 1 : 0)}</p>
     </div>
   );

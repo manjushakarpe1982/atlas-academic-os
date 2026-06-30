@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronLeft,
   RotateCcw,
@@ -8,9 +8,12 @@ import {
   Sparkles,
   RefreshCw,
   Clock,
+  TrendingUp,
+  Trophy,
 } from "lucide-react";
 import { API_BASE, getToken } from "@/lib/api";
 import { TopicItem } from "./shared";
+import AttemptHistory from "./AttemptHistory";
 import { LiaHandPointer } from "react-icons/lia";
 interface Card {
   id: number;
@@ -43,11 +46,86 @@ export default function FlashcardsView({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cached, setCached] = useState(false);
+  const [checkingAttempts, setCheckingAttempts] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+  const [retakeOfAttempt, setRetakeOfAttempt] = useState<number | null>(null);
+
+  // Check for existing attempts on mount
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/api/classes/study/attempts/${topic.id}/flashcards`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const d = await res.json();
+        if (d.attempts && d.attempts.length > 0) { setShowHistory(true); }
+      } catch {}
+      finally { setCheckingAttempts(false); }
+    };
+    check();
+  }, [topic.id]);
 
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [known, setKnown] = useState<Set<number>>(new Set());
   const [review, setReview] = useState<Set<number>>(new Set());
+  const [finished, setFinished] = useState(false);
+  const [attempts, setAttempts] = useState<any[]>([]);
+  const [attemptSaved, setAttemptSaved] = useState(false);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const attemptIdRef = useRef<string | null>(null);
+  useEffect(() => { attemptIdRef.current = attemptId; }, [attemptId]);
+
+  // Start attempt when data loads (not from resume)
+  useEffect(() => {
+    if (!data || attemptId || attemptIdRef.current || finished || showHistory || loading) return;
+    const startAttempt = async () => {
+      try {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/api/classes/study/start-attempt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            topic_id: topic.id, class_id: classId, material_type: 'flashcards',
+            content_json: { cards: data.cards }, total: data.cards.length,
+            is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
+          }),
+        });
+        const d = await res.json();
+        if (d.id) setAttemptId(d.id);
+      } catch {}
+    };
+    startAttempt();
+  }, [data, attemptId, finished, showHistory, loading, retakeOfAttempt]);
+
+  // Complete attempt when finished
+  useEffect(() => {
+    if (!finished || attemptSaved || !data) return;
+    setAttemptSaved(true);
+    const complete = async () => {
+      try {
+        const token = getToken();
+        if (attemptId) {
+          await fetch(`${API_BASE}/api/classes/study/complete-attempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ attempt_id: attemptId, score: known.size, total: data.cards.length, content_json: { cards: data.cards } }),
+          });
+        } else {
+          await fetch(`${API_BASE}/api/classes/study/save-attempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              topic_id: topic.id, class_id: classId, material_type: 'flashcards',
+              content_json: { cards: data.cards }, score: known.size, total: data.cards.length,
+            }),
+          });
+        }
+      } catch {}
+    };
+    complete();
+  }, [finished]);
 
   const fetchFlashcards = async (regenerate = false) => {
     setLoading(true);
@@ -77,6 +155,8 @@ export default function FlashcardsView({
         setFlipped(false);
         setKnown(new Set());
         setReview(new Set());
+        setFinished(false);
+        setAttemptSaved(false);
       } else {
         setError(d.error || "Failed to generate flashcards");
       }
@@ -130,6 +210,59 @@ export default function FlashcardsView({
   }, []);
 
   // Loading
+  if (checkingAttempts) {
+    return (
+      <div className="px-4 py-4 pb-24">
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
+          <h1 className="text-base font-extrabold text-gray-900">Flashcards</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (showHistory) {
+    return (
+      <AttemptHistory
+        topicId={topic.id} topicTitle={topic.title} classId={classId} className={className}
+        materialType="flashcards" onBack={onBack}
+        onRegenerate={() => { setShowHistory(false); setRetakeOfAttempt(null); setAttemptId(null); attemptIdRef.current = null; fetchFlashcards(true); }}
+        onResume={(row: any) => {
+          const cards = row.content_json?.cards || row.content_json || [];
+          setData({ title: topic.title, totalCards: cards.length, cards });
+          setIndex(row.current_index || 0); setFlipped(false);
+          setKnown(new Set()); setReview(new Set()); setFinished(false); setAttemptSaved(false);
+          setAttemptId(row.id); attemptIdRef.current = row.id; setLoading(false); setShowHistory(false);
+        }}
+        onRetake={async (content: any, attemptNumber: number) => {
+          const cards = content?.cards || content || [];
+          setRetakeOfAttempt(attemptNumber);
+          // Create incomplete row BEFORE showing UI
+          try {
+            const token = getToken();
+            const res = await fetch(`${API_BASE}/api/classes/study/start-attempt`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                topic_id: topic.id, class_id: classId, material_type: 'flashcards',
+                content_json: { cards }, total: cards.length,
+                is_retake: true, parent_attempt: attemptNumber,
+              }),
+            });
+            const d = await res.json();
+            if (d.id) { setAttemptId(d.id); attemptIdRef.current = d.id; }
+          } catch {}
+          setData({ title: topic.title, totalCards: cards.length, cards });
+          setIndex(0); setFlipped(false); setKnown(new Set()); setReview(new Set()); setFinished(false); setAttemptSaved(false);
+          setLoading(false); setShowHistory(false);
+        }}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <div className="px-4 py-4 pb-24">
@@ -188,14 +321,118 @@ export default function FlashcardsView({
   const cards = data.cards;
   const card = cards[index];
   const total = cards.length;
+  // Finished screen
+  if (finished) {
+    const pct = total > 0 ? Math.round((known.size / total) * 100) : 0;
+    return (
+      <div className="px-4 py-4 pb-24">
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={onBack}><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
+          <h1 className="text-base font-extrabold text-gray-900">Flashcard Results</h1>
+        </div>
+        <div className="flex flex-col items-center py-3 gap-4">
+          <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center">
+            <Trophy className="w-10 h-10 text-indigo-600" />
+          </div>
+          <p className={`text-2xl font-extrabold ${pct >= 70 ? 'text-green-600' : pct >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
+            {pct >= 70 ? 'Great Job!' : pct >= 50 ? 'Keep Practicing' : 'Needs Review'}
+          </p>
+          <div className="grid grid-cols-3 gap-3 w-full">
+            <div className="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
+              <p className="text-xl font-extrabold text-green-600">{known.size}</p>
+              <p className="text-[10px] text-green-500 font-medium">Know</p>
+            </div>
+            <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-center">
+              <p className="text-xl font-extrabold text-red-500">{review.size}</p>
+              <p className="text-[10px] text-red-400 font-medium">Review</p>
+            </div>
+            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-center">
+              <p className="text-xl font-extrabold text-indigo-600">{attempts.length}</p>
+              <p className="text-[10px] text-indigo-400 font-medium">Attempts</p>
+            </div>
+          </div>
+        </div>
+
+        {attempts.length > 0 && (
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="w-4 h-4 text-indigo-600" />
+              <h3 className="text-sm font-extrabold text-gray-900">Attempt History</h3>
+            </div>
+            <div className="space-y-2">
+              {attempts.map((a: any) => {
+                const aPct = a.total > 0 ? Math.round(a.score / a.total * 100) : 0;
+                const isLatest = a.attempt_number === attempts[0]?.attempt_number;
+                return (
+                  <div key={a.id} className={`rounded-xl border p-3 flex items-center gap-3 ${isLatest ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-100'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold ${isLatest ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}`}>{a.attempt_number}</div>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-gray-900">Attempt #{a.attempt_number} {isLatest && <span className="text-indigo-600">· Latest</span>}</p>
+                      <p className="text-[10px] text-gray-400">{new Date(a.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-sm font-extrabold ${aPct >= 70 ? 'text-green-600' : aPct >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{aPct}%</p>
+                      <p className="text-[10px] text-gray-400">{a.score}/{a.total} known</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-3 mt-4">
+          <button onClick={() => { setShowHistory(true); setFinished(false); }}
+            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all text-sm">
+            Review Attempt History
+          </button>
+          <button onClick={() => { fetchFlashcards(true); setAttemptSaved(false); setRetakeOfAttempt(null); }}
+            className="w-full border-2 border-indigo-200 text-indigo-600 font-bold py-2.5 rounded-xl hover:bg-indigo-50 transition-all text-sm">
+            Regenerate
+          </button>
+          <button onClick={onDone} className="w-full border border-gray-200 text-gray-600 rounded-xl font-bold py-2.5 text-sm hover:bg-gray-50">Done</button>
+        </div>
+      </div>
+    );
+  }
+
   const progress = Math.round(((known.size + review.size) / total) * 100);
 
+  const saveProgress = async (nextIndex: number, newKnownSize: number) => {
+    const token = getToken();
+    // If no attemptId yet, create one first
+    if (!attemptIdRef.current) {
+      try {
+        const res = await fetch(`${API_BASE}/api/classes/study/start-attempt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            topic_id: topic.id, class_id: classId, material_type: 'flashcards',
+            content_json: { cards: data?.cards || [] }, total: data?.cards?.length || 0,
+            is_retake: !!retakeOfAttempt, parent_attempt: retakeOfAttempt,
+          }),
+        });
+        const d = await res.json();
+        if (d.id) { setAttemptId(d.id); attemptIdRef.current = d.id; }
+      } catch {}
+    }
+    if (attemptIdRef.current) {
+      fetch(`${API_BASE}/api/classes/study/update-progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ attempt_id: attemptIdRef.current, current_index: nextIndex, answers_so_far: [], score_so_far: newKnownSize }),
+      }).catch(() => {});
+    }
+  };
   const handleKnow = () => {
-    setKnown(new Set(known).add(card.id));
+    const newKnown = new Set(known).add(card.id);
+    setKnown(newKnown);
+    saveProgress(index + 1, newKnown.size);
     next();
   };
   const handleReview = () => {
     setReview(new Set(review).add(card.id));
+    saveProgress(index + 1, known.size);
     next();
   };
   const next = () => {
@@ -203,7 +440,7 @@ export default function FlashcardsView({
       setIndex(index + 1);
       setFlipped(false);
     } else {
-      onDone();
+      setFinished(true);
     }
   };
   const prev = () => {
@@ -361,13 +598,8 @@ export default function FlashcardsView({
         </button>
       </div>
 
-      {/* Regenerate */}
-      <button
-        onClick={() => fetchFlashcards(true)}
-        className="w-full flex items-center justify-center gap-2  mb-4 text-sm border border-indigo-500 rounded-lg font-semibold text-indigo-500 py-2  hover:text-indigo-600 transition-colors"
-      >
-        <RefreshCw className="w-3 h-3" /> Regenerate Flashcards
-      </button>
+
+     
     </div>
   );
 }

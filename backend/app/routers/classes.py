@@ -47,6 +47,7 @@ STRICT RULES:
 * Grade weights should sum to approximately 100. If they do not, set confidence of uncertain items to "low".
 * Dates must use YYYY-MM-DD format.
 * If a date is missing a year, infer the year from the academic term if clearly available. Otherwise return null.
+* For date_note: store the original date text from the syllabus (e.g. "Weekly", "See Lab Schedule", "Thursday, September 27, 7:30-9:30pm"). If due_date is null, date_note is especially important to preserve the schedule info.
 * If multiple instructors exist, return the primary instructor.
 * If week information is unavailable, set week_hint to null.
 * Never guess dates, percentages, instructor names, or grade weights.
@@ -62,7 +63,7 @@ Return this exact JSON schema:
     { "category": string, "weight_pct": number | null, "confidence": "high" | "medium" | "low" }
   ],
   "assessments": [
-    { "title": string, "category": string | null, "due_date": "YYYY-MM-DD" | null, "confidence": "high" | "medium" | "low" }
+    { "title": string, "category": string | null, "due_date": "YYYY-MM-DD" | null, "date_note": string | null, "confidence": "high" | "medium" | "low" }
   ],
   "topics": [
     { "title": string, "week_hint": number | null, "chapter_ref": string | null, "confidence": "high" | "medium" | "low" }
@@ -425,7 +426,8 @@ async def confirm_class(class_id: str, request: Request):
             supabase.table("assessments").insert({
                 "class_id":   class_id, "user_id": user_id,
                 "title":      a["title"], "category": a.get("category"),
-                "due_date":   a.get("due_date"), "confidence": a.get("confidence", "medium"),
+                "due_date":   a.get("due_date"), "date_note": a.get("date_note"),
+                "confidence": a.get("confidence", "medium"),
                 "source":     "syllabus",
             }).execute()
 
@@ -632,7 +634,7 @@ async def get_assignments(class_id: str, request: Request):
 
     # Fetch assessments for this class
     assess_res = supabase.table("assessments") \
-        .select("id, title, category, due_date") \
+        .select("id, title, category, due_date, date_note") \
         .eq("class_id", class_id).eq("user_id", user_id) \
         .order("due_date").execute()
     assessments = assess_res.data or []
@@ -722,6 +724,7 @@ async def get_assignments(class_id: str, request: Request):
             "title":     title,
             "category":  category,
             "due_date":  due_date,
+            "date_note": a.get("date_note", ""),
             "days_left": days_left,
             "weight":    weight,
             "priority":  priority,
@@ -1105,7 +1108,7 @@ async def generate_study_summary(request: Request):
             "- Prioritize accuracy — never fabricate facts, formulas, or definitions.\n"
             "- If information is missing or uncertain, say so instead of guessing.\n"
             "- Highlight key definitions, important facts, formulas, and concepts.\n"
-            "- Include 5-8 key concepts ordered from foundational to advanced.\n"
+            "- Include key concepts ordered from foundational to advanced. The number of concepts should match the topic depth.\n"
             "- Each definition should be concise (1-2 sentences) but complete enough to study from.\n"
             "- The 'remember' field should contain the single most critical takeaway.\n"
             "- The 'connections' field should link this topic to related concepts in the same course.\n"
@@ -1128,13 +1131,17 @@ async def generate_study_summary(request: Request):
             "}"
         )
 
-        user_message = f"Generate a study summary for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        user_message = f"Generate a study summary for the topic \"{topic_title}\" in the class \"{class_name}\". Include as many key concepts as the topic requires."
+        if regenerate:
+            import random
+            user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Create a COMPLETELY DIFFERENT summary with different key concepts, different examples, and different explanations. Variation seed: {random.randint(1000,9999)}"
         if topic_description:
             user_message += f"\n\nTopic description: {topic_description}"
 
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=1500,
+            temperature=1.0,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}]
         )
@@ -1245,7 +1252,7 @@ async def generate_study_flashcards(request: Request):
             "- Answers should be short and easy to memorize (1-2 sentences max).\n"
             "- Avoid duplicate flashcards.\n"
             "- Use simple, student-friendly language.\n"
-            "- Generate between 10 and 20 flashcards depending on topic complexity.\n"
+            "- Generate flashcards based on topic complexity. More complex topics need more cards.\n"
             "- Do not invent information not present in the source material.\n"
             "- If information is uncertain, skip it rather than guessing.\n"
             "- Each flashcard should test ONE concept only.\n"
@@ -1262,13 +1269,17 @@ async def generate_study_flashcards(request: Request):
             "}"
         )
 
-        user_message = f"Generate study flashcards for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        user_message = f"Generate study flashcards for the topic \"{topic_title}\" in the class \"{class_name}\". Generate as many flashcards as needed to cover all important concepts."
+        if regenerate:
+            import random
+            user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT flashcards covering different aspects. Use different questions and angles. Variation seed: {random.randint(1000,9999)}"
         if topic_description:
             user_message += f"\n\nTopic description: {topic_description}"
 
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=2000,
+            temperature=1.0,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}]
         )
@@ -1373,7 +1384,7 @@ async def generate_study_quiz(request: Request):
             "- Include a brief explanation for the correct answer.\n"
             "- Avoid duplicate questions.\n"
             "- Use simple, student-friendly language.\n"
-            "- Generate between 10 and 15 questions depending on topic complexity.\n"
+            "- Generate questions based on topic complexity. More complex topics need more questions.\n"
             "- Do not invent information that is not present in the source material.\n"
             "- Distractors (wrong options) should be plausible but clearly wrong.\n"
             "- Avoid 'all of the above' or 'none of the above' options.\n"
@@ -1396,13 +1407,17 @@ async def generate_study_quiz(request: Request):
             "}"
         )
 
-        user_message = f"Generate a practice quiz for the topic \"{topic_title}\" in the class \"{class_name}\"."
+        user_message = f"Generate practice quiz questions for the topic \"{topic_title}\" in the class \"{class_name}\". Generate as many questions as needed to properly cover the topic."
+        if regenerate:
+            import random
+            user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT questions from any previous version. Use different angles, different examples, different scenarios. Variation seed: {random.randint(1000,9999)}"
         if topic_description:
             user_message += f"\n\nTopic description: {topic_description}"
 
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=8192,
+            temperature=1.0,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}]
         )
@@ -1539,13 +1554,17 @@ async def generate_targeted_practice(request: Request):
             "}"
         )
 
-        user_message = f"Generate targeted practice for the topic \"{topic_title}\" in the class \"{class_name}\" at {difficulty} difficulty."
+        user_message = f"Generate targeted practice questions for the topic \"{topic_title}\" in the class \"{class_name}\" at {difficulty} difficulty. Generate as many questions as needed based on topic complexity."
+        if regenerate:
+            import random
+            user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT questions focusing on different weak areas. Variation seed: {random.randint(1000,9999)}"
         if topic_description:
             user_message += f"\n\nTopic description: {topic_description}"
 
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=8192,
+            temperature=1.0,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}]
         )
@@ -1653,3 +1672,224 @@ async def save_study_feedback(request: Request):
         return {"saved": bool(result.data), "feedback": feedback}
     except Exception as e:
         return {"saved": False, "error": str(e)}
+
+
+# ── POST /api/classes/study/save-attempt ───────────────────────────────────
+
+@router.post("/study/save-attempt")
+async def save_study_attempt(request: Request):
+    """Save a study attempt with score and content for history tracking.
+    is_retake=true: same attempt_number, increment retake_number
+    is_retake=false: new attempt_number, retake_number=0
+    """
+    user_id = _get_user(request)
+    body = await request.json()
+    topic_id = body.get("topic_id", "")
+    class_id = body.get("class_id", "")
+    material_type = body.get("material_type", "")
+    content_json = body.get("content_json", {})
+    score = body.get("score", 0)
+    total = body.get("total", 0)
+    is_retake = body.get("is_retake", False)
+    retake_attempt = body.get("attempt_number", None)
+
+    if not topic_id or not material_type:
+        raise HTTPException(400, "topic_id and material_type required")
+
+    is_retake = body.get("is_retake", False)
+    parent_attempt = body.get("parent_attempt", None)
+
+    try:
+        if is_retake and parent_attempt:
+            # Re-Take: same attempt_number, next retake_number
+            existing_r = supabase.table("study_attempts") \
+                .select("retake_number") \
+                .eq("user_id", user_id).eq("topic_id", topic_id) \
+                .eq("material_type", material_type).eq("attempt_number", parent_attempt) \
+                .order("retake_number", desc=True).limit(1).execute()
+            next_r = (existing_r.data[0].get("retake_number", 0) + 1) if existing_r.data else 1
+            supabase.table("study_attempts").insert({
+                "user_id": user_id, "topic_id": topic_id, "class_id": class_id,
+                "material_type": material_type, "attempt_number": parent_attempt,
+                "retake_number": next_r, "content_json": content_json,
+                "score": score, "total": total,
+            }).execute()
+            print(f"[SAVE ATTEMPT] Saved retake #{next_r} of attempt #{parent_attempt}")
+            return {"success": True, "attempt_number": parent_attempt, "retake_number": next_r}
+        else:
+            # Regenerate: new attempt_number
+            existing = supabase.table("study_attempts") \
+                .select("attempt_number") \
+                .eq("user_id", user_id).eq("topic_id", topic_id) \
+                .eq("material_type", material_type) \
+                .order("attempt_number", desc=True).limit(1).execute()
+            next_num = (existing.data[0]["attempt_number"] + 1) if existing.data else 1
+            supabase.table("study_attempts").insert({
+                "user_id": user_id, "topic_id": topic_id, "class_id": class_id,
+                "material_type": material_type, "attempt_number": next_num,
+                "retake_number": 0, "content_json": content_json,
+                "score": score, "total": total,
+            }).execute()
+            print(f"[SAVE ATTEMPT] Saved new attempt #{next_num}")
+            return {"success": True, "attempt_number": next_num}
+    except Exception as e:
+        print(f"[SAVE ATTEMPT] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── GET /api/classes/study/attempts/{topic_id}/{material_type} ─────────────
+
+@router.get("/study/attempts/{topic_id}/{material_type}")
+async def get_study_attempts(topic_id: str, material_type: str, request: Request):
+    """Get all attempts as a simple flat list, sorted newest first."""
+    user_id = _get_user(request)
+
+    try:
+        result = supabase.table("study_attempts") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .eq("topic_id", topic_id) \
+            .eq("material_type", material_type) \
+            .order("attempt_number").order("retake_number") \
+            .execute()
+
+        all_rows = result.data or []
+        # Group by attempt_number
+        grouped: dict = {}
+        for row in all_rows:
+            an = row.get("attempt_number", 1)
+            if an not in grouped:
+                grouped[an] = []
+            grouped[an].append(row)
+
+        attempts = []
+        for an in sorted(grouped.keys()):
+            rows = sorted(grouped[an], key=lambda r: r.get("retake_number", 0))
+            attempts.append({
+                "attempt_number": an,
+                "original": rows[0],
+                "retakes": rows[1:],
+                "retake_count": len(rows) - 1,
+            })
+
+        best_pct = max((round(r["score"] / r["total"] * 100) if r["total"] > 0 else 0 for r in all_rows), default=0)
+        print(f"[GET ATTEMPTS] topic={topic_id} type={material_type} groups={len(attempts)} rows={len(all_rows)} best={best_pct}")
+
+        return {
+            "attempts": attempts,
+            "total_attempts": len(attempts),
+            "best_percentage": best_pct,
+        }
+    except Exception as e:
+        return {"attempts": [], "all_rows": [], "total_attempts": 0, "error": str(e)}
+
+
+# ── POST /api/classes/study/start-attempt ──────────────────────────────────
+
+@router.post("/study/start-attempt")
+async def start_study_attempt(request: Request):
+    """Create an incomplete attempt when a test starts."""
+    user_id = _get_user(request)
+    body = await request.json()
+    topic_id = body.get("topic_id", "")
+    class_id = body.get("class_id", "")
+    material_type = body.get("material_type", "")
+    content_json = body.get("content_json", {})
+    is_retake = body.get("is_retake", False)
+    parent_attempt = body.get("parent_attempt", None)
+    total = body.get("total", 0)
+
+    if not topic_id or not material_type:
+        raise HTTPException(400, "topic_id and material_type required")
+
+    try:
+        if is_retake and parent_attempt:
+            # Always create new retake
+            pass
+
+        # New attempts (Regenerate) always create a new row
+        if is_retake and parent_attempt:
+            attempt_number = parent_attempt
+            existing_r = supabase.table("study_attempts") \
+                .select("retake_number") \
+                .eq("user_id", user_id).eq("topic_id", topic_id) \
+                .eq("material_type", material_type).eq("attempt_number", parent_attempt) \
+                .order("retake_number", desc=True).limit(1).execute()
+            retake_number = (existing_r.data[0].get("retake_number", 0) + 1) if existing_r.data else 1
+        else:
+            existing = supabase.table("study_attempts") \
+                .select("attempt_number") \
+                .eq("user_id", user_id).eq("topic_id", topic_id) \
+                .eq("material_type", material_type) \
+                .order("attempt_number", desc=True).limit(1).execute()
+            attempt_number = (existing.data[0]["attempt_number"] + 1) if existing.data else 1
+            retake_number = 0
+
+        result = supabase.table("study_attempts").insert({
+            "user_id": user_id, "topic_id": topic_id, "class_id": class_id,
+            "material_type": material_type, "attempt_number": attempt_number,
+            "retake_number": retake_number, "content_json": content_json,
+            "score": 0, "total": total, "status": "incomplete",
+            "current_index": 0, "answers_so_far": [], "score_so_far": 0,
+        }).execute()
+
+        return {"success": True, "id": result.data[0]["id"] if result.data else None, "existing": False}
+    except Exception as e:
+        print(f"[START ATTEMPT] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/study/update-progress ────────────────────────────────
+
+@router.post("/study/update-progress")
+async def update_study_progress(request: Request):
+    """Update progress after each answer."""
+    user_id = _get_user(request)
+    body = await request.json()
+    attempt_id = body.get("attempt_id", "")
+    current_index = body.get("current_index", 0)
+    answers_so_far = body.get("answers_so_far", [])
+    score_so_far = body.get("score_so_far", 0)
+    print(f"[UPDATE PROGRESS] attempt={attempt_id} index={current_index} score={score_so_far}")
+    answers_so_far = body.get("answers_so_far", [])
+    score_so_far = body.get("score_so_far", 0)
+
+    if not attempt_id:
+        raise HTTPException(400, "attempt_id required")
+
+    try:
+        supabase.table("study_attempts").update({
+            "current_index": current_index,
+            "answers_so_far": answers_so_far,
+            "score_so_far": score_so_far,
+        }).eq("id", attempt_id).eq("user_id", user_id).execute()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/study/complete-attempt ───────────────────────────────
+
+@router.post("/study/complete-attempt")
+async def complete_study_attempt(request: Request):
+    """Mark an incomplete attempt as completed."""
+    user_id = _get_user(request)
+    body = await request.json()
+    attempt_id = body.get("attempt_id", "")
+    score = body.get("score", 0)
+    total = body.get("total", 0)
+    content_json = body.get("content_json", {})
+
+    if not attempt_id:
+        raise HTTPException(400, "attempt_id required")
+
+    try:
+        supabase.table("study_attempts").update({
+            "status": "completed",
+            "score": score,
+            "total": total,
+            "content_json": content_json,
+        }).eq("id", attempt_id).eq("user_id", user_id).execute()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
