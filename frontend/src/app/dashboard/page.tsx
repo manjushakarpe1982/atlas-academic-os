@@ -9,6 +9,8 @@ import {
   Brain,
   Loader2,
   Info,
+  ThumbsUp,
+  ThumbsDown,
   X,
 } from "lucide-react";
 import LoadingDashboard from "./components/LoadingDashboard";
@@ -254,6 +256,10 @@ export default function DashboardHome() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [studyFeedback, setStudyFeedback] = useState<'helpful' | 'not_helpful' | null>(null);
+  const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
+  const [feedbackReason, setFeedbackReason] = useState<string | null>(null);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [recExpanded, setRecExpanded] = useState(false);
 
   useEffect(() => {
@@ -426,6 +432,96 @@ export default function DashboardHome() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Study Recommendation Feedback ── */}
+      {focusTask && (
+        <div className="flex items-center justify-center border bg-violet-100 border-gray-200 rounded-lg gap-3 py-2 ">
+          <button
+            onClick={() => setStudyFeedback(studyFeedback === 'helpful' ? null : 'helpful')}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 ${
+              studyFeedback === 'helpful' ? 'bg-indigo-100 text-indigo-600' : 'text-gray-500 hover:bg-gray-50'
+            }`}
+            style={{ transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+          >
+            <ThumbsUp className={`w-4 h-4 transition-all duration-300 ${studyFeedback === 'helpful' ? 'text-indigo-600' : 'text-gray-400'}`}
+              fill={studyFeedback === 'helpful' ? 'currentColor' : 'none'} strokeWidth={studyFeedback === 'helpful' ? 0 : 2} />
+            Helpful
+          </button>
+          <div className="w-px h-6 bg-violet-300" />
+          <button
+            onClick={() => setShowFeedbackSheet(true)}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 ${
+              studyFeedback === 'not_helpful' ? 'bg-red-50 text-red-500' : 'text-gray-500 hover:bg-gray-50'
+            }`}
+            style={{ transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+          >
+            <ThumbsDown className={`w-4 h-4 transition-all duration-300 ${studyFeedback === 'not_helpful' ? 'text-red-500' : 'text-gray-400'}`}
+              fill={studyFeedback === 'not_helpful' ? 'currentColor' : 'none'} strokeWidth={studyFeedback === 'not_helpful' ? 0 : 2} />
+            Not Helpful
+          </button>
+        </div>
+      )}
+
+      {/* ── Not Helpful Feedback Sheet ── */}
+      {showFeedbackSheet && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowFeedbackSheet(false)} />
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 px-5 pt-6 pb-8 max-w-lg mx-auto"
+            style={{ animation: 'slideUp 0.3s ease-out' }}>
+            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-5" />
+
+            {feedbackSubmitted ? (
+              <div className="flex flex-col items-center mb-8">
+                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                  <CheckCircle2 className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-lg font-extrabold text-gray-900 mb-1">Thanks!</h3>
+                <p className="text-sm text-gray-500 text-center">Your feedback helps Atlas improve future recommendations.</p>
+                <button onClick={() => { setShowFeedbackSheet(false); setFeedbackReason(null); setFeedbackSubmitted(false); }}
+                  className="mt-5 bg-indigo-600 text-white font-bold px-8 py-2.5 rounded-xl text-sm">Done</button>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-lg font-extrabold text-gray-900 text-center mb-1">Why wasn&apos;t this helpful?</h3>
+                <p className="text-xs text-gray-500 text-center mb-5">Your feedback helps Atlas improve future recommendations.</p>
+                <div className="space-y-3 mb-5">
+                  {[
+                    { id: 'wrong', title: 'This is wrong', desc: 'The information or suggestion is incorrect.' },
+                    { id: 'missing', title: 'Missing context', desc: 'Important information was not considered.' },
+                    { id: 'studied', title: 'I already studied this', desc: "I've already completed or planned this." },
+                    { id: 'other', title: 'Other', desc: 'Something else.' },
+                  ].map(opt => (
+                    <button key={opt.id} onClick={() => setFeedbackReason(opt.id)}
+                      className={`w-full flex items-center gap-3 text-left p-3 rounded-lg border transition-all ${
+                        feedbackReason === opt.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                      }`}>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-900">{opt.title}</p>
+                        <p className="text-xs text-gray-500">{opt.desc}</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        feedbackReason === opt.id ? 'border-indigo-600' : 'border-gray-300'
+                      }`}>
+                        {feedbackReason === opt.id && <div className="w-2.5 h-2.5 bg-indigo-600 rounded-full" />}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => { setStudyFeedback('not_helpful'); setFeedbackSubmitted(true); }}
+                  disabled={!feedbackReason}
+                  className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg text-base disabled:opacity-40 hover:bg-indigo-700 transition-all">
+                  Submit Feedback
+                </button>
+                <button onClick={() => { setShowFeedbackSheet(false); setFeedbackReason(null); }}
+                  className="w-full text-indigo-600 font-semibold py-2.5 text-base mt-1">
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
+          <style jsx>{`@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
+        </>
       )}
 
       {/* ── Today's Study Plan ── */}
