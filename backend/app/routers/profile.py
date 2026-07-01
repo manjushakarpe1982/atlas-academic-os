@@ -167,3 +167,55 @@ async def export_user_data(request: Request):
     except Exception as e:
         print(f"[EXPORT] ERROR: {e}")
         return {"success": False, "error": str(e)}
+
+
+# ── DELETE /api/profile/delete-all-data ───────────────────────────────────
+
+@router.delete("/delete-all-data")
+async def delete_all_user_data(request: Request):
+    """Delete ALL user data but keep the account active."""
+    user_id = _get_user(request)
+
+    try:
+        # Get all classes
+        classes_res = supabase.table("classes").select("id").eq("user_id", user_id).execute()
+        class_ids = [c["id"] for c in (classes_res.data or [])]
+
+        # Delete child data for each class
+        for cid in class_ids:
+            supabase.table("grades").delete().eq("class_id", cid).eq("user_id", user_id).execute()
+            supabase.table("grade_weights").delete().eq("class_id", cid).execute()
+            supabase.table("assessments").delete().eq("class_id", cid).execute()
+            supabase.table("topics").delete().eq("class_id", cid).execute()
+            supabase.table("study_attempts").delete().eq("class_id", cid).execute()
+
+            try:
+                supabase.table("parsed_results").delete().eq("class_id", cid).execute()
+            except Exception:
+                pass
+
+        # Delete files from storage
+        file_result = supabase.table("files").select("id, storage_bucket, storage_path") \
+            .eq("user_id", user_id).execute()
+        for f in (file_result.data or []):
+            if f.get("storage_bucket") and f.get("storage_path"):
+                try:
+                    supabase.storage.from_(f["storage_bucket"]).remove([f["storage_path"]])
+                except Exception:
+                    pass
+
+        # Delete user-level data
+        supabase.table("files").delete().eq("user_id", user_id).execute()
+        supabase.table("calendar_events").delete().eq("user_id", user_id).execute()
+        supabase.table("classes").delete().eq("user_id", user_id).execute()
+
+        try:
+            supabase.table("recommendation_feedback").delete().eq("user_id", user_id).execute()
+        except Exception:
+            pass
+
+        print(f"[DELETE ALL] Deleted all data for user {user_id}")
+        return {"success": True, "message": "All data deleted successfully"}
+    except Exception as e:
+        print(f"[DELETE ALL] ERROR: {e}")
+        raise HTTPException(500, f"Failed to delete data: {e}")
