@@ -363,6 +363,48 @@ export default function DashboardHome() {
         </Link>
       </div>
 
+      {/* ── Empty State — No Classes ── */}
+      {!focusTask && classGrades.length === 0 && todayPlan.length === 0 && (
+        <div className="bg-white border-2 border-dashed border-indigo-200 rounded-2xl p-6 text-center">
+          <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">📚</span>
+          </div>
+          <h2 className="text-lg font-extrabold text-gray-900 mb-1">
+            Get Started with Atlas
+          </h2>
+          <p className="text-sm text-gray-500 mb-5">
+            Add your first class to unlock smart study plans, grade tracking,
+            and AI-powered recommendations.
+          </p>
+          <Link
+            href="/add-class"
+            className="inline-flex items-center gap-2 bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-indigo-700 transition-all text-sm"
+          >
+            <span className="text-lg">+</span> Add Your First Class
+          </Link>
+          <div className="grid grid-cols-3 gap-3 mt-5">
+            <div className="bg-indigo-50 rounded-xl p-2.5 text-center">
+              <span className="text-lg">📄</span>
+              <p className="text-[10px] font-semibold text-gray-600 mt-1">
+                Upload Syllabus
+              </p>
+            </div>
+            <div className="bg-indigo-50 rounded-xl p-2.5 text-center">
+              <span className="text-lg">🤖</span>
+              <p className="text-[10px] font-semibold text-gray-600 mt-1">
+                AI Extracts Data
+              </p>
+            </div>
+            <div className="bg-indigo-50 rounded-xl p-2.5 text-center">
+              <span className="text-lg">🎯</span>
+              <p className="text-[10px] font-semibold text-gray-600 mt-1">
+                Smart Study Plan
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── What to Study First ── */}
       {focusTask && (
         <div
@@ -445,7 +487,7 @@ export default function DashboardHome() {
 
       {/* ── Study Recommendation Feedback ── */}
       {focusTask && (
-        <div className="flex items-center justify-center border border-gray-200 rounded-lg gap-3 py-2 bg-violet-50">
+        <div className="flex items-center justify-center border border-gray-200 rounded-lg gap-3 py-2.5 bg-white">
           <button
             onClick={async () => {
               const newVal = studyFeedback === "helpful" ? null : "helpful";
@@ -485,7 +527,7 @@ export default function DashboardHome() {
             />
             Helpful
           </button>
-            <div className="w-px h-6 bg-violet-300" />
+          <div className="w-px h-5 bg-gray-200" />
           <button
             onClick={() => setShowFeedbackSheet(true)}
             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 ${
@@ -513,14 +555,14 @@ export default function DashboardHome() {
             onClick={() => setShowFeedbackSheet(false)}
           />
           <div
-            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-xl z-50 px-5 pt-6 pb-8 max-w-lg mx-auto"
+            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 px-5 pt-6 pb-8 max-w-lg mx-auto"
             style={{ animation: "slideUp 0.3s ease-out" }}
           >
             <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-5" />
 
             {feedbackSubmitted ? (
-              <div className="flex flex-col items-center mb-10">
-                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-1">
+              <div className="flex flex-col items-center py-4">
+                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-3">
                   <CheckCircle2 className="w-8 h-8 text-green-600" />
                 </div>
                 <h3 className="text-lg font-extrabold text-gray-900 mb-1">
@@ -570,7 +612,7 @@ export default function DashboardHome() {
                     <button
                       key={opt.id}
                       onClick={() => setFeedbackReason(opt.id)}
-                      className={`w-full flex items-center gap-3 text-left p-3 rounded-lg border transition-all ${
+                      className={`w-full flex items-center gap-3 text-left p-3.5 rounded-xl border transition-all ${
                         feedbackReason === opt.id
                           ? "border-indigo-500 bg-indigo-50"
                           : "border-gray-200 hover:border-gray-300"
