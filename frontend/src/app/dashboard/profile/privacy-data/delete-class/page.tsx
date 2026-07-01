@@ -109,57 +109,36 @@ export default function DeleteClassDataPage() {
     }
   };
 
-  // ── Success Screen ──
-  if (deleted) {
-    return (
-      <div className="">
-        <BackHeader title="Delete Class Data" />
-
-        <div className="px-4 py-6 flex flex-col items-center justify-center space-y-6">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-            <CheckCircle2 className="w-12 h-12 text-green-600" />
-          </div>
-
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold text-gray-900">Class data deleted!</h1>
-            <p className="text-sm text-gray-600">
-              All data for {deletedClassName} has been permanently deleted.
-            </p>
-          </div>
-
-          <div className="w-full bg-green-50 border-2 border-green-200 rounded-2xl p-4 flex items-start gap-3">
-            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-green-900 font-medium">
-              {deletedClassName} and all associated data has been deleted
-            </p>
-          </div>
-
-          {/* Back / Delete Another */}
-          <div className="w-full space-y-3">
-            {classes.length > 0 && (
-              <button
-                onClick={() => { setDeleted(false); setSelectedClassId(null); }}
-                className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-all"
-              >
-                Delete Another Class
-              </button>
-            )}
-            <button
-              onClick={() => router.push('/dashboard/profile/privacy-data')}
-              className="w-full border-2 border-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-50 transition-all"
-            >
-              Back to Privacy & Data
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ── Success handled as popup below ──
 
   // ── Main Page ──
   return (
     <div className="">
       <BackHeader title="Delete Class Data" />
+
+      {/* Success Popup */}
+      {deleted && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => { setDeleted(false); setSelectedClassId(null); }} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl z-50 p-6 w-[85%] max-w-sm shadow-xl"
+            style={{ animation: 'popIn 0.3s ease-out' }}>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                <CheckCircle2 className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-lg font-extrabold text-gray-900 mb-1">Class Deleted!</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                All data for <span className="font-bold text-gray-700">{deletedClassName}</span> has been permanently deleted.
+              </p>
+              <button onClick={() => { setDeleted(false); setSelectedClassId(null); }}
+                className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-indigo-700">
+                OK
+              </button>
+            </div>
+          </div>
+          <style jsx>{`@keyframes popIn { from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }`}</style>
+        </>
+      )}
 
       <div className="px-4 py-4 space-y-4">
         <Image

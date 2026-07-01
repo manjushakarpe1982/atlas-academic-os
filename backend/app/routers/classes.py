@@ -923,40 +923,50 @@ async def get_class_overview(class_id: str, request: Request):
 
 @router.delete("/{class_id}")
 async def delete_class(class_id: str, request: Request):
-    """Delete a class and ALL associated data (grades, weights, assessments, topics, files, parsed results)."""
+    """Delete a class and ALL associated data."""
     user_id = _get_user(request)
-
-    # Verify class exists and belongs to user
     cls = _get_class(class_id, user_id)
-
     class_name = cls.get("name", "Unknown Class")
 
-    # Delete all related data in order (child tables first)
-    supabase.table("grades").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
-    supabase.table("grade_weights").delete().eq("class_id", class_id).execute()
-    supabase.table("assessments").delete().eq("class_id", class_id).execute()
-    supabase.table("topics").delete().eq("class_id", class_id).execute()
-    supabase.table("parsed_results").delete().eq("class_id", class_id).execute()
+    try:
+        # Delete all related data (child tables first)
+        supabase.table("grades").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
+        supabase.table("grade_weights").delete().eq("class_id", class_id).execute()
+        supabase.table("assessments").delete().eq("class_id", class_id).execute()
+        supabase.table("topics").delete().eq("class_id", class_id).execute()
+        supabase.table("study_attempts").delete().eq("class_id", class_id).execute()
 
-    # Delete files from storage + DB
-    file_result = supabase.table("files").select("id, storage_bucket, storage_path") \
-        .eq("class_id", class_id).eq("user_id", user_id).execute()
+        try:
+            supabase.table("parsed_results").delete().eq("class_id", class_id).execute()
+        except Exception:
+            pass  # Table may not exist
 
-    for f in (file_result.data or []):
-        if f.get("storage_bucket") and f.get("storage_path"):
-            try:
-                supabase.storage.from_(f["storage_bucket"]).remove([f["storage_path"]])
-            except Exception:
-                pass
+        try:
+            supabase.table("recommendation_feedback").delete().eq("user_id", user_id).execute()
+        except Exception:
+            pass
 
-    supabase.table("files").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
+        # Delete files from storage + DB
+        file_result = supabase.table("files").select("id, storage_bucket, storage_path") \
+            .eq("class_id", class_id).eq("user_id", user_id).execute()
 
-    # Delete the class itself
-    supabase.table("classes").delete().eq("id", class_id).eq("user_id", user_id).execute()
+        for f in (file_result.data or []):
+            if f.get("storage_bucket") and f.get("storage_path"):
+                try:
+                    supabase.storage.from_(f["storage_bucket"]).remove([f["storage_path"]])
+                except Exception:
+                    pass
 
-    print(f"[DeleteClass] Deleted class '{class_name}' ({class_id}) for user {user_id}")
+        supabase.table("files").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
 
-    return {"message": f"Class '{class_name}' and all associated data deleted successfully", "id": class_id}
+        # Delete the class itself
+        supabase.table("classes").delete().eq("id", class_id).eq("user_id", user_id).execute()
+
+        print(f"[DeleteClass] Deleted class '{class_name}' ({class_id}) for user {user_id}")
+        return {"message": f"Class '{class_name}' and all associated data deleted successfully", "id": class_id}
+    except Exception as e:
+        print(f"[DeleteClass] ERROR: {e}")
+        raise HTTPException(500, f"Failed to delete class: {e}")
 
 
 # ============================================================================
