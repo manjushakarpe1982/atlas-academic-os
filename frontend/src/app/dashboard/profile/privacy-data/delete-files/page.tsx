@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Trash2, Info, CheckCircle2, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { Trash2, Info, CheckCircle2, FileText, Loader2, AlertCircle, Download } from 'lucide-react';
 import BackHeader from '../../BackHeader';
 import Image from 'next/image';
 import { api, API_BASE, getToken } from '@/lib/api';
@@ -54,7 +54,27 @@ export default function DeleteFilesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
   const [deletedFile, setDeletedFile] = useState(false);
+
+  // ── Download file ──
+  const handleDownload = async (fileId: string) => {
+    setDownloading(fileId);
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/api/classes/files/${fileId}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.url) {
+        const a = document.createElement('a');
+        a.href = data.url;
+        a.download = data.name || 'download';
+        a.target = '_blank';
+        a.click();
+      }
+    } catch {} finally { setDownloading(null); }
+  };
   const [deletingAll, setDeletingAll] = useState(false);
   const [allDeleted, setAllDeleted] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -234,18 +254,31 @@ export default function DeleteFilesPage() {
                   </p>
                 </div>
 
-                {/* Delete Button */}
-                <button
-                  onClick={() => handleDeleteFile(file.id)}
-                  disabled={deleting === file.id}
-                  className="text-red-600 hover:text-red-700 transition-colors flex-shrink-0 p-2 hover:bg-red-50 rounded-lg disabled:opacity-50"
-                >
-                  {deleting === file.id ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-5 h-5" />
-                  )}
-                </button>
+                {/* Buttons */}
+                <div className="flex gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => handleDownload(file.id)}
+                    disabled={downloading === file.id}
+                    className="text-indigo-600 hover:text-indigo-700 transition-colors p-1.5 hover:bg-indigo-50 rounded-lg disabled:opacity-50"
+                  >
+                    {downloading === file.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteFile(file.id)}
+                    disabled={deleting === file.id}
+                    className="text-red-600 hover:text-red-700 transition-colors p-1.5 hover:bg-red-50 rounded-lg disabled:opacity-50"
+                  >
+                    {deleting === file.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

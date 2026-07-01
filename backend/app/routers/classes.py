@@ -992,6 +992,39 @@ async def list_user_files(request: Request):
     return {"files": files}
 
 
+@router.get("/files/{file_id}/download")
+async def download_user_file(file_id: str, request: Request):
+    """Get a signed download URL for a specific file."""
+    user_id = _get_user(request)
+
+    file_result = supabase.table("files") \
+        .select("id, original_name, storage_bucket, storage_path") \
+        .eq("id", file_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    if not file_result.data:
+        raise HTTPException(404, "File not found")
+
+    file_data = file_result.data[0]
+    bucket = file_data.get("storage_bucket")
+    path = file_data.get("storage_path")
+
+    if not bucket or not path:
+        raise HTTPException(404, "File not available in storage")
+
+    try:
+        signed = supabase.storage.from_(bucket).create_signed_url(path, 300)
+        return {
+            "success": True,
+            "url": signed.get("signedURL") or signed.get("signedUrl") or signed,
+            "name": file_data.get("original_name", "download"),
+        }
+    except Exception as e:
+        print(f"[DOWNLOAD] ERROR: {e}")
+        raise HTTPException(500, f"Could not generate download link: {e}")
+
+
 @router.delete("/files/{file_id}")
 async def delete_user_file(file_id: str, request: Request):
     """Delete a specific uploaded file."""
