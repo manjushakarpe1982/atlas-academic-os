@@ -30,7 +30,7 @@ export default function CalendarPage() {
   const goTo = (v: View) => { setView(v); window.scrollTo(0, 0); };
   const openDetail = (ev: CalEvent) => { setSelectedEvent(ev); goTo('detail'); };
   const backToCalendar = () => { setSelectedEvent(null); goTo('calendar'); };
-  const onSaved = () => { fetchEvents(); backToCalendar(); };
+  const onSaved = () => { fetchEvents(); backToCalendar(); window.dispatchEvent(new Event('atlas-refresh-notifications')); };
   const onDeleted = () => { fetchEvents(); backToCalendar(); };
 
   if (loading) {
