@@ -127,12 +127,12 @@ export default function NotificationSettingsPage() {
         </div>
 
         {/* Reminder Time */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-          <p className="text-[14px] font-bold text-gray-500 mb-3">Reminder Time</p>
+        <div className="bg-violet-50 rounded-lg border border-violet-200 shadow-sm p-4">
+          <p className="text-[15px] font-bold text-gray-500 mb-3">Reminder Time</p>
           <div className="flex items-center gap-2">
             <select value={tempHour}
               onChange={(e) => setTempHour(e.target.value)}
-              className="flex-1 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-3 text-center text-lg font-extrabold text-indigo-600 appearance-none focus:outline-none">
+              className="flex-1 bg-indigo-50 border border-indigo-200 rounded-lg py-1.5 text-center text-lg font-extrabold text-indigo-600 appearance-none focus:outline-none">
               {[12,1,2,3,4,5,6,7,8,9,10,11].map(h => (
                 <option key={h} value={String(h)}>{h}</option>
               ))}
@@ -140,16 +140,16 @@ export default function NotificationSettingsPage() {
             <span className="text-2xl font-extrabold text-gray-400">:</span>
             <select value={tempMin}
               onChange={(e) => setTempMin(e.target.value)}
-              className="flex-1 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-3 text-center text-lg font-extrabold text-indigo-600 appearance-none focus:outline-none">
+              className="flex-1 bg-indigo-50 border border-indigo-200 rounded-lg py-1.5 text-center text-lg font-extrabold text-indigo-600 appearance-none focus:outline-none">
               {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
-            <div className="flex rounded-xl overflow-hidden border border-indigo-200">
+            <div className="flex rounded-lg overflow-hidden border border-indigo-200">
               {['AM', 'PM'].map(ap => (
                 <button key={ap} onClick={() => setTempAp(ap)}
-                  className={`px-3 py-3 text-sm font-extrabold transition-all ${
-                    tempAp === ap ? 'bg-indigo-600 text-white' : 'bg-white text-gray-400'
+                  className={`px-2 py-2 text-sm font-bold transition-all ${
+                    tempAp === ap ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500'
                   }`}>
                   {ap}
                 </button>
@@ -157,7 +157,7 @@ export default function NotificationSettingsPage() {
             </div>
           </div>
           <button onClick={() => updateTime(`${tempHour}:${tempMin} ${tempAp}`)}
-            className="w-full mt-3 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-indigo-700 transition-all">
+            className="w-full mt-3 bg-indigo-600 text-white font-bold py-2 rounded-lg text-[15px] hover:bg-indigo-700 transition-all">
             Set Reminder
           </button>
           <p className="text-xs text-gray-400 mt-2 text-center">Set when you want to receive daily reminders</p>

@@ -188,7 +188,7 @@ async def generate_notifications(request: Request):
     user_id = _get_user(request)
 
     try:
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()  # local server time, not UTC
         today = now.strftime("%Y-%m-%d")
         tomorrow = (now + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
         week_end = (now + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
@@ -271,12 +271,20 @@ async def generate_notifications(request: Request):
                 try:
                     ev_time = datetime.datetime.fromisoformat(ev_date_raw.replace("Z", "").replace("+00:00", ""))
                     diff_mins = (ev_time - now).total_seconds() / 60
+                    # Extract time string from raw date for display
+                    raw_time = ev_date_raw.split("T")[1][:5] if "T" in ev_date_raw else "00:00"
+                    parts = raw_time.split(":")
+                    h_int = int(parts[0])
+                    m_str = parts[1] if len(parts) > 1 else "00"
+                    ap = "AM" if h_int < 12 else "PM"
+                    h_12 = h_int if h_int <= 12 else h_int - 12
+                    if h_12 == 0: h_12 = 12
+                    time_str = f"{h_12}:{m_str} {ap}"
+
                     if 0 < diff_mins <= 60:
-                        time_str = ev_time.strftime("%I:%M %p").lstrip("0")
                         notifications.append({"user_id": user_id, "type": n_type,
                             "title": f"Starting soon: {ev_title}", "body": f"{ev_title} starts at {time_str} — less than 1 hour!"})
                     elif 60 < diff_mins <= 120:
-                        time_str = ev_time.strftime("%I:%M %p").lstrip("0")
                         notifications.append({"user_id": user_id, "type": n_type,
                             "title": f"Reminder: {ev_title}", "body": f"{ev_title} starts at {time_str} — about 1 hour away."})
                 except Exception:

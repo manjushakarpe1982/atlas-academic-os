@@ -262,16 +262,16 @@ export default function TopHeader({ title, showBack }: Props) {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <button onClick={() => setNotifTab('inbox')}
-                            className={`text-sm font-bold pb-1 transition-all ${notifTab === 'inbox' ? 'text-gray-900 border-b-2 border-indigo-600' : 'text-gray-400'}`}>
+                            className={`text-sm font-bold pb-1 transition-all ${notifTab === 'inbox' ? 'text-gray-900 border-b-2 border-indigo-600' : 'text-gray-500'}`}>
                             Inbox {unreadCount > 0 && <span className="ml-1 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount}</span>}
                           </button>
                           <button onClick={() => setNotifTab('archive')}
-                            className={`text-sm font-bold pb-1 transition-all ${notifTab === 'archive' ? 'text-gray-900 border-b-2 border-indigo-600' : 'text-gray-400'}`}>
+                            className={`text-sm font-bold pb-1 transition-all ${notifTab === 'archive' ? 'text-gray-900 border-b-2 border-indigo-600' : 'text-gray-500'}`}>
                             Archive
                           </button>
                         </div>
                         <Link href="/dashboard/profile/notification-settings" onClick={() => setNotifOpen(false)}>
-                          <Settings className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                          <Settings className="w-4 h-4 text-gray-600 hover:text-gray-600" />
                         </Link>
                       </div>
                     </div>
