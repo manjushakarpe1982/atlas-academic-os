@@ -287,6 +287,26 @@ async def generate_notifications(request: Request):
         if new_notifs:
             supabase.table("notification_log").insert(new_notifs).execute()
 
+            # Send push to all subscribed devices
+            if settings.vapid_private_key:
+                try:
+                    from pywebpush import webpush, WebPushException
+                    import json
+                    subs_res = supabase.table("push_subscriptions") \
+                        .select("*").eq("user_id", user_id).execute()
+                    for sub in (subs_res.data or []):
+                        sub_info = {"endpoint": sub["endpoint"], "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}}
+                        # Send first new notification as push
+                        push_data = json.dumps({"title": new_notifs[0]["title"], "body": new_notifs[0]["body"], "url": "/dashboard"})
+                        try:
+                            webpush(subscription_info=sub_info, data=push_data,
+                                vapid_private_key=settings.vapid_private_key,
+                                vapid_claims={"sub": settings.vapid_email})
+                        except WebPushException:
+                            pass
+                except Exception:
+                    pass
+
         return {"success": True, "generated": len(notifications), "saved": len(new_notifs)}
     except Exception as e:
         print(f"[NOTIF GENERATE] ERROR: {e}")
@@ -312,4 +332,95 @@ async def clear_all_notifications(request: Request):
         supabase.table("notification_log").delete().eq("user_id", user_id).execute()
         return {"success": True}
     except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ── GET /api/notifications/vapid-key ──────────────────────────────────────
+
+@router.get("/vapid-key")
+async def get_vapid_key():
+    """Return the public VAPID key for push subscription."""
+    return {"key": settings.vapid_public_key}
+
+
+# ── POST /api/notifications/subscribe ─────────────────────────────────────
+
+@router.post("/subscribe")
+async def subscribe_push(request: Request):
+    """Save a push subscription for the user."""
+    user_id = _get_user(request)
+    body = await request.json()
+    endpoint = body.get("endpoint", "")
+    p256dh = body.get("keys", {}).get("p256dh", "")
+    auth = body.get("keys", {}).get("auth", "")
+
+    if not endpoint or not p256dh or not auth:
+        raise HTTPException(400, "Invalid subscription data")
+
+    try:
+        # Upsert
+        existing = supabase.table("push_subscriptions") \
+            .select("id").eq("user_id", user_id).eq("endpoint", endpoint).execute()
+        if existing.data:
+            supabase.table("push_subscriptions") \
+                .update({"p256dh": p256dh, "auth": auth}) \
+                .eq("user_id", user_id).eq("endpoint", endpoint).execute()
+        else:
+            supabase.table("push_subscriptions").insert({
+                "user_id": user_id, "endpoint": endpoint,
+                "p256dh": p256dh, "auth": auth,
+            }).execute()
+        return {"success": True}
+    except Exception as e:
+        print(f"[PUSH SUBSCRIBE] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/notifications/send-push ─────────────────────────────────────
+
+@router.post("/send-push")
+async def send_push_notification(request: Request):
+    """Send push notification to all user's subscribed devices."""
+    user_id = _get_user(request)
+    body = await request.json()
+    title = body.get("title", "Atlas")
+    msg_body = body.get("body", "")
+    url = body.get("url", "/dashboard")
+
+    if not settings.vapid_private_key or not settings.vapid_public_key:
+        return {"success": False, "error": "VAPID keys not configured"}
+
+    try:
+        from pywebpush import webpush, WebPushException
+        import json
+
+        subs_res = supabase.table("push_subscriptions") \
+            .select("*").eq("user_id", user_id).execute()
+
+        sent = 0
+        failed = 0
+        for sub in (subs_res.data or []):
+            subscription_info = {
+                "endpoint": sub["endpoint"],
+                "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]},
+            }
+            try:
+                webpush(
+                    subscription_info=subscription_info,
+                    data=json.dumps({"title": title, "body": msg_body, "url": url, "tag": title}),
+                    vapid_private_key=settings.vapid_private_key,
+                    vapid_claims={"sub": settings.vapid_email},
+                )
+                sent += 1
+            except WebPushException as e:
+                print(f"[PUSH] Failed: {e}")
+                # Remove invalid subscription
+                if "410" in str(e) or "404" in str(e):
+                    supabase.table("push_subscriptions") \
+                        .delete().eq("id", sub["id"]).execute()
+                failed += 1
+
+        return {"success": True, "sent": sent, "failed": failed}
+    except Exception as e:
+        print(f"[PUSH] ERROR: {e}")
         return {"success": False, "error": str(e)}

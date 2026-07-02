@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     jwt_algorithm:        str = "HS256"
     anthropic_api_key:    str = ""
     storage_bucket:       str = "atlas-files"
+    vapid_public_key:     str = ""
+    vapid_private_key:    str = ""
+    vapid_email:          str = "mailto:admin@atlas.edu"
 
     def get_key(self) -> str:
         return self.supabase_service_key or self.supabase_key

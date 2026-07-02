@@ -46,6 +46,70 @@ export default function TopHeader({ title, showBack }: Props) {
   const path = usePathname();
   const generatedRef = useRef(false);
 
+  // Request browser notification permission + register service worker
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    const setupPush = async () => {
+      try {
+        // Register service worker
+        const reg = await navigator.serviceWorker.register('/sw.js');
+
+        // Request permission
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return;
+
+        // Get VAPID key
+        const token = getToken();
+        if (!token) return;
+        const vapidRes = await fetch(`${API_BASE}/api/notifications/vapid-key`);
+        const vapidData = await vapidRes.json();
+        if (!vapidData.key) return;
+
+        // Convert VAPID key
+        const urlBase64ToUint8Array = (base64String: string) => {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+          const raw = window.atob(base64);
+          return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+        };
+
+        // Subscribe to push
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidData.key),
+        });
+
+        // Send subscription to backend
+        const subJson = sub.toJSON();
+        await fetch(`${API_BASE}/api/notifications/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            endpoint: subJson.endpoint,
+            keys: subJson.keys,
+          }),
+        });
+      } catch (e) {
+        console.log('Push setup skipped:', e);
+      }
+    };
+
+    setupPush();
+  }, []);
+
+  // Show browser notification (stays until user dismisses)
+  const showBrowserNotif = (title: string, body: string) => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: '/atlas-icon.png',
+        tag: title,
+        requireInteraction: true,
+      });
+    }
+  };
+
   // Generate + fetch notifications on mount
   useEffect(() => {
     const token = getToken();
@@ -54,12 +118,9 @@ export default function TopHeader({ title, showBack }: Props) {
 
     const load = async () => {
       try {
-        // Generate new notifications
         await fetch(`${API_BASE}/api/notifications/generate`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          method: "POST", headers: { Authorization: `Bearer ${token}` },
         });
-        // Fetch all notifications
         const res = await fetch(`${API_BASE}/api/notifications`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -67,6 +128,13 @@ export default function TopHeader({ title, showBack }: Props) {
         if (data.notifications) {
           setNotifications(data.notifications);
           setUnreadCount(data.unread_count || 0);
+          // Show browser notification for new unread
+          const unread = (data.notifications as Notification[]).filter((n: Notification) => !n.read);
+          if (unread.length > 0 && unread.length <= 3) {
+            unread.forEach((n: Notification) => showBrowserNotif(n.title, n.body));
+          } else if (unread.length > 3) {
+            showBrowserNotif('Atlas', `You have ${unread.length} new notifications`);
+          }
         }
       } catch {}
     };
@@ -86,8 +154,13 @@ export default function TopHeader({ title, showBack }: Props) {
       });
       const data = await res.json();
       if (data.notifications) {
+        const prevUnread = unreadCount;
         setNotifications(data.notifications);
         setUnreadCount(data.unread_count || 0);
+        if (data.unread_count > prevUnread) {
+          const newest = (data.notifications as Notification[]).find((n: Notification) => !n.read);
+          if (newest) showBrowserNotif(newest.title, newest.body);
+        }
       }
     } catch {}
   };
