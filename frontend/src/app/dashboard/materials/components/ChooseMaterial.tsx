@@ -30,7 +30,7 @@ function timeAgo(dateStr: string | null): string {
   } catch { return ''; }
 }
 
-export default function ChooseMaterial({ topic, onBack, onSelect ,className }: Props) {
+export default function ChooseMaterial({ topic, onBack, onSelect, className }: Props) {
   const [progress, setProgress] = useState<Progress | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -169,6 +169,25 @@ export default function ChooseMaterial({ topic, onBack, onSelect ,className }: P
             </button>
           );
         })}
+      </div>
+
+      {/* Ask Atlas AI */}
+      <div className="mt-4 bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-4 flex items-center gap-4">
+        <img
+          src="https://res.cloudinary.com/mview/image/upload/atlas/askatlasai.webp"
+          alt="Atlas AI"
+          className="w-16 h-16 object-contain flex-shrink-0"
+        />
+        <div className="flex-1">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="text-lg">💬</span>
+            <h3 className="text-base font-extrabold text-gray-900">Need more help?</h3>
+          </div>
+          <p className="text-xs text-gray-500 mb-2">Ask Atlas AI anything about this topic and get instant help.</p>
+          <button onClick={() => onSelect('askAI')} className="bg-indigo-600 text-white font-bold text-xs px-4 py-2 rounded-xl hover:bg-indigo-700 transition-all flex items-center gap-1.5">
+            ✨ Ask Atlas AI
+          </button>
+        </div>
       </div>
     </div>
   );

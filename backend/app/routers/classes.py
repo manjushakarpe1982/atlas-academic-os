@@ -1936,3 +1936,154 @@ async def complete_study_attempt(request: Request):
         return {"success": True}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/study/ask-ai ────────────────────────────────────────
+
+@router.post("/study/ask-ai")
+async def ask_atlas_ai(request: Request):
+    """Chat with Atlas AI about a specific topic."""
+    _get_user(request)
+    body = await request.json()
+    topic = body.get("topic", "")
+    class_name = body.get("class_name", "")
+    messages = body.get("messages", [])
+
+    if not topic or not messages:
+        raise HTTPException(400, "topic and messages required")
+
+    try:
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+
+        system_prompt = f"""You are Atlas AI, a friendly and helpful academic tutor for college students.
+The student is studying the topic: "{topic}" from the class: "{class_name}".
+
+Rules:
+- Keep answers focused on the topic
+- Use simple, clear explanations
+- Include examples when helpful
+- Use bullet points and formatting for clarity
+- If asked for MCQs, create 4-5 questions with answers
+- If asked for exam tips, give specific study strategies
+- Be encouraging and supportive
+- Keep responses concise but thorough
+- Use **bold** for key terms"""
+
+        # Build conversation
+        conv = []
+        for m in messages:
+            role = m.get("role", "user")
+            if role in ("user", "assistant"):
+                conv.append({"role": role, "content": m.get("content", "")})
+
+        response = client.messages.create(
+           model="claude-haiku-4-5-20251001",
+            max_tokens=1024,
+            system=system_prompt,
+            messages=conv,
+        )
+
+        reply = response.content[0].text if response.content else "I couldn't generate a response."
+        return {"success": True, "reply": reply}
+    except Exception as e:
+        print(f"[ASK AI] ERROR: {e}")
+        return {"success": False, "reply": f"Sorry, something went wrong: {str(e)}"}
+
+
+# ── GET /api/classes/study/ai-conversations ───────────────────────────────
+
+@router.get("/study/ai-conversations")
+async def get_ai_conversations(request: Request):
+    """Get all saved AI conversations for the user."""
+    user_id = _get_user(request)
+    try:
+        res = supabase.table("ai_conversations") \
+            .select("id, class_name, topic_title, last_message, message_count, updated_at") \
+            .eq("user_id", user_id) \
+            .order("updated_at", desc=True).limit(50).execute()
+        return {"success": True, "conversations": res.data or []}
+    except Exception as e:
+        return {"success": True, "conversations": []}
+
+
+# ── GET /api/classes/study/ai-conversations/{id} ──────────────────────────
+
+@router.get("/study/ai-conversations/{conv_id}")
+async def get_ai_conversation(conv_id: str, request: Request):
+    """Get a single conversation with full messages."""
+    user_id = _get_user(request)
+    try:
+        res = supabase.table("ai_conversations") \
+            .select("*").eq("id", conv_id).eq("user_id", user_id).execute()
+        if not res.data:
+            raise HTTPException(404, "Conversation not found")
+        return {"success": True, "conversation": res.data[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/study/ai-conversations/save ─────────────────────────
+
+@router.post("/study/ai-conversations/save")
+async def save_ai_conversation(request: Request):
+    """Create or update an AI conversation."""
+    user_id = _get_user(request)
+    body = await request.json()
+    conv_id = body.get("conversation_id")
+    messages = body.get("messages", [])
+    class_id = body.get("class_id", "")
+    class_name = body.get("class_name", "")
+    topic_id = body.get("topic_id", "")
+    topic_title = body.get("topic_title", "")
+
+    last_msg = ""
+    for m in reversed(messages):
+        if m.get("role") == "assistant":
+            last_msg = m.get("content", "")[:100]
+            break
+
+    try:
+        import datetime
+        now = datetime.datetime.utcnow().isoformat()
+
+        if conv_id:
+            supabase.table("ai_conversations").update({
+                "messages": messages,
+                "last_message": last_msg,
+                "message_count": len(messages),
+                "updated_at": now,
+            }).eq("id", conv_id).eq("user_id", user_id).execute()
+            return {"success": True, "conversation_id": conv_id}
+        else:
+            res = supabase.table("ai_conversations").insert({
+                "user_id": user_id,
+                "class_id": class_id,
+                "class_name": class_name,
+                "topic_id": topic_id,
+                "topic_title": topic_title,
+                "messages": messages,
+                "last_message": last_msg,
+                "message_count": len(messages),
+                "updated_at": now,
+            }).execute()
+            new_id = res.data[0]["id"] if res.data else None
+            return {"success": True, "conversation_id": new_id}
+    except Exception as e:
+        print(f"[AI CONV SAVE] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── DELETE /api/classes/study/ai-conversations/{id} ───────────────────────
+
+@router.delete("/study/ai-conversations/{conv_id}")
+async def delete_ai_conversation(conv_id: str, request: Request):
+    """Delete an AI conversation."""
+    user_id = _get_user(request)
+    try:
+        supabase.table("ai_conversations").delete() \
+            .eq("id", conv_id).eq("user_id", user_id).execute()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
