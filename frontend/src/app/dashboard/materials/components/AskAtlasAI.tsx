@@ -185,7 +185,7 @@ export default function AskAtlasAI({ topic, className, classId, onBack }: Props)
             <h1 className="text-base font-extrabold text-gray-900">Chat History</h1>
           </div>
           <button onClick={newChat}
-            className="text-xs font-bold text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50">
+            className="text-sm font-bold text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50">
             + New Chat
           </button>
         </div>
@@ -204,13 +204,13 @@ export default function AskAtlasAI({ topic, className, classId, onBack }: Props)
             <div className="space-y-2">
               {history.map(c => (
                 <div key={c.id}
-                  className={`bg-white border rounded-xl p-3 flex items-center gap-3 hover:border-indigo-200 transition-all cursor-pointer ${convId === c.id ? 'border-indigo-400 bg-indigo-50/30' : 'border-gray-200'}`}>
+                  className={`bg-white border rounded-lg p-2 flex items-center gap-3 hover:border-indigo-200 transition-all cursor-pointer ${convId === c.id ? 'border-indigo-400 bg-indigo-50/30' : 'border-gray-200'}`}>
                   <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
                     <MessageSquare className="w-5 h-5 text-indigo-600" />
                   </div>
                   <div className="flex-1 min-w-0" onClick={() => loadConversation(c.id)}>
-                    <p className="text-sm font-bold text-gray-900 truncate">{c.topic_title}</p>
-                    <p className="text-xs text-gray-500 truncate">{c.last_message || 'No messages'}</p>
+                    <p className="text-base font-bold text-gray-800 truncate">{c.topic_title}</p>
+                    <p className="text-xs text-gray-600 truncate">{c.last_message || 'No messages'}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[10px] text-gray-400">{c.class_name}</span>
                       <span className="text-[10px] text-gray-300">·</span>
@@ -220,7 +220,7 @@ export default function AskAtlasAI({ topic, className, classId, onBack }: Props)
                     </div>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); deleteConv(c.id); }}
-                    className="text-gray-300 hover:text-red-500 transition-colors p-1">
+                    className="text-red-400 transition-colors p-1">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -245,13 +245,13 @@ export default function AskAtlasAI({ topic, className, classId, onBack }: Props)
             </div>
           </div>
           <button onClick={loadHistory} className="relative">
-            <Clock className="w-5 h-5 text-gray-400 hover:text-indigo-600 transition-colors" />
+            <Clock className="w-5 h-5 text-gray-500 hover:text-indigo-600 transition-colors" />
           </button>
         </div>
       </div>
 
       {/* Topic Banner */}
-      <div className="mx-4 mt-3 bg-indigo-50 border border-indigo-100 rounded-xl p-3 flex items-center justify-between">
+      <div className="mx-4 mt-3 bg-violet-50 border border-violet-200 rounded-xl p-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
             <span className="text-lg">📘</span>
@@ -279,7 +279,7 @@ export default function AskAtlasAI({ topic, className, classId, onBack }: Props)
               ? 'bg-indigo-600 text-white rounded-2xl rounded-br-md px-4 py-2.5'
               : 'bg-gray-100 text-gray-800 rounded-2xl rounded-bl-md px-4 py-2.5'}`}>
               <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: fmt(m.content) }} />
-              <p className={`text-[10px] mt-1.5 flex items-center gap-1 ${m.role === 'user' ? 'text-indigo-200 justify-end' : 'text-gray-400'}`}>
+              <p className={`text-[10px] mt-1.5 flex items-center gap-1 ${m.role === 'user' ? 'text-indigo-200 justify-end' : 'text-gray-500'}`}>
                 {m.time} {m.role === 'user' && '✓✓'}
               </p>
             </div>
@@ -302,8 +302,8 @@ export default function AskAtlasAI({ topic, className, classId, onBack }: Props)
       </div>
 
       {/* Quick Questions */}
-      <div className="px-4 pb-2">
-        <p className="text-xs font-bold text-gray-500 mb-2">Quick Questions</p>
+      <div className="px-4 bg-gray-50 pb-2">
+        <p className="text-sm font-bold text-gray-500 mt-1 mb-1.5">Quick Questions</p>
         <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {QUICK_QUESTIONS.map(q => (
             <button key={q} onClick={() => sendMessage(`${q} about ${topic.title}`)}
@@ -326,14 +326,14 @@ export default function AskAtlasAI({ topic, className, classId, onBack }: Props)
             onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
             placeholder={`Ask anything about ${topic.title}...`}
             disabled={loading}
-            className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:opacity-50"
+            className="flex-1 bg-gray-100 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:opacity-50"
           />
           <button onClick={() => sendMessage(input)} disabled={!input.trim() || loading}
             className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition-all disabled:opacity-50 flex-shrink-0">
-            <Send className="w-4 h-4 text-white" />
+            <Send className="w-5 h-5 text-white" />
           </button>
         </div>
-        <p className="text-[10px] text-gray-400 text-center mt-1.5">Atlas AI can make mistakes. Please verify important information.</p>
+        <p className="text-[10px] text-gray-500 text-center mt-1.5">Atlas AI can make mistakes. Please verify important information.</p>
       </div>
     </div>
   );
