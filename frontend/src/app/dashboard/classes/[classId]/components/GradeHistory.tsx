@@ -34,22 +34,24 @@ export default function GradeHistory({
             return (
               <div
                 key={g.id}
-                className="flex items-center gap-2 py-3 border-b border-gray-50 last:border-0 relative"
+                className="flex items-center gap-2 py-3 border-b border-gray-50 last:border-0"
               >
-                {g.source && (
-                  <span className={`absolute top-2 right-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                    g.source === 'manual' ? 'bg-blue-50 text-blue-600' : g.source === 'scanned' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600'
-                  }`}>
-                    {g.source === 'manual' ? '✍️ Manual' : g.source === 'scanned' ? '📷 Scanned' : '📄 Uploaded'}
-                  </span>
-                )}
                 <div
                   className={`w-10 h-10 ${getCategoryColor(g.category)} rounded-xl flex items-center justify-center text-lg flex-shrink-0`}
                 >
                   {getCategoryIcon(g.category)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900">{g.title}</p>
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-sm font-bold text-gray-900 truncate">{g.title}</p>
+                    {g.source && (
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
+                        g.source === 'manual' ? 'bg-blue-50 text-blue-600' : g.source === 'scanned' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600'
+                      }`}>
+                        {g.source === 'manual' ? 'Manual' : g.source === 'scanned' ? 'Scanned' : 'Uploaded'}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {g.date} · {g.category}
                   </p>
