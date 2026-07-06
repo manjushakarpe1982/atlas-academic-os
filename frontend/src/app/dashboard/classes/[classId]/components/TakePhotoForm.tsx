@@ -48,6 +48,8 @@ export default function TakePhotoForm({ classId, onBack, onSaved }: Props) {
     setSelected(prev => { const s = new Set(prev); s.has(i) ? s.delete(i) : s.add(i); return s; });
   };
 
+  const [saveResult, setSaveResult] = useState<any>(null);
+
   const saveGrades = async () => {
     setSaving(true);
     try {
@@ -56,12 +58,20 @@ export default function TakePhotoForm({ classId, onBack, onSaved }: Props) {
         const g = grades[i];
         return { title: g.name || 'Scanned Grade', score: g.score, max_score: g.total, category: g.category || 'other' };
       });
-      await fetch(`${API_BASE}/api/classes/${classId}/grades/add-batch`, {
+      const res = await fetch(`${API_BASE}/api/classes/${classId}/grades/add-batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ grades: batch, source: 'scanned' }),
       });
-      onSaved();
+      const data = await res.json();
+      if (data.duplicates > 0 && data.saved === 0) {
+        setSaveResult(data);
+      } else if (data.duplicates > 0 && data.saved > 0) {
+        setSaveResult(data);
+        setTimeout(() => onSaved(), 3000);
+      } else {
+        onSaved();
+      }
     } catch { setError('Failed to save'); }
     finally { setSaving(false); }
   };
@@ -116,6 +126,34 @@ export default function TakePhotoForm({ classId, onBack, onSaved }: Props) {
                 {saving ? 'Saving...' : `Save ${selected.size} Grade${selected.size > 1 ? 's' : ''}`}
               </button>
             </div>
+            {saveResult && (
+              <>
+                <div className="fixed inset-0 bg-black/40 z-40" />
+                <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl z-50 p-6 w-[85%] max-w-sm shadow-xl"
+                  style={{ animation: 'popIn 0.3s ease-out' }}>
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center">
+                      <span className="text-2xl">⚠️</span>
+                    </div>
+                    <h3 className="text-lg font-extrabold text-gray-900">Duplicate Grades Found</h3>
+                    {saveResult.saved > 0 && (
+                      <p className="text-sm text-green-600 font-semibold">✅ {saveResult.saved} new grade{saveResult.saved > 1 ? 's' : ''} added</p>
+                    )}
+                    <p className="text-sm text-gray-500">{saveResult.duplicates} grade{saveResult.duplicates > 1 ? 's' : ''} already exist</p>
+                    <div className="flex flex-wrap gap-1.5 justify-center">
+                      {saveResult.duplicate_names.map((n: string, i: number) => (
+                        <span key={i} className="text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full">{n}</span>
+                      ))}
+                    </div>
+                    <button onClick={() => { setSaveResult(null); onSaved(); }}
+                      className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-indigo-700 mt-2">
+                      OK
+                    </button>
+                  </div>
+                </div>
+                <style jsx>{`@keyframes popIn { from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }`}</style>
+              </>
+            )}
           </div>
         ) : preview ? (
           <div className="space-y-4">

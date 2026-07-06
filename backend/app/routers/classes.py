@@ -2168,18 +2168,32 @@ If only one grade exists, still return an array with one item."""
 
 @router.post("/{class_id}/grades/add-batch")
 async def add_grades_batch(class_id: str, request: Request):
-    """Add multiple grades at once without deleting existing ones."""
+    """Add multiple grades at once, skipping duplicates."""
     user_id = _get_user(request)
     _get_class(class_id, user_id)
 
     body = await request.json()
     grades = body.get("grades", [])
     source = body.get("source", "manual")
+    check_duplicates = body.get("check_duplicates", True)
 
     if not grades:
-        return {"saved": 0}
+        return {"saved": 0, "duplicates": 0, "duplicate_names": []}
+
+    # Fetch existing grades for this class
+    existing_res = supabase.table("grades") \
+        .select("title, score, max_score") \
+        .eq("class_id", class_id).eq("user_id", user_id).execute()
+    existing_set = set()
+    for e in (existing_res.data or []):
+        key = (e.get("title", "").strip().lower(), float(e.get("score", 0)), float(e.get("max_score", 0)))
+        existing_set.add(key)
 
     saved = 0
+    duplicates = 0
+    duplicate_names = []
+    new_grades = []
+
     for g in grades:
         title = (g.get("title") or "").strip()
         score = g.get("score")
@@ -2187,6 +2201,12 @@ async def add_grades_batch(class_id: str, request: Request):
         category = g.get("category", "other")
 
         if not title or score is None or max_score is None or float(max_score) <= 0:
+            continue
+
+        key = (title.lower(), float(score), float(max_score))
+        if check_duplicates and key in existing_set:
+            duplicates += 1
+            duplicate_names.append(title)
             continue
 
         supabase.table("grades").insert({
@@ -2199,5 +2219,6 @@ async def add_grades_batch(class_id: str, request: Request):
             "source": source,
         }).execute()
         saved += 1
+        existing_set.add(key)
 
-    return {"saved": saved}
+    return {"saved": saved, "duplicates": duplicates, "duplicate_names": duplicate_names}
