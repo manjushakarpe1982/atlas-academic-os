@@ -2108,35 +2108,62 @@ async def scan_grade_from_image(request: Request):
 
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=1000,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": media_type,
-                            "data": image_data,
+            max_tokens=1500,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": media_type,
+                                "data": image_data,
+                            },
                         },
-                    },
-                    {
-                        "type": "text",
-                        "text": """Look at this graded document/image. Extract ALL grades you can find.
-For each grade, extract:
-1. Assignment/quiz name
-2. Score earned (numerator)
-3. Total possible (denominator)
-4. Category (quiz, exam, homework, assignment, lab, project)
+                        {
+                            "type": "text",
+                            "text": """TASK: Extract grades from this image. Follow these steps EXACTLY.
 
-Respond ONLY with a JSON array, nothing else:
-[{"name": "...", "score": number, "total": number, "category": "..."}, ...]
+STEP 1 — SCAN the image carefully. Look at:
+- Printed text, tables, grade columns
+- Handwritten scores (circled, boxed, in margins)
+- Headers like "Score", "Grade", "Points", "Marks", "Total"
+- Fractions like 42/50, percentages like 85%, letter grades like B+
 
-If you see percentages like 85%, convert to score/total (e.g. 85/100).
-If only one grade exists, still return an array with one item."""
-                    }
-                ],
-            }],
+STEP 2 — For EACH grade found, read the EXACT numbers:
+- If image shows "42/50" → score=42, total=50 (NOT 40, NOT 45, EXACTLY 42)
+- If image shows "85%" → score=85, total=100
+- If image shows "B+" → score=88, total=100
+- If image shows just "92" with no total → score=92, total=100
+- Letter grade conversion: A+=97 A=95 A-=92 B+=88 B=85 B-=82 C+=78 C=75 C-=72 D+=68 D=65 F=50
+
+STEP 3 — Identify the category from context:
+- Words like "Quiz", "Test" → category: "quiz"
+- Words like "Exam", "Midterm", "Final" → category: "exam"
+- Words like "HW", "Homework" → category: "homework"
+- Words like "Assignment", "Assign" → category: "assignment"
+- Words like "Lab", "Laboratory" → category: "lab"
+- Words like "Project" → category: "project"
+- If unclear → category: "other"
+
+STEP 4 — Output ONLY a JSON array. No text before or after. No markdown. No backticks.
+
+FORMAT:
+[{"name": "Quiz 1", "score": 42, "total": 50, "category": "quiz"}]
+
+RULES:
+- Include ALL grades visible in the image
+- name = exact title as written on document
+- score = exact number earned (READ DIGIT BY DIGIT)
+- total = exact maximum possible
+- One grade = still use array format [...]
+- Zero grades found = return []
+- NEVER guess a number. Read it from the image."""
+                        }
+                    ],
+                }
+            ],
         )
 
         reply = response.content[0].text if response.content else "[]"
