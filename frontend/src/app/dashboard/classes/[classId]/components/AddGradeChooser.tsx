@@ -13,9 +13,9 @@ export default function AddGradeChooser({ onClose, onManual, onPhoto, onUpload }
         <h2 className="text-base font-extrabold text-gray-900 text-center">How do you want to add this grade?</h2>
         <div className="space-y-2 pt-2">
           {[
-            { onClick: onManual, Icon: PenLine, title: 'Manual Entry', sub: 'Enter the grade details manually' },
-            { onClick: onPhoto,  Icon: Camera,  title: 'Take Photo',   sub: 'Take a photo of your graded work' },
-            { onClick: onUpload, Icon: Upload,  title: 'Upload Screenshot', sub: 'Upload grade from LMS or PDF' },
+            { onClick: onManual, Icon: PenLine, title: '✍️ Manual Entry', sub: 'Enter the grade details manually' },
+            { onClick: onPhoto,  Icon: Camera,  title: '📷 Scan Grade',   sub: 'Scan a photo of your graded work' },
+            { onClick: onUpload, Icon: Upload,  title: '🖼️ Upload File', sub: 'Upload grade from LMS or PDF' },
           ].map(opt => (
             <button key={opt.title} onClick={opt.onClick}
               className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all text-left">

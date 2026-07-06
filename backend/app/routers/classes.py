@@ -1977,7 +1977,7 @@ Rules:
                 conv.append({"role": role, "content": m.get("content", "")})
 
         response = client.messages.create(
-           model="claude-haiku-4-5-20251001",
+            model="claude-haiku-4-5-20251001",
             max_tokens=1024,
             system=system_prompt,
             messages=conv,
@@ -2087,3 +2087,116 @@ async def delete_ai_conversation(conv_id: str, request: Request):
         return {"success": True}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/grades/scan ─────────────────────────────────────────
+
+@router.post("/grades/scan")
+async def scan_grade_from_image(request: Request):
+    """Use Claude Vision to extract grade from an uploaded image."""
+    user_id = _get_user(request)
+    body = await request.json()
+    image_data = body.get("image", "")
+    media_type = body.get("media_type", "image/jpeg")
+    class_id = body.get("class_id", "")
+
+    if not image_data:
+        raise HTTPException(400, "image (base64) required")
+
+    try:
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1000,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": image_data,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": """Look at this graded document/image. Extract ALL grades you can find.
+For each grade, extract:
+1. Assignment/quiz name
+2. Score earned (numerator)
+3. Total possible (denominator)
+4. Category (quiz, exam, homework, assignment, lab, project)
+
+Respond ONLY with a JSON array, nothing else:
+[{"name": "...", "score": number, "total": number, "category": "..."}, ...]
+
+If you see percentages like 85%, convert to score/total (e.g. 85/100).
+If only one grade exists, still return an array with one item."""
+                    }
+                ],
+            }],
+        )
+
+        reply = response.content[0].text if response.content else "[]"
+        import json, re
+        # Try to parse as array first
+        arr_match = re.search(r'\[.*\]', reply, re.DOTALL)
+        if arr_match:
+            try:
+                grades = json.loads(arr_match.group())
+                if isinstance(grades, list):
+                    return {"success": True, "grades": grades, "count": len(grades)}
+            except Exception:
+                pass
+        # Fallback: try single object
+        json_match = re.search(r'\{[^{}]*\}', reply, re.DOTALL)
+        if json_match:
+            try:
+                grade_data = json.loads(json_match.group())
+                return {"success": True, "grades": [grade_data], "count": 1}
+            except Exception:
+                pass
+        return {"success": True, "grades": [], "count": 0}
+    except Exception as e:
+        print(f"[SCAN GRADE] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/{class_id}/grades/add-batch ─────────────────────────
+
+@router.post("/{class_id}/grades/add-batch")
+async def add_grades_batch(class_id: str, request: Request):
+    """Add multiple grades at once without deleting existing ones."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    body = await request.json()
+    grades = body.get("grades", [])
+
+    if not grades:
+        return {"saved": 0}
+
+    saved = 0
+    for g in grades:
+        title = (g.get("title") or "").strip()
+        score = g.get("score")
+        max_score = g.get("max_score")
+        category = g.get("category", "other")
+
+        if not title or score is None or max_score is None or float(max_score) <= 0:
+            continue
+
+        supabase.table("grades").insert({
+            "class_id": class_id,
+            "user_id": user_id,
+            "title": title,
+            "score": float(score),
+            "max_score": float(max_score),
+            "category": category,
+            "source": "manual",
+        }).execute()
+        saved += 1
+
+    return {"saved": saved}

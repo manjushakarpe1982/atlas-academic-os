@@ -99,8 +99,8 @@ export default function GradesTab({ classId }: { classId: string }) {
       )}
 
       {view === 'manual' && <ManualEntryForm classId={classId} onBack={resetAll} onSaved={() => setView('success')} />}
-      {view === 'photo' && <TakePhotoForm onBack={resetAll} />}
-      {view === 'upload' && <UploadScreenshotForm onBack={resetAll} />}
+      {view === 'photo' && <TakePhotoForm classId={classId} onBack={resetAll} onSaved={() => { fetchData(); resetAll(); }} />}
+      {view === 'upload' && <UploadScreenshotForm classId={classId} onBack={resetAll} onSaved={() => { fetchData(); resetAll(); }} />}
 
       {view === 'edit' && editGrade && (
         <EditGradeForm
