@@ -923,40 +923,50 @@ async def get_class_overview(class_id: str, request: Request):
 
 @router.delete("/{class_id}")
 async def delete_class(class_id: str, request: Request):
-    """Delete a class and ALL associated data (grades, weights, assessments, topics, files, parsed results)."""
+    """Delete a class and ALL associated data."""
     user_id = _get_user(request)
-
-    # Verify class exists and belongs to user
     cls = _get_class(class_id, user_id)
-
     class_name = cls.get("name", "Unknown Class")
 
-    # Delete all related data in order (child tables first)
-    supabase.table("grades").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
-    supabase.table("grade_weights").delete().eq("class_id", class_id).execute()
-    supabase.table("assessments").delete().eq("class_id", class_id).execute()
-    supabase.table("topics").delete().eq("class_id", class_id).execute()
-    supabase.table("parsed_results").delete().eq("class_id", class_id).execute()
+    try:
+        # Delete all related data (child tables first)
+        supabase.table("grades").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
+        supabase.table("grade_weights").delete().eq("class_id", class_id).execute()
+        supabase.table("assessments").delete().eq("class_id", class_id).execute()
+        supabase.table("topics").delete().eq("class_id", class_id).execute()
+        supabase.table("study_attempts").delete().eq("class_id", class_id).execute()
 
-    # Delete files from storage + DB
-    file_result = supabase.table("files").select("id, storage_bucket, storage_path") \
-        .eq("class_id", class_id).eq("user_id", user_id).execute()
+        try:
+            supabase.table("parsed_results").delete().eq("class_id", class_id).execute()
+        except Exception:
+            pass  # Table may not exist
 
-    for f in (file_result.data or []):
-        if f.get("storage_bucket") and f.get("storage_path"):
-            try:
-                supabase.storage.from_(f["storage_bucket"]).remove([f["storage_path"]])
-            except Exception:
-                pass
+        try:
+            supabase.table("recommendation_feedback").delete().eq("user_id", user_id).execute()
+        except Exception:
+            pass
 
-    supabase.table("files").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
+        # Delete files from storage + DB
+        file_result = supabase.table("files").select("id, storage_bucket, storage_path") \
+            .eq("class_id", class_id).eq("user_id", user_id).execute()
 
-    # Delete the class itself
-    supabase.table("classes").delete().eq("id", class_id).eq("user_id", user_id).execute()
+        for f in (file_result.data or []):
+            if f.get("storage_bucket") and f.get("storage_path"):
+                try:
+                    supabase.storage.from_(f["storage_bucket"]).remove([f["storage_path"]])
+                except Exception:
+                    pass
 
-    print(f"[DeleteClass] Deleted class '{class_name}' ({class_id}) for user {user_id}")
+        supabase.table("files").delete().eq("class_id", class_id).eq("user_id", user_id).execute()
 
-    return {"message": f"Class '{class_name}' and all associated data deleted successfully", "id": class_id}
+        # Delete the class itself
+        supabase.table("classes").delete().eq("id", class_id).eq("user_id", user_id).execute()
+
+        print(f"[DeleteClass] Deleted class '{class_name}' ({class_id}) for user {user_id}")
+        return {"message": f"Class '{class_name}' and all associated data deleted successfully", "id": class_id}
+    except Exception as e:
+        print(f"[DeleteClass] ERROR: {e}")
+        raise HTTPException(500, f"Failed to delete class: {e}")
 
 
 # ============================================================================
@@ -990,6 +1000,39 @@ async def list_user_files(request: Request):
         f["class_name"] = class_map.get(f.get("class_id"), "Unknown Class") if f.get("class_id") else "No Class"
 
     return {"files": files}
+
+
+@router.get("/files/{file_id}/download")
+async def download_user_file(file_id: str, request: Request):
+    """Get a signed download URL for a specific file."""
+    user_id = _get_user(request)
+
+    file_result = supabase.table("files") \
+        .select("id, original_name, storage_bucket, storage_path") \
+        .eq("id", file_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    if not file_result.data:
+        raise HTTPException(404, "File not found")
+
+    file_data = file_result.data[0]
+    bucket = file_data.get("storage_bucket")
+    path = file_data.get("storage_path")
+
+    if not bucket or not path:
+        raise HTTPException(404, "File not available in storage")
+
+    try:
+        signed = supabase.storage.from_(bucket).create_signed_url(path, 300)
+        return {
+            "success": True,
+            "url": signed.get("signedURL") or signed.get("signedUrl") or signed,
+            "name": file_data.get("original_name", "download"),
+        }
+    except Exception as e:
+        print(f"[DOWNLOAD] ERROR: {e}")
+        raise HTTPException(500, f"Could not generate download link: {e}")
 
 
 @router.delete("/files/{file_id}")
@@ -1893,3 +1936,289 @@ async def complete_study_attempt(request: Request):
         return {"success": True}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/study/ask-ai ────────────────────────────────────────
+
+@router.post("/study/ask-ai")
+async def ask_atlas_ai(request: Request):
+    """Chat with Atlas AI about a specific topic."""
+    _get_user(request)
+    body = await request.json()
+    topic = body.get("topic", "")
+    class_name = body.get("class_name", "")
+    messages = body.get("messages", [])
+
+    if not topic or not messages:
+        raise HTTPException(400, "topic and messages required")
+
+    try:
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+
+        system_prompt = f"""You are Atlas AI, a friendly and helpful academic tutor for college students.
+The student is studying the topic: "{topic}" from the class: "{class_name}".
+
+Rules:
+- Keep answers focused on the topic
+- Use simple, clear explanations
+- Include examples when helpful
+- Use bullet points and formatting for clarity
+- If asked for MCQs, create 4-5 questions with answers
+- If asked for exam tips, give specific study strategies
+- Be encouraging and supportive
+- Keep responses concise but thorough
+- Use **bold** for key terms"""
+
+        # Build conversation
+        conv = []
+        for m in messages:
+            role = m.get("role", "user")
+            if role in ("user", "assistant"):
+                conv.append({"role": role, "content": m.get("content", "")})
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1024,
+            system=system_prompt,
+            messages=conv,
+        )
+
+        reply = response.content[0].text if response.content else "I couldn't generate a response."
+        return {"success": True, "reply": reply}
+    except Exception as e:
+        print(f"[ASK AI] ERROR: {e}")
+        return {"success": False, "reply": f"Sorry, something went wrong: {str(e)}"}
+
+
+# ── GET /api/classes/study/ai-conversations ───────────────────────────────
+
+@router.get("/study/ai-conversations")
+async def get_ai_conversations(request: Request):
+    """Get all saved AI conversations for the user."""
+    user_id = _get_user(request)
+    try:
+        res = supabase.table("ai_conversations") \
+            .select("id, class_name, topic_title, last_message, message_count, updated_at") \
+            .eq("user_id", user_id) \
+            .order("updated_at", desc=True).limit(50).execute()
+        return {"success": True, "conversations": res.data or []}
+    except Exception as e:
+        return {"success": True, "conversations": []}
+
+
+# ── GET /api/classes/study/ai-conversations/{id} ──────────────────────────
+
+@router.get("/study/ai-conversations/{conv_id}")
+async def get_ai_conversation(conv_id: str, request: Request):
+    """Get a single conversation with full messages."""
+    user_id = _get_user(request)
+    try:
+        res = supabase.table("ai_conversations") \
+            .select("*").eq("id", conv_id).eq("user_id", user_id).execute()
+        if not res.data:
+            raise HTTPException(404, "Conversation not found")
+        return {"success": True, "conversation": res.data[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/study/ai-conversations/save ─────────────────────────
+
+@router.post("/study/ai-conversations/save")
+async def save_ai_conversation(request: Request):
+    """Create or update an AI conversation."""
+    user_id = _get_user(request)
+    body = await request.json()
+    conv_id = body.get("conversation_id")
+    messages = body.get("messages", [])
+    class_id = body.get("class_id", "")
+    class_name = body.get("class_name", "")
+    topic_id = body.get("topic_id", "")
+    topic_title = body.get("topic_title", "")
+
+    last_msg = ""
+    for m in reversed(messages):
+        if m.get("role") == "assistant":
+            last_msg = m.get("content", "")[:100]
+            break
+
+    try:
+        import datetime
+        now = datetime.datetime.utcnow().isoformat()
+
+        if conv_id:
+            supabase.table("ai_conversations").update({
+                "messages": messages,
+                "last_message": last_msg,
+                "message_count": len(messages),
+                "updated_at": now,
+            }).eq("id", conv_id).eq("user_id", user_id).execute()
+            return {"success": True, "conversation_id": conv_id}
+        else:
+            res = supabase.table("ai_conversations").insert({
+                "user_id": user_id,
+                "class_id": class_id,
+                "class_name": class_name,
+                "topic_id": topic_id,
+                "topic_title": topic_title,
+                "messages": messages,
+                "last_message": last_msg,
+                "message_count": len(messages),
+                "updated_at": now,
+            }).execute()
+            new_id = res.data[0]["id"] if res.data else None
+            return {"success": True, "conversation_id": new_id}
+    except Exception as e:
+        print(f"[AI CONV SAVE] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── DELETE /api/classes/study/ai-conversations/{id} ───────────────────────
+
+@router.delete("/study/ai-conversations/{conv_id}")
+async def delete_ai_conversation(conv_id: str, request: Request):
+    """Delete an AI conversation."""
+    user_id = _get_user(request)
+    try:
+        supabase.table("ai_conversations").delete() \
+            .eq("id", conv_id).eq("user_id", user_id).execute()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/grades/scan ─────────────────────────────────────────
+
+@router.post("/grades/scan")
+async def scan_grade_from_image(request: Request):
+    """Use Claude Vision to extract grade from an uploaded image."""
+    user_id = _get_user(request)
+    body = await request.json()
+    image_data = body.get("image", "")
+    media_type = body.get("media_type", "image/jpeg")
+    class_id = body.get("class_id", "")
+
+    if not image_data:
+        raise HTTPException(400, "image (base64) required")
+
+    try:
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1000,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": image_data,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": """Look at this graded document/image. Extract ALL grades you can find.
+For each grade, extract:
+1. Assignment/quiz name
+2. Score earned (numerator)
+3. Total possible (denominator)
+4. Category (quiz, exam, homework, assignment, lab, project)
+
+Respond ONLY with a JSON array, nothing else:
+[{"name": "...", "score": number, "total": number, "category": "..."}, ...]
+
+If you see percentages like 85%, convert to score/total (e.g. 85/100).
+If only one grade exists, still return an array with one item."""
+                    }
+                ],
+            }],
+        )
+
+        reply = response.content[0].text if response.content else "[]"
+        import json, re
+        # Try to parse as array first
+        arr_match = re.search(r'\[.*\]', reply, re.DOTALL)
+        if arr_match:
+            try:
+                grades = json.loads(arr_match.group())
+                if isinstance(grades, list):
+                    return {"success": True, "grades": grades, "count": len(grades)}
+            except Exception:
+                pass
+        # Fallback: try single object
+        json_match = re.search(r'\{[^{}]*\}', reply, re.DOTALL)
+        if json_match:
+            try:
+                grade_data = json.loads(json_match.group())
+                return {"success": True, "grades": [grade_data], "count": 1}
+            except Exception:
+                pass
+        return {"success": True, "grades": [], "count": 0}
+    except Exception as e:
+        print(f"[SCAN GRADE] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/{class_id}/grades/add-batch ─────────────────────────
+
+@router.post("/{class_id}/grades/add-batch")
+async def add_grades_batch(class_id: str, request: Request):
+    """Add multiple grades at once, skipping duplicates."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    body = await request.json()
+    grades = body.get("grades", [])
+    source = body.get("source", "manual")
+    check_duplicates = body.get("check_duplicates", True)
+
+    if not grades:
+        return {"saved": 0, "duplicates": 0, "duplicate_names": []}
+
+    # Fetch existing grades for this class
+    existing_res = supabase.table("grades") \
+        .select("title, score, max_score") \
+        .eq("class_id", class_id).eq("user_id", user_id).execute()
+    existing_set = set()
+    for e in (existing_res.data or []):
+        key = (e.get("title", "").strip().lower(), float(e.get("score", 0)), float(e.get("max_score", 0)))
+        existing_set.add(key)
+
+    saved = 0
+    duplicates = 0
+    duplicate_names = []
+    new_grades = []
+
+    for g in grades:
+        title = (g.get("title") or "").strip()
+        score = g.get("score")
+        max_score = g.get("max_score")
+        category = g.get("category", "other")
+
+        if not title or score is None or max_score is None or float(max_score) <= 0:
+            continue
+
+        key = (title.lower(), float(score), float(max_score))
+        if check_duplicates and key in existing_set:
+            duplicates += 1
+            duplicate_names.append(title)
+            continue
+
+        supabase.table("grades").insert({
+            "class_id": class_id,
+            "user_id": user_id,
+            "title": title,
+            "score": float(score),
+            "max_score": float(max_score),
+            "category": category,
+            "source": source,
+        }).execute()
+        saved += 1
+        existing_set.add(key)
+
+    return {"saved": saved, "duplicates": duplicates, "duplicate_names": duplicate_names}

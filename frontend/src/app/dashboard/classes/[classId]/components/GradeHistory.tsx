@@ -27,14 +27,22 @@ export default function GradeHistory({
           No grades recorded yet
         </p>
       ) : (
-        <div className="space-y-0">
-          {grades.map((g) => {
+        <div className="space-y-0 max-h-[400px] overflow-y-auto">
+          {grades.map((g, idx) => {
             const pct = Math.round((g.score / g.max) * 100);
+            const openUp = idx >= grades.length - 2;
             return (
               <div
                 key={g.id}
-                className="flex items-center gap-2 py-3 border-b border-gray-50 last:border-0"
+                className="flex items-center gap-2 py-3 border-b border-gray-50 last:border-0 relative"
               >
+                {g.source && (
+                  <span className={`absolute top-2 right-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                    g.source === 'manual' ? 'bg-blue-50 text-blue-600' : g.source === 'scanned' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600'
+                  }`}>
+                    {g.source === 'manual' ? '✍️ Manual' : g.source === 'scanned' ? '📷 Scanned' : '📄 Uploaded'}
+                  </span>
+                )}
                 <div
                   className={`w-10 h-10 ${getCategoryColor(g.category)} rounded-xl flex items-center justify-center text-lg flex-shrink-0`}
                 >
@@ -77,7 +85,7 @@ export default function GradeHistory({
                         className="fixed inset-0 z-40"
                         onClick={() => setMenuOpen(null)}
                       />
-                      <div className="absolute right-0 top-8 z-50 w-36 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+                      <div className={`absolute right-0 ${openUp ? 'bottom-8' : 'top-8'} z-50 w-36 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden`}>
                         <button
                           onClick={() => {
                             setMenuOpen(null);

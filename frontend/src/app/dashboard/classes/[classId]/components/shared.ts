@@ -55,7 +55,7 @@ export const PC: Record<string,string> = {
 export const CATEGORIES = ['Quiz', 'Exam', 'Homework', 'Lab', 'Project', 'Midterm', 'Final', 'Participation'];
 
 export interface GradeItem {
-  id: string; title: string; category: string; date: string; score: number; max: number;
+  id: string; title: string; category: string; date: string; score: number; max: number; source?: string;
 }
 
 export function getCategoryIcon(cat: string): string {

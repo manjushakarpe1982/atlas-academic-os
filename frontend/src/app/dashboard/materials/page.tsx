@@ -8,7 +8,9 @@ import FlashcardsView from './components/FlashcardsView';
 import PracticeQuiz from './components/PracticeQuiz';
 import TargetedPractice from './components/TargetedPractice';
 
-type View = 'topics' | 'choose' | 'summary' | 'flashcards' | 'quiz' | 'targeted';
+import AskAtlasAI from './components/AskAtlasAI';
+
+type View = 'topics' | 'choose' | 'summary' | 'flashcards' | 'quiz' | 'targeted' | 'askAI';
 
 export default function MaterialsPage() {
   const [view, setView] = useState<View>('topics');
@@ -24,10 +26,12 @@ export default function MaterialsPage() {
     else if (id === 'flashcards') setView('flashcards');
     else if (id === 'quiz') setView('quiz');
     else if (id === 'targeted') setView('targeted');
+    else if (id === 'askAI') setView('askAI');
   };
   const backToChoose = () => setView('choose');
 
   if (view === 'choose' && topic) return <ChooseMaterial topic={topic} onBack={() => setView('topics')} onSelect={selectMaterial} className={className}/>;
+  if (view === 'askAI' && topic)  return <AskAtlasAI topic={topic} className={className} classId={classId} onBack={() => setView('topics')} />;
   if (view === 'summary')    return <SummaryView className={className} classId={classId} topic={topic!} onBack={backToChoose} onFlashcards={() => setView('flashcards')} onQuiz={() => setView('quiz')} onTargeted={() => setView('targeted')} />;
   if (view === 'flashcards') return <FlashcardsView className={className} classId={classId} topic={topic!} onBack={backToChoose} onDone={backToChoose} />;
   if (view === 'quiz')       return <PracticeQuiz className={className} classId={classId} topic={topic!} onBack={backToChoose} onDone={backToChoose} />;
