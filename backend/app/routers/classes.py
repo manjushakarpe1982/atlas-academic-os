@@ -2174,6 +2174,7 @@ async def add_grades_batch(class_id: str, request: Request):
 
     body = await request.json()
     grades = body.get("grades", [])
+    source = body.get("source", "manual")
 
     if not grades:
         return {"saved": 0}
@@ -2195,7 +2196,7 @@ async def add_grades_batch(class_id: str, request: Request):
             "score": float(score),
             "max_score": float(max_score),
             "category": category,
-            "source": "manual",
+            "source": source,
         }).execute()
         saved += 1
 

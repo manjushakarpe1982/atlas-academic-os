@@ -14,7 +14,7 @@ import DeleteGradeModal from './DeleteGradeModal';
 import GradeSuccess from './GradeSuccess';
 
 interface GradeData {
-  id: string; category: string; title: string; score: number; max_score: number; created_at: string;
+  id: string; category: string; title: string; score: number; max_score: number; created_at: string, source?: string;
 }
 interface WeightData {
   id: string; category: string; weight_pct: number;
@@ -58,6 +58,7 @@ export default function GradesTab({ classId }: { classId: string }) {
     date: new Date(g.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     score: g.score,
     max: g.max_score,
+    source: g.source || 'manual',
   }));
 
   const weightItems = weights.map((w, i) => ({

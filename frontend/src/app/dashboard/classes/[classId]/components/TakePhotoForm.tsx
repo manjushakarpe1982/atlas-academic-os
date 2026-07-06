@@ -59,7 +59,7 @@ export default function TakePhotoForm({ classId, onBack, onSaved }: Props) {
       await fetch(`${API_BASE}/api/classes/${classId}/grades/add-batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ grades: batch }),
+        body: JSON.stringify({ grades: batch, source: 'scanned' }),
       });
       onSaved();
     } catch { setError('Failed to save'); }
