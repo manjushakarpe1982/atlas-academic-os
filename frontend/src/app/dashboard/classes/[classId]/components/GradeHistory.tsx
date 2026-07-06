@@ -28,8 +28,9 @@ export default function GradeHistory({
         </p>
       ) : (
         <div className="space-y-0 max-h-[400px] overflow-y-auto">
-          {grades.map((g) => {
+          {grades.map((g, idx) => {
             const pct = Math.round((g.score / g.max) * 100);
+            const openUp = idx >= grades.length - 2;
             return (
               <div
                 key={g.id}
@@ -84,7 +85,7 @@ export default function GradeHistory({
                         className="fixed inset-0 z-40"
                         onClick={() => setMenuOpen(null)}
                       />
-                      <div className="absolute right-0 top-8 z-50 w-36 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+                      <div className={`absolute right-0 ${openUp ? 'bottom-8' : 'top-8'} z-50 w-36 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden`}>
                         <button
                           onClick={() => {
                             setMenuOpen(null);
