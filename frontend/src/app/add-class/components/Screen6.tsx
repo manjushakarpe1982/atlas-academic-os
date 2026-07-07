@@ -1,7 +1,11 @@
 'use client';
-// Screen 6 — Textbook Found: shows real scanned book details
-import { CheckCircle2, BookOpen } from 'lucide-react';
+// Screen 6 — Textbook Found: real book details + Table of Contents
+import { useState, useEffect } from 'react';
+import { CheckCircle2, BookOpen, Loader2, List } from 'lucide-react';
 import { Phone } from './shared';
+import { API_BASE, getToken } from '@/lib/api';
+
+interface Chapter { number: number; title: string; }
 
 interface Props {
   onNext: () => void;
@@ -10,6 +14,32 @@ interface Props {
 }
 
 export default function Screen6({ onNext, onBack, book }: Props) {
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [loadingToc, setLoadingToc] = useState(false);
+
+  useEffect(() => {
+    if (!book?.title) return;
+    const fetchToc = async () => {
+      setLoadingToc(true);
+      try {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/api/classes/book/toc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            title: book.title,
+            authors: book.authors || '',
+            publisher: book.publisher || '',
+            published_date: book.published_date || '',
+          }),
+        });
+        const data = await res.json();
+        if (data.success && data.chapters) setChapters(data.chapters);
+      } catch {} finally { setLoadingToc(false); }
+    };
+    fetchToc();
+  }, [book]);
+
   return (
     <Phone step={4} total={5}>
       <div className="flex flex-col bg-white overflow-hidden">
@@ -39,12 +69,31 @@ export default function Screen6({ onNext, onBack, book }: Props) {
           </div>
         </div>
 
-        {/* Description */}
-        {book?.description && (
-          <p className="text-xs text-gray-500 leading-relaxed mb-4 bg-gray-50 rounded-xl p-3 border border-gray-100">
-            {book.description}...
+        {/* Table of Contents */}
+        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+          <p className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <List className="w-4 h-4 text-indigo-600" /> Table of Contents
           </p>
-        )}
+          {loadingToc ? (
+            <div className="flex flex-col items-center py-6 gap-2">
+              <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+              <p className="text-xs text-gray-400">Loading chapters...</p>
+            </div>
+          ) : chapters.length > 0 ? (
+            <div className="max-h-[220px] overflow-y-auto space-y-1 pr-1">
+              {chapters.map((ch) => (
+                <div key={ch.number} className="flex items-start gap-2.5 py-1.5 border-b border-gray-50 last:border-0">
+                  <span className="w-6 h-6 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center text-[11px] font-bold flex-shrink-0">
+                    {ch.number}
+                  </span>
+                  <p className="text-sm text-gray-700 leading-snug pt-0.5">{ch.title}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 text-center py-4">Table of contents not available for this book</p>
+          )}
+        </div>
 
         {/* Benefits */}
         <div className="bg-indigo-50 rounded-xl p-3 mb-5 border border-indigo-100">

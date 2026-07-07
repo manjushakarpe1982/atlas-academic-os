@@ -2468,3 +2468,59 @@ async def get_class_book(class_id: str, request: Request):
         return {"success": True, "book": result.data[0] if result.data else None}
     except Exception as e:
         return {"success": True, "book": None}
+
+
+# ── POST /api/classes/book/toc ────────────────────────────────────────────
+
+@router.post("/book/toc")
+async def get_book_toc(request: Request):
+    """Generate the table of contents for a book using Claude's knowledge."""
+    _get_user(request)
+    body = await request.json()
+    title = (body.get("title") or "").strip()
+    authors = body.get("authors", "")
+    publisher = body.get("publisher", "")
+    published_date = body.get("published_date", "")
+
+    if not title:
+        raise HTTPException(400, "title required")
+
+    try:
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2000,
+            messages=[{
+                "role": "user",
+                "content": f"""You are a textbook expert. Provide the table of contents (chapter list) for this book:
+
+Title: {title}
+Authors: {authors}
+Publisher: {publisher}
+Year: {published_date}
+
+Rules:
+- List the main chapters only (not sub-sections)
+- Use the actual chapter titles from this book if you know it
+- If you don't know this exact book, generate a typical chapter list for a book with this title/subject
+- Maximum 30 chapters
+
+Respond ONLY with a JSON array, nothing else. No markdown, no backticks:
+[{{"number": 1, "title": "Chapter title here"}}, {{"number": 2, "title": "..."}}]"""
+            }],
+        )
+
+        reply = response.content[0].text if response.content else "[]"
+        import json as json_lib, re
+        m = re.search(r'\[.*\]', reply, re.DOTALL)
+        if m:
+            try:
+                chapters = json_lib.loads(m.group())
+                if isinstance(chapters, list):
+                    return {"success": True, "chapters": chapters}
+            except Exception:
+                pass
+        return {"success": False, "chapters": [], "error": "Could not generate TOC"}
+    except Exception as e:
+        print(f"[BOOK TOC] ERROR: {e}")
+        return {"success": False, "chapters": [], "error": str(e)}
