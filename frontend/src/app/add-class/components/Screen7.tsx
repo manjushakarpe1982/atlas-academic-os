@@ -274,9 +274,9 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
           {/* TABS */}
           <div className="flex bg-gray-100 p-1.5 rounded w-fit mb-4 shadow-inner">
             {[
-              { id: "manual" as Tab, label: "✍️ Manual Entry" },
-              { id: "photo" as Tab, label: "📷 Scan Grade" },
-              { id: "screenshot" as Tab, label: "🖼️ Upload File" },
+              { id: "manual" as Tab, label: "Manual Entry" },
+              { id: "photo" as Tab, label: "Scan Grade" },
+              { id: "screenshot" as Tab, label: "Upload File" },
             ].map((t) => (
               <button
                 key={t.id}
