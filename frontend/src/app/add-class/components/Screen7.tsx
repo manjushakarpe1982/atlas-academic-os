@@ -1,8 +1,8 @@
 "use client";
-import { useState, useImperativeHandle, forwardRef } from "react";
+import { useState, useImperativeHandle, forwardRef, useRef } from "react";
 import Image from "next/image";
-import { Plus, Trash2, Check, Loader2, Upload } from "lucide-react";
-import { api } from "@/lib/api";
+import { Plus, Trash2, Check, Loader2, Upload, CheckCircle2, RotateCcw, XCircle } from "lucide-react";
+import { api, API_BASE, getToken } from "@/lib/api";
 import { Phone } from "./shared";
 
 interface Props {
@@ -20,6 +20,14 @@ interface Grade {
   total: number;
   date: string;
   editing: boolean;
+  source?: string;
+}
+
+interface ScannedGrade {
+  name: string;
+  score: number | null;
+  total: number | null;
+  category: string;
 }
 
 let nextId = 10;
@@ -36,6 +44,99 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [grades, setGrades] = useState<Grade[]>([]);
+
+  // AI Scan state
+  const [scanPreview, setScanPreview] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scannedGrades, setScannedGrades] = useState<ScannedGrade[]>([]);
+  const [scanSelected, setScanSelected] = useState<Set<number>>(new Set());
+  const [scanError, setScanError] = useState("");
+  const [scanSaving, setScanSaving] = useState(false);
+  const [scanSaved, setScanSaved] = useState(false);
+  const photoRef = useRef<HTMLInputElement>(null);
+  const uploadRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setScanPreview(reader.result as string);
+    reader.readAsDataURL(file);
+    setScanError(""); setScannedGrades([]); setScanSaved(false);
+  };
+
+  const doScan = async () => {
+    if (!scanPreview) return;
+    setScanning(true); setScanError("");
+    try {
+      const base64 = scanPreview.split(",")[1];
+      const mediaType = scanPreview.split(";")[0].split(":")[1] || "image/jpeg";
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/api/classes/grades/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ image: base64, media_type: mediaType, class_id: classId }),
+      });
+      const data = await res.json();
+      if (data.success && data.grades?.length) {
+        setScannedGrades(data.grades);
+        setScanSelected(new Set(data.grades.map((_: any, i: number) => i)));
+      } else { setScanError("Could not read any grades from image"); }
+    } catch { setScanError("Something went wrong"); }
+    finally { setScanning(false); }
+  };
+
+  const updateScanned = (i: number, field: string, value: any) => {
+    setScannedGrades(prev => prev.map((g, idx) => idx === i ? { ...g, [field]: value } : g));
+  };
+
+  const toggleScanSelect = (i: number) => {
+    setScanSelected(prev => { const s = new Set(prev); s.has(i) ? s.delete(i) : s.add(i); return s; });
+  };
+
+  const [dupResult, setDupResult] = useState<{ added: number; dupes: string[] } | null>(null);
+
+  const saveScannedGrades = async () => {
+    const existingNames = new Set(grades.map(g => g.assessment.toLowerCase().trim()));
+    const dupes: string[] = [];
+    const newGrades: Grade[] = [];
+    const gradeSource = tab === "photo" ? "scanned" : "uploaded";
+
+    for (const i of scanSelected) {
+      const g = scannedGrades[i];
+      const name = (g.name || "Scanned Grade").trim();
+      if (existingNames.has(name.toLowerCase())) {
+        dupes.push(name);
+      } else {
+        newGrades.push({
+          id: nextId++,
+          assessment: name,
+          score: g.score ?? 0,
+          total: g.total ?? 100,
+          date: new Date().toISOString().split("T")[0],
+          editing: false,
+          source: gradeSource,
+        });
+        existingNames.add(name.toLowerCase());
+      }
+    }
+
+    if (newGrades.length > 0) {
+      setGrades(prev => [...prev, ...newGrades]);
+    }
+
+    if (dupes.length > 0) {
+      setDupResult({ added: newGrades.length, dupes });
+    } else {
+      setSaveMsg(`✅ ${newGrades.length} grade(s) added to list`);
+      resetScan();
+      setTab("manual");
+    }
+  };
+
+  const resetScan = () => {
+    setScanPreview(null); setScannedGrades([]); setScanError(""); setScanSaved(false); setScanSelected(new Set());
+  };
 
   const update = (id: number, field: keyof Grade, value: any) => {
     setGrades((prev) =>
@@ -63,6 +164,7 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
         total: 100,
         date: dateStr,
         editing: true,
+        source: "manual",
       },
     ]);
   };
@@ -117,6 +219,35 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
 
   return (
     <Phone>
+      {/* Duplicate Popup */}
+      {dupResult && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl z-50 p-6 w-[85%] max-w-sm shadow-xl"
+            style={{ animation: 'popIn 0.3s ease-out' }}>
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <h3 className="text-lg font-extrabold text-gray-900">Duplicate Grades Found</h3>
+              {dupResult.added > 0 && (
+                <p className="text-sm text-green-600 font-semibold">✅ {dupResult.added} new grade{dupResult.added > 1 ? 's' : ''} added</p>
+              )}
+              <p className="text-sm text-gray-500">{dupResult.dupes.length} grade{dupResult.dupes.length > 1 ? 's' : ''} already exist</p>
+              <div className="flex flex-wrap gap-1.5 justify-center">
+                {dupResult.dupes.map((n, i) => (
+                  <span key={i} className="text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full">{n}</span>
+                ))}
+              </div>
+              <button onClick={() => { setDupResult(null); resetScan(); setTab("manual"); }}
+                className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-indigo-700 mt-2">
+                OK
+              </button>
+            </div>
+          </div>
+          <style jsx>{`@keyframes popIn { from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }`}</style>
+        </>
+      )}
       <div className="flex flex-col  bg-white overflow-hidden">
         {/* HEADER - Fixed */}
         <div className="  flex-shrink-0 border-b border-gray-100">
@@ -143,13 +274,13 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
           {/* TABS */}
           <div className="flex bg-gray-100 p-1.5 rounded w-fit mb-4 shadow-inner">
             {[
-              { id: "manual" as Tab, label: "Manual Entry" },
-              { id: "photo" as Tab, label: "Upload Photo" },
-              { id: "screenshot" as Tab, label: "Screenshot" },
+              { id: "manual" as Tab, label: "✍️ Manual Entry" },
+              { id: "photo" as Tab, label: "📷 Scan Grade" },
+              { id: "screenshot" as Tab, label: "🖼️ Upload File" },
             ].map((t) => (
               <button
                 key={t.id}
-                onClick={() => setTab(t.id)}
+                onClick={() => { setTab(t.id); resetScan(); }}
                 className={`px-3 py-1.5 rounded-xl text-[13px] font-semibold transition-all duration-300 flex items-center gap-3
         ${
           tab === t.id
@@ -248,9 +379,18 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
                               </div>
                             ) : (
                               <div>
-                                <p className="text-sm font-bold text-gray-900">
-                                  {g.assessment}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-bold text-gray-900">
+                                    {g.assessment}
+                                  </p>
+                                  {g.source && (
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                                      g.source === 'manual' ? 'bg-blue-50 text-blue-600' : g.source === 'scanned' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600'
+                                    }`}>
+                                      {g.source === 'manual' ? '✍️ Manual' : g.source === 'scanned' ? '📷 Scanned' : '📄 Uploaded'}
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-xs text-gray-500">
                                   {g.date}
                                 </p>
@@ -377,80 +517,171 @@ const Screen7 = forwardRef<Screen7Handle, Props>(function Screen7(
               </div>
             )}
 
-            {/* UPLOAD PHOTO */}
+            {/* SCAN GRADE */}
             {tab === "photo" && (
               <div className="space-y-5">
-                <div className="border-2 border-dashed border-indigo-400 bg-gray-50 rounded-xl  text-center flex flex-col items-center justify-center min-h-[300px]">
-                  <span className="text-4xl block mb-2">📷</span>
-
-                  <p className="text-lg font-semibold text-gray-900 mb-2">
-                    Upload a photo of your gradebook
-                  </p>
-
-                  <p className="text-sm text-gray-500 max-w-[260px] mb-5">
-                    Take a clear photo of your grade report and upload it here
-                  </p>
-
-                  <button className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3.5 rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-200">
-                    📷 Choose Photo
-                  </button>
-                </div>
-
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl  p-3">
-                  <p className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
-                    <span>📷</span> Photo Tips
-                  </p>
-                  <ul className="text-sm text-gray-700 space-y-1">
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-600 mt-0.5">✅</span>{" "}
-                      <span>Make sure all text is clear and readable</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-600 mt-0.5">✅</span>{" "}
-                      <span>Include all grades if there are multiple</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-600 mt-0.5">✅</span>{" "}
-                      <span>Supported formats: JPG, PNG, HEIC</span>
-                    </li>
-                  </ul>
-                </div>
+                <input ref={photoRef} type="file" accept="image/*" capture="environment" onChange={handleFileSelect} className="hidden" />
+                {scannedGrades.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mb-2"><CheckCircle2 className="w-6 h-6 text-green-600" /></div>
+                      <h3 className="text-base font-extrabold text-gray-900">{scannedGrades.length} Grade{scannedGrades.length > 1 ? "s" : ""} Detected</h3>
+                      <p className="text-xs text-gray-400">Edit if needed, then save</p>
+                    </div>
+                    {scanPreview && <img src={scanPreview} alt="Scanned" className="w-full rounded-xl border max-h-28 object-contain bg-gray-50" />}
+                    <div className="space-y-2">
+                      {scannedGrades.map((g, i) => (
+                        <div key={i} className={`border-2 rounded-xl p-3 transition-all ${scanSelected.has(i) ? "border-indigo-500 bg-indigo-50/30" : "border-gray-200"}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <div onClick={() => toggleScanSelect(i)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 cursor-pointer ${scanSelected.has(i) ? "bg-indigo-600 border-indigo-600" : "border-gray-300"}`}>
+                              {scanSelected.has(i) && <CheckCircle2 className="w-3 h-3 text-white" />}
+                            </div>
+                            <input value={g.name || ""} onChange={e => updateScanned(i, "name", e.target.value)} className="flex-1 text-sm font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-indigo-500 focus:outline-none px-1 py-0.5" />
+                          </div>
+                          <div className="pl-7 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input type="number" value={g.score ?? ""} onChange={e => updateScanned(i, "score", e.target.value ? Number(e.target.value) : null)} className="w-16 text-sm font-bold text-center bg-white border border-gray-200 rounded-lg px-1 py-1" />
+                              <span className="text-gray-400 font-bold">/</span>
+                              <input type="number" value={g.total ?? ""} onChange={e => updateScanned(i, "total", e.target.value ? Number(e.target.value) : null)} className="w-16 text-sm font-bold text-center bg-white border border-gray-200 rounded-lg px-1 py-1" />
+                              <span className="text-xs font-bold text-indigo-600 ml-auto">{g.score != null && g.total ? `${Math.round((g.score / g.total) * 100)}%` : ""}</span>
+                            </div>
+                            <select value={g.category || "other"} onChange={e => updateScanned(i, "category", e.target.value)} className="text-xs font-semibold bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-gray-600 w-full">
+                              <option value="quiz">Quiz</option><option value="exam">Exam</option><option value="homework">Homework</option><option value="assignment">Assignment</option><option value="lab">Lab</option><option value="project">Project</option><option value="other">Other</option>
+                            </select>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {scanError && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700">{scanError}</div>}
+                    <div className="flex gap-2">
+                      <button onClick={resetScan} className="flex-1 border-2 border-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><RotateCcw className="w-4 h-4" /> Retry</button>
+                      <button onClick={() => saveScannedGrades()} disabled={scanSaving || scanSelected.size === 0} className="flex-1 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                        {scanSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} {scanSaving ? "Saving..." : `Save ${scanSelected.size}`}
+                      </button>
+                    </div>
+                  </div>
+                ) : scanPreview ? (
+                  <div className="space-y-4">
+                    <img src={scanPreview} alt="Preview" className="w-full rounded-xl border max-h-48 object-contain bg-gray-50" />
+                    {scanError && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700">{scanError}</div>}
+                    <div className="flex gap-2">
+                      <button onClick={resetScan} className="flex-1 border-2 border-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm">Retake</button>
+                      <button onClick={doScan} disabled={scanning} className="flex-1 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                        {scanning ? <><Loader2 className="w-4 h-4 animate-spin" /> Scanning...</> : "🤖 Scan with AI"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="border-2 border-dashed border-indigo-400 bg-gray-50 rounded-xl text-center flex flex-col items-center justify-center min-h-[300px]">
+                      <span className="text-4xl block mb-2">📷</span>
+                      <p className="text-lg font-semibold text-gray-900 mb-2">Scan Grade</p>
+                      <p className="text-sm text-gray-500 max-w-[260px] mb-5">Take a photo of your graded assignment, quiz or exam</p>
+                      <button onClick={() => photoRef.current?.click()} className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3.5 rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-200">
+                        📷 Scan Grade
+                      </button>
+                    </div>
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+                      <p className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
+                        <span>ℹ️</span> How it works
+                      </p>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        <li className="flex items-start gap-2"><span className="text-green-600 mt-0.5">✅</span> <span>Atlas AI will detect your score automatically</span></li>
+                        <li className="flex items-start gap-2"><span className="text-green-600 mt-0.5">✅</span> <span>Make sure all text is clear and readable</span></li>
+                        <li className="flex items-start gap-2"><span className="text-green-600 mt-0.5">✅</span> <span>You can edit the result before saving</span></li>
+                        <li className="flex items-start gap-2"><span className="text-green-600 mt-0.5">✅</span> <span>Supported formats: JPG, PNG, HEIC</span></li>
+                      </ul>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
-            {/* SCREENSHOT */}
+            {/* UPLOAD FILE */}
             {tab === "screenshot" && (
-              <div className="flex flex-col items-center text-center space-y-5">
-                <Image
-                  src="https://res.cloudinary.com/mview/image/upload/v1781596631/atlas/entergradescrenshot.png"
-                  alt="Grade"
-                  width={350}
-                  height={300}
-                  className="object-contain w-full max-w-[280px] rounded-2xl shadow-md"
-                  priority
-                />
-
-                <div>
-                  <p className="text-lg font-semibold text-gray-900 mb-1">
-                    Upload Gradebook Screenshot
-                  </p>
-                  <p className="text-sm text-gray-600 max-w-[260px]">
-                    Take a screenshot of your online gradebook
-                  </p>
-                </div>
-
-                <button className="w-full max-w-[260px] flex items-center justify-center gap-2 bg-indigo-600 text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-indigo-700 transition-all active:scale-[0.97]">
-                  <Upload className="w-5 h-5" />
-                  Upload Screenshot
-                </button>
-
-                <p className="text-xs text-blue-700 flex items-center gap-1.5">
-                  🔒 Your data is private and secure
-                </p>
+              <div className="space-y-5">
+                <input ref={uploadRef} type="file" accept="image/*,.pdf" onChange={handleFileSelect} className="hidden" />
+                {scannedGrades.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mb-2"><CheckCircle2 className="w-6 h-6 text-green-600" /></div>
+                      <h3 className="text-base font-extrabold text-gray-900">{scannedGrades.length} Grade{scannedGrades.length > 1 ? "s" : ""} Detected</h3>
+                      <p className="text-xs text-gray-400">Edit if needed, then save</p>
+                    </div>
+                    <div className="space-y-2">
+                      {scannedGrades.map((g, i) => (
+                        <div key={i} className={`border-2 rounded-xl p-3 transition-all ${scanSelected.has(i) ? "border-indigo-500 bg-indigo-50/30" : "border-gray-200"}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <div onClick={() => toggleScanSelect(i)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 cursor-pointer ${scanSelected.has(i) ? "bg-indigo-600 border-indigo-600" : "border-gray-300"}`}>
+                              {scanSelected.has(i) && <CheckCircle2 className="w-3 h-3 text-white" />}
+                            </div>
+                            <input value={g.name || ""} onChange={e => updateScanned(i, "name", e.target.value)} className="flex-1 text-sm font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-indigo-500 focus:outline-none px-1 py-0.5" />
+                          </div>
+                          <div className="pl-7 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input type="number" value={g.score ?? ""} onChange={e => updateScanned(i, "score", e.target.value ? Number(e.target.value) : null)} className="w-16 text-sm font-bold text-center bg-white border border-gray-200 rounded-lg px-1 py-1" />
+                              <span className="text-gray-400 font-bold">/</span>
+                              <input type="number" value={g.total ?? ""} onChange={e => updateScanned(i, "total", e.target.value ? Number(e.target.value) : null)} className="w-16 text-sm font-bold text-center bg-white border border-gray-200 rounded-lg px-1 py-1" />
+                              <span className="text-xs font-bold text-indigo-600 ml-auto">{g.score != null && g.total ? `${Math.round((g.score / g.total) * 100)}%` : ""}</span>
+                            </div>
+                            <select value={g.category || "other"} onChange={e => updateScanned(i, "category", e.target.value)} className="text-xs font-semibold bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-gray-600 w-full">
+                              <option value="quiz">Quiz</option><option value="exam">Exam</option><option value="homework">Homework</option><option value="assignment">Assignment</option><option value="lab">Lab</option><option value="project">Project</option><option value="other">Other</option>
+                            </select>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {scanError && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700">{scanError}</div>}
+                    <div className="flex gap-2">
+                      <button onClick={resetScan} className="flex-1 border-2 border-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><RotateCcw className="w-4 h-4" /> Retry</button>
+                      <button onClick={() => saveScannedGrades()} disabled={scanSaving || scanSelected.size === 0} className="flex-1 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                        {scanSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} {scanSaving ? "Saving..." : `Save ${scanSelected.size}`}
+                      </button>
+                    </div>
+                  </div>
+                ) : scanPreview ? (
+                  <div className="space-y-4">
+                    {scanPreview.startsWith("data:image") ? (
+                      <img src={scanPreview} alt="Preview" className="w-full rounded-xl border max-h-48 object-contain bg-gray-50" />
+                    ) : (
+                      <div className="bg-gray-50 rounded-xl p-6 text-center"><p className="text-3xl mb-2">📄</p><p className="text-sm font-bold text-gray-700">File ready</p></div>
+                    )}
+                    {scanError && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700">{scanError}</div>}
+                    <div className="flex gap-2">
+                      <button onClick={resetScan} className="flex-1 border-2 border-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm">Change</button>
+                      <button onClick={doScan} disabled={scanning} className="flex-1 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                        {scanning ? <><Loader2 className="w-4 h-4 animate-spin" /> Scanning...</> : "🤖 Scan with AI"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center text-center space-y-5">
+                    <Image
+                      src="https://res.cloudinary.com/mview/image/upload/v1781596631/atlas/entergradescrenshot.png"
+                      alt="Grade"
+                      width={350}
+                      height={300}
+                      className="object-contain w-full max-w-[280px] rounded-2xl shadow-md"
+                      priority
+                    />
+                    <div>
+                      <p className="text-lg font-semibold text-gray-900 mb-1">Upload File</p>
+                      <p className="text-sm text-gray-600 max-w-[260px]">Upload a screenshot or photo of your graded work</p>
+                    </div>
+                    <button onClick={() => uploadRef.current?.click()} className="w-full max-w-[260px] flex items-center justify-center gap-2 bg-indigo-600 text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-indigo-700 transition-all active:scale-[0.97]">
+                      <Upload className="w-5 h-5" />
+                      Upload File
+                    </button>
+                    <p className="text-xs text-blue-700 flex items-center gap-1.5">
+                      🔒 Your data is private and secure
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
+
 
         {/* FOOTER - Fixed bottom */}
         <div className="px-5 py-3 flex-shrink-0 border-t border-gray-100 space-y-2">
