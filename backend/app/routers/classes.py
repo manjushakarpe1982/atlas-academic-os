@@ -2413,3 +2413,58 @@ async def lookup_book_by_isbn(request: Request):
     except Exception as e:
         print(f"[BOOK LOOKUP] ERROR: {e}")
         return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/{class_id}/book ─────────────────────────────────────
+
+@router.post("/{class_id}/book")
+async def save_class_book(class_id: str, request: Request):
+    """Save a scanned textbook to the class."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    body = await request.json()
+    title = (body.get("title") or "").strip()
+    if not title:
+        raise HTTPException(400, "title required")
+
+    try:
+        # Replace existing book for this class (one textbook per class)
+        supabase.table("class_books").delete() \
+            .eq("class_id", class_id).eq("user_id", user_id).execute()
+
+        result = supabase.table("class_books").insert({
+            "user_id": user_id,
+            "class_id": class_id,
+            "isbn": body.get("isbn", ""),
+            "title": title,
+            "authors": body.get("authors", ""),
+            "publisher": body.get("publisher", ""),
+            "published_date": body.get("published_date", ""),
+            "page_count": body.get("page_count"),
+            "cover_url": body.get("cover_url", ""),
+            "description": body.get("description", ""),
+        }).execute()
+
+        book_id = result.data[0]["id"] if result.data else None
+        return {"success": True, "book_id": book_id}
+    except Exception as e:
+        print(f"[SAVE BOOK] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── GET /api/classes/{class_id}/book ──────────────────────────────────────
+
+@router.get("/{class_id}/book")
+async def get_class_book(class_id: str, request: Request):
+    """Get the textbook saved for this class."""
+    user_id = _get_user(request)
+    _get_class(class_id, user_id)
+
+    try:
+        result = supabase.table("class_books") \
+            .select("*").eq("class_id", class_id).eq("user_id", user_id) \
+            .limit(1).execute()
+        return {"success": True, "book": result.data[0] if result.data else None}
+    except Exception as e:
+        return {"success": True, "book": None}

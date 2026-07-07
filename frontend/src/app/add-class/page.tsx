@@ -96,6 +96,21 @@ export default function AddClassPage() {
       return;
     }
 
+    // Step 6 right = "Yes, Add This Book" → save book to DB
+    if (step === 6 && classId && scannedBook) {
+      setLoading(true);
+      try {
+        await api(`/api/classes/${classId}/book`, {
+          method: 'POST',
+          body: scannedBook,
+        });
+        next();
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Failed to save book');
+      } finally { setLoading(false); }
+      return;
+    }
+
     // Step 7 right = "Save & Continue" → save grades first
     if (step === 7) {
       screen7Ref.current?.saveAndContinue();
