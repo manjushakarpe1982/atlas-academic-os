@@ -2249,3 +2249,167 @@ async def add_grades_batch(class_id: str, request: Request):
         existing_set.add(key)
 
     return {"saved": saved, "duplicates": duplicates, "duplicate_names": duplicate_names}
+
+
+# ── POST /api/classes/book/scan ───────────────────────────────────────────
+
+@router.post("/book/scan")
+async def scan_book_barcode(request: Request):
+    """Read ISBN from book cover image via Claude Vision, then lookup book details."""
+    _get_user(request)
+    body = await request.json()
+    image_data = body.get("image", "")
+    media_type = body.get("media_type", "image/jpeg")
+
+    if not image_data:
+        raise HTTPException(400, "image (base64) required")
+
+    try:
+        # Step 1: Claude Vision reads the ISBN
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=200,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {"type": "base64", "media_type": media_type, "data": image_data},
+                    },
+                    {
+                        "type": "text",
+                        "text": """Look at this book cover/barcode image. Find the ISBN number.
+It may appear as a barcode number, or printed as "ISBN 978-..." or "ISBN-13" or "ISBN-10".
+Respond ONLY with JSON, nothing else:
+{"isbn": "9780134685991"}
+Remove all dashes and spaces from the ISBN. If no ISBN found, return {"isbn": null}"""
+                    }
+                ],
+            }],
+        )
+
+        reply = response.content[0].text if response.content else "{}"
+        import json as json_lib, re
+        m = re.search(r'\{[^{}]*\}', reply, re.DOTALL)
+        isbn = None
+        if m:
+            try:
+                isbn = json_lib.loads(m.group()).get("isbn")
+            except Exception:
+                pass
+
+        if not isbn:
+            return {"success": False, "error": "Could not find ISBN in image. Make sure the barcode is clear."}
+
+        # Step 2: Lookup book details from Google Books (with fallback)
+        import urllib.request
+        books_data = {}
+        try:
+            url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}"
+            req = urllib.request.Request(url, headers={"User-Agent": "AtlasAcademicOS/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as res:
+                books_data = json_lib.loads(res.read().decode())
+        except Exception as ge:
+            print(f"[BOOK SCAN] Google Books failed: {ge}")
+            books_data = {}
+
+        if not books_data.get("items"):
+            # Fallback: Open Library
+            try:
+                ol_url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
+                ol_req = urllib.request.Request(ol_url, headers={"User-Agent": "AtlasAcademicOS/1.0"})
+                with urllib.request.urlopen(ol_req, timeout=10) as res:
+                    ol_data = json_lib.loads(res.read().decode())
+                key = f"ISBN:{isbn}"
+                if key in ol_data:
+                    b = ol_data[key]
+                    return {"success": True, "isbn": isbn, "book": {
+                        "title": b.get("title", ""),
+                        "authors": ", ".join(a.get("name", "") for a in b.get("authors", [])),
+                        "publisher": ", ".join(p.get("name", "") for p in b.get("publishers", [])),
+                        "published_date": b.get("publish_date", ""),
+                        "page_count": b.get("number_of_pages"),
+                        "cover_url": b.get("cover", {}).get("medium", ""),
+                        "description": "",
+                    }}
+            except Exception:
+                pass
+            return {"success": False, "error": f"ISBN {isbn} found, but no book details available.", "isbn": isbn}
+
+        info = books_data["items"][0].get("volumeInfo", {})
+        return {"success": True, "isbn": isbn, "book": {
+            "title": info.get("title", ""),
+            "authors": ", ".join(info.get("authors", [])),
+            "publisher": info.get("publisher", ""),
+            "published_date": info.get("publishedDate", ""),
+            "page_count": info.get("pageCount"),
+            "cover_url": (info.get("imageLinks", {}) or {}).get("thumbnail", "").replace("http://", "https://"),
+            "description": (info.get("description", "") or "")[:300],
+        }}
+    except Exception as e:
+        print(f"[BOOK SCAN] ERROR: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# ── POST /api/classes/book/lookup ─────────────────────────────────────────
+
+@router.post("/book/lookup")
+async def lookup_book_by_isbn(request: Request):
+    """Lookup book details by ISBN directly (manual entry)."""
+    _get_user(request)
+    body = await request.json()
+    isbn = (body.get("isbn") or "").replace("-", "").replace(" ", "").strip()
+
+    if not isbn:
+        raise HTTPException(400, "isbn required")
+
+    try:
+        import json as json_lib
+        import urllib.request
+        books_data = {}
+        try:
+            url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}"
+            req = urllib.request.Request(url, headers={"User-Agent": "AtlasAcademicOS/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as res:
+                books_data = json_lib.loads(res.read().decode())
+        except Exception as ge:
+            print(f"[BOOK LOOKUP] Google Books failed: {ge}")
+            books_data = {}
+
+        if not books_data.get("items"):
+            # Fallback: Open Library
+            try:
+                ol_url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
+                ol_req = urllib.request.Request(ol_url, headers={"User-Agent": "AtlasAcademicOS/1.0"})
+                with urllib.request.urlopen(ol_req, timeout=10) as res:
+                    ol_data = json_lib.loads(res.read().decode())
+                key = f"ISBN:{isbn}"
+                if key in ol_data:
+                    b = ol_data[key]
+                    return {"success": True, "isbn": isbn, "book": {
+                        "title": b.get("title", ""),
+                        "authors": ", ".join(a.get("name", "") for a in b.get("authors", [])),
+                        "publisher": ", ".join(p.get("name", "") for p in b.get("publishers", [])),
+                        "published_date": b.get("publish_date", ""),
+                        "page_count": b.get("number_of_pages"),
+                        "cover_url": b.get("cover", {}).get("medium", ""),
+                        "description": "",
+                    }}
+            except Exception:
+                pass
+            return {"success": False, "error": f"No book found for ISBN {isbn}"}
+
+        info = books_data["items"][0].get("volumeInfo", {})
+        return {"success": True, "isbn": isbn, "book": {
+            "title": info.get("title", ""),
+            "authors": ", ".join(info.get("authors", [])),
+            "publisher": info.get("publisher", ""),
+            "published_date": info.get("publishedDate", ""),
+            "page_count": info.get("pageCount"),
+            "cover_url": (info.get("imageLinks", {}) or {}).get("thumbnail", "").replace("http://", "https://"),
+            "description": (info.get("description", "") or "")[:300],
+        }}
+    except Exception as e:
+        print(f"[BOOK LOOKUP] ERROR: {e}")
+        return {"success": False, "error": str(e)}

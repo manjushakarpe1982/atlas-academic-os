@@ -53,6 +53,7 @@ export default function AddClassPage() {
   const [step,      setStep]      = useState(1);
   const [className, setClassName] = useState('');
   const [classId,   setClassId]   = useState<string | null>(null);
+  const [scannedBook, setScannedBook] = useState<any>(null);
   const [error,     setError]     = useState('');
   const [loading,   setLoading]   = useState(false);
   const screen7Ref = useRef<Screen7Handle>(null);
@@ -125,8 +126,8 @@ export default function AddClassPage() {
     2: <Screen2 onNext={next} onBack={back} classId={classId} />,
     3: <Screen3 onNext={next} onBack={back} classId={classId} />,
     4: <Screen4 onNext={next} onBack={back} classId={classId} />,
-    5: <Screen5 onNext={next} onBack={back} />,
-    6: <Screen6 onNext={next} onBack={back} />,
+    5: <Screen5 onNext={next} onBack={back} onBookFound={(b: any) => { setScannedBook(b); next(); }} />,
+    6: <Screen6 onNext={next} onBack={back} book={scannedBook} />,
     7: <Screen7 ref={screen7Ref} onNext={next} onBack={back} classId={classId} />,
     8: <Screen8 onNext={next} onBack={back} classId={classId} />,
     9: <Screen9 onAddAnother={() => { setStep(1); setClassName(''); setClassId(null); }} /> };

@@ -1,37 +1,50 @@
 'use client';
-// Screen 8 — Textbook Found
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+// Screen 6 — Textbook Found: shows real scanned book details
+import { CheckCircle2, BookOpen } from 'lucide-react';
 import { Phone } from './shared';
-import { ScreenProps } from './types';
-import { MOCK_TEXTBOOK } from './mockData';
 
-export default function Screen8({ onNext, onBack }: ScreenProps) {
+interface Props {
+  onNext: () => void;
+  onBack: () => void;
+  book?: any;
+}
+
+export default function Screen6({ onNext, onBack, book }: Props) {
   return (
     <Phone step={4} total={5}>
-      <div className="flex flex-col  bg-white overflow-hidden">
-       
+      <div className="flex flex-col bg-white overflow-hidden">
 
         <h1 className="text-2xl font-extrabold text-gray-900 mb-1">We found your textbook!</h1>
         <p className="text-sm text-gray-400 mb-5">Is this the correct book?</p>
 
         {/* Book card */}
         <div className="flex gap-4 bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
-          <div className="w-20 h-28 bg-indigo-900 rounded-xl flex items-center justify-center flex-shrink-0">
-            <div className="text-center p-2">
-              <p className="text-white text-[10px] font-bold leading-tight">CAMPBELL</p>
-              <p className="text-white text-[8px] leading-tight opacity-70">BIOLOGY</p>
+          {book?.cover_url ? (
+            <img src={book.cover_url} alt={book.title} className="w-20 h-28 object-cover rounded-xl shadow-md flex-shrink-0" />
+          ) : (
+            <div className="w-20 h-28 bg-indigo-900 rounded-xl flex items-center justify-center flex-shrink-0">
+              <BookOpen className="w-8 h-8 text-white opacity-70" />
             </div>
-          </div>
-          <div>
-            <p className="font-extrabold text-gray-900 text-base">{MOCK_TEXTBOOK.title}</p>
-            <p className="text-sm text-gray-500">{MOCK_TEXTBOOK.edition}</p>
-            <p className="text-sm text-gray-400 mt-1">Author: {MOCK_TEXTBOOK.author}</p>
-            <p className="text-sm text-gray-400">Publisher: {MOCK_TEXTBOOK.publisher}</p>
-            <span className="inline-flex items-center gap-1 mt-2 bg-green-100 text-green-700 text-[13px] font-bold px-2 py-0.5 rounded-full">
-              Match: {MOCK_TEXTBOOK.match}%
-            </span>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="font-extrabold text-gray-900 text-base leading-snug">{book?.title || 'Unknown Book'}</p>
+            {book?.authors && <p className="text-sm text-gray-400 mt-1">Author: {book.authors}</p>}
+            {book?.publisher && <p className="text-sm text-gray-400">Publisher: {book.publisher}{book?.published_date ? ` · ${book.published_date}` : ''}</p>}
+            {book?.page_count && <p className="text-sm text-gray-400">{book.page_count} pages</p>}
+            {book?.isbn && (
+              <span className="inline-flex items-center gap-1 mt-2 bg-green-100 text-green-700 text-[12px] font-bold px-2 py-0.5 rounded-full font-mono">
+                ISBN: {book.isbn}
+              </span>
+            )}
           </div>
         </div>
+
+        {/* Description */}
+        {book?.description && (
+          <p className="text-xs text-gray-500 leading-relaxed mb-4 bg-gray-50 rounded-xl p-3 border border-gray-100">
+            {book.description}...
+          </p>
+        )}
 
         {/* Benefits */}
         <div className="bg-indigo-50 rounded-xl p-3 mb-5 border border-indigo-100">
@@ -44,7 +57,6 @@ export default function Screen8({ onNext, onBack }: ScreenProps) {
           ))}
         </div>
 
-      
       </div>
     </Phone>
   );
