@@ -59,6 +59,7 @@ function formatDeadlineDate(dateStr: string): {
 }
 
 export default function OverviewTab({ classId }: { classId: string }) {
+  const [book, setBook] = useState<any>(null);
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -68,6 +69,9 @@ export default function OverviewTab({ classId }: { classId: string }) {
       .then(setData)
       .catch(() => {})
       .finally(() => setLoading(false));
+    api<{ success: boolean; book: any }>(`/api/classes/${classId}/book`)
+      .then((r) => setBook(r.book))
+      .catch(() => {});
   }, [classId]);
 
   if (loading) {
@@ -142,6 +146,46 @@ export default function OverviewTab({ classId }: { classId: string }) {
           </div>
         </div>
       </div>
+
+      {/* Textbook */}
+      {book && (
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h2 className="text-base font-bold text-gray-900 mb-3">
+            📖 Textbook
+          </h2>
+          <div className="flex gap-3">
+            {book.cover_url ? (
+              <img src={book.cover_url} alt={book.title} className="w-16 h-22 object-cover rounded-lg shadow-md flex-shrink-0" style={{ height: '88px' }} />
+            ) : (
+              <div className="w-16 bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0" style={{ height: '88px' }}>
+                <span className="text-white text-xl">📖</span>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-900 leading-snug">{book.title}</p>
+              {book.authors && <p className="text-xs text-gray-500 mt-0.5">{book.authors}</p>}
+              {book.publisher && (
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  {book.publisher}{book.published_date ? ` · ${book.published_date}` : ''}
+                </p>
+              )}
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                {book.page_count && (
+                  <span className="text-[10px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                    {book.page_count} pages
+                  </span>
+                )}
+                {book.isbn && (
+                  <span className="text-[10px] font-semibold bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-mono">
+                    ISBN: {book.isbn}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Strongest Area + Needs Attention */}
       {(insight.strongest || insight.weakest) && (
         <div className="grid grid-cols-2 gap-3">
