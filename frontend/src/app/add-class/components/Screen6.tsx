@@ -1,36 +1,102 @@
 'use client';
-// Screen 8 — Textbook Found
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+// Screen 6 — Textbook Found: real book details + Table of Contents
+import { useState, useEffect } from 'react';
+import { CheckCircle2, BookOpen, Loader2, List } from 'lucide-react';
 import { Phone } from './shared';
-import { ScreenProps } from './types';
-import { MOCK_TEXTBOOK } from './mockData';
+import { API_BASE, getToken } from '@/lib/api';
 
-export default function Screen8({ onNext, onBack }: ScreenProps) {
+interface Chapter { number: number; title: string; }
+
+interface Props {
+  onNext: () => void;
+  onBack: () => void;
+  book?: any;
+  onTocLoaded?: (chapters: Chapter[]) => void;
+}
+
+export default function Screen6({ onNext, onBack, book, onTocLoaded }: Props) {
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [loadingToc, setLoadingToc] = useState(false);
+
+  useEffect(() => {
+    if (!book?.title) return;
+    const fetchToc = async () => {
+      setLoadingToc(true);
+      try {
+        const token = getToken();
+        const res = await fetch(`${API_BASE}/api/classes/book/toc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            title: book.title,
+            authors: book.authors || '',
+            publisher: book.publisher || '',
+            published_date: book.published_date || '',
+          }),
+        });
+        const data = await res.json();
+        if (data.success && data.chapters) {
+          setChapters(data.chapters);
+          onTocLoaded?.(data.chapters);
+        }
+      } catch {} finally { setLoadingToc(false); }
+    };
+    fetchToc();
+  }, [book]);
+
   return (
     <Phone step={4} total={5}>
-      <div className="flex flex-col  bg-white overflow-hidden">
-       
+      <div className="flex flex-col bg-white overflow-hidden">
 
         <h1 className="text-2xl font-extrabold text-gray-900 mb-1">We found your textbook!</h1>
         <p className="text-sm text-gray-400 mb-5">Is this the correct book?</p>
 
         {/* Book card */}
         <div className="flex gap-4 bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
-          <div className="w-20 h-28 bg-indigo-900 rounded-xl flex items-center justify-center flex-shrink-0">
-            <div className="text-center p-2">
-              <p className="text-white text-[10px] font-bold leading-tight">CAMPBELL</p>
-              <p className="text-white text-[8px] leading-tight opacity-70">BIOLOGY</p>
+          {book?.cover_url ? (
+            <img src={book.cover_url} alt={book.title} className="w-20 h-28 object-cover rounded-xl shadow-md flex-shrink-0" />
+          ) : (
+            <div className="w-20 h-28 bg-indigo-900 rounded-xl flex items-center justify-center flex-shrink-0">
+              <BookOpen className="w-8 h-8 text-white opacity-70" />
             </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="font-extrabold text-gray-900 text-base leading-snug">{book?.title || 'Unknown Book'}</p>
+            {book?.authors && <p className="text-sm text-gray-400 mt-1">Author: {book.authors}</p>}
+            {book?.publisher && <p className="text-sm text-gray-400">Publisher: {book.publisher}{book?.published_date ? ` · ${book.published_date}` : ''}</p>}
+            {book?.page_count && <p className="text-sm text-gray-400">{book.page_count} pages</p>}
+            {book?.isbn && (
+              <span className="inline-flex items-center gap-1 mt-2 bg-green-100 text-green-700 text-[12px] font-bold px-2 py-0.5 rounded-full font-mono">
+                ISBN: {book.isbn}
+              </span>
+            )}
           </div>
-          <div>
-            <p className="font-extrabold text-gray-900 text-base">{MOCK_TEXTBOOK.title}</p>
-            <p className="text-sm text-gray-500">{MOCK_TEXTBOOK.edition}</p>
-            <p className="text-sm text-gray-400 mt-1">Author: {MOCK_TEXTBOOK.author}</p>
-            <p className="text-sm text-gray-400">Publisher: {MOCK_TEXTBOOK.publisher}</p>
-            <span className="inline-flex items-center gap-1 mt-2 bg-green-100 text-green-700 text-[13px] font-bold px-2 py-0.5 rounded-full">
-              Match: {MOCK_TEXTBOOK.match}%
-            </span>
-          </div>
+        </div>
+
+        {/* Table of Contents */}
+        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+          <p className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <List className="w-4 h-4 text-indigo-600" /> Table of Contents
+          </p>
+          {loadingToc ? (
+            <div className="flex flex-col items-center py-6 gap-2">
+              <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+              <p className="text-xs text-gray-400">Loading chapters...</p>
+            </div>
+          ) : chapters.length > 0 ? (
+            <div className="max-h-[220px] overflow-y-auto space-y-1 pr-1">
+              {chapters.map((ch) => (
+                <div key={ch.number} className="flex items-start gap-2.5 py-1.5 border-b border-gray-50 last:border-0">
+                  <span className="w-6 h-6 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center text-[11px] font-bold flex-shrink-0">
+                    {ch.number}
+                  </span>
+                  <p className="text-sm text-gray-700 leading-snug pt-0.5">{ch.title}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 text-center py-4">Table of contents not available for this book</p>
+          )}
         </div>
 
         {/* Benefits */}
@@ -44,7 +110,6 @@ export default function Screen8({ onNext, onBack }: ScreenProps) {
           ))}
         </div>
 
-      
       </div>
     </Phone>
   );

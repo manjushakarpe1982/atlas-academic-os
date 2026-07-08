@@ -50,6 +50,10 @@ export default function TakePhotoForm({ classId, onBack, onSaved }: Props) {
 
   const [saveResult, setSaveResult] = useState<any>(null);
 
+  const updateGrade = (i: number, field: string, value: any) => {
+    setGrades(prev => prev.map((g, idx) => idx === i ? { ...g, [field]: value } : g));
+  };
+
   const saveGrades = async () => {
     setSaving(true);
     try {
@@ -97,20 +101,36 @@ export default function TakePhotoForm({ classId, onBack, onSaved }: Props) {
             {preview && <img src={preview} alt="Scanned" className="w-full rounded-xl border border-gray-200 max-h-32 object-contain bg-gray-50" />}
             <div className="space-y-2">
               {grades.map((g, i) => (
-                <div key={i} onClick={() => toggleSelect(i)}
-                  className={`border-2 rounded-xl p-3 cursor-pointer transition-all flex items-center gap-3 ${selected.has(i) ? 'border-indigo-500 bg-indigo-50/30' : 'border-gray-200'}`}>
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${selected.has(i) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
-                    {selected.has(i) && <CheckCircle2 className="w-3 h-3 text-white" />}
+                <div key={i} className={`border-2 rounded-xl p-3 transition-all ${selected.has(i) ? 'border-indigo-500 bg-indigo-50/30' : 'border-gray-200'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div onClick={() => toggleSelect(i)} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 cursor-pointer ${selected.has(i) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
+                      {selected.has(i) && <CheckCircle2 className="w-3 h-3 text-white" />}
+                    </div>
+                    <input value={g.name || ''} onChange={e => updateGrade(i, 'name', e.target.value)}
+                      className="flex-1 text-sm font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-indigo-500 focus:outline-none px-1 py-0.5"
+                      placeholder="Grade name" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-900 truncate">{g.name || 'Untitled'}</p>
-                    <p className="text-xs text-gray-500 capitalize">{g.category || 'other'}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-extrabold text-gray-900">{g.score ?? '—'}/{g.total ?? '—'}</p>
-                    <p className="text-xs font-bold text-indigo-600">
-                      {g.score != null && g.total ? `${Math.round((g.score / g.total) * 100)}%` : ''}
-                    </p>
+                  <div className="pl-7 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input type="number" value={g.score ?? ''} onChange={e => updateGrade(i, 'score', e.target.value ? Number(e.target.value) : null)}
+                        className="w-16 text-sm font-bold text-center bg-white border border-gray-200 rounded-lg px-1 py-1 focus:border-indigo-500 focus:outline-none" placeholder="Score" />
+                      <span className="text-gray-400 font-bold">/</span>
+                      <input type="number" value={g.total ?? ''} onChange={e => updateGrade(i, 'total', e.target.value ? Number(e.target.value) : null)}
+                        className="w-16 text-sm font-bold text-center bg-white border border-gray-200 rounded-lg px-1 py-1 focus:border-indigo-500 focus:outline-none" placeholder="Total" />
+                      <span className="text-xs font-bold text-indigo-600 ml-auto">
+                        {g.score != null && g.total ? `${Math.round((g.score / g.total) * 100)}%` : ''}
+                      </span>
+                    </div>
+                    <select value={g.category || 'other'} onChange={e => updateGrade(i, 'category', e.target.value)}
+                      className="text-xs font-semibold bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-gray-600 focus:outline-none w-full">
+                      <option value="quiz">Quiz</option>
+                      <option value="exam">Exam</option>
+                      <option value="homework">Homework</option>
+                      <option value="assignment">Assignment</option>
+                      <option value="lab">Lab</option>
+                      <option value="project">Project</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
                 </div>
               ))}
