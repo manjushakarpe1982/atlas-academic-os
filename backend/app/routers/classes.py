@@ -1175,6 +1175,7 @@ async def generate_study_summary(request: Request):
         )
 
         user_message = f"Generate a study summary for the topic \"{topic_title}\" in the class \"{class_name}\". Include as many key concepts as the topic requires."
+        user_message += _get_book_context(user_id, topic_id)
         if regenerate:
             import random
             user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Create a COMPLETELY DIFFERENT summary with different key concepts, different examples, and different explanations. Variation seed: {random.randint(1000,9999)}"
@@ -1313,6 +1314,7 @@ async def generate_study_flashcards(request: Request):
         )
 
         user_message = f"Generate study flashcards for the topic \"{topic_title}\" in the class \"{class_name}\". Generate as many flashcards as needed to cover all important concepts."
+        user_message += _get_book_context(user_id, topic_id)
         if regenerate:
             import random
             user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT flashcards covering different aspects. Use different questions and angles. Variation seed: {random.randint(1000,9999)}"
@@ -1451,6 +1453,7 @@ async def generate_study_quiz(request: Request):
         )
 
         user_message = f"Generate practice quiz questions for the topic \"{topic_title}\" in the class \"{class_name}\". Generate as many questions as needed to properly cover the topic."
+        user_message += _get_book_context(user_id, topic_id)
         if regenerate:
             import random
             user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT questions from any previous version. Use different angles, different examples, different scenarios. Variation seed: {random.randint(1000,9999)}"
@@ -1598,6 +1601,7 @@ async def generate_targeted_practice(request: Request):
         )
 
         user_message = f"Generate targeted practice questions for the topic \"{topic_title}\" in the class \"{class_name}\" at {difficulty} difficulty. Generate as many questions as needed based on topic complexity."
+        user_message += _get_book_context(user_id, topic_id)
         if regenerate:
             import random
             user_message += f"\n\nIMPORTANT: This is a REGENERATION request. Generate COMPLETELY DIFFERENT questions focusing on different weak areas. Variation seed: {random.randint(1000,9999)}"
@@ -2419,7 +2423,7 @@ async def lookup_book_by_isbn(request: Request):
 
 @router.post("/{class_id}/book")
 async def save_class_book(class_id: str, request: Request):
-    """Save a scanned textbook to the class."""
+    """Save a scanned textbook to the class, then link book chapters to syllabus topics."""
     user_id = _get_user(request)
     _get_class(class_id, user_id)
 
@@ -2429,10 +2433,48 @@ async def save_class_book(class_id: str, request: Request):
         raise HTTPException(400, "title required")
 
     try:
-        # Replace existing book for this class (one textbook per class)
+        import json as json_lib
+        import re as re_lib
+
+        # Replace existing book + links for this class (one textbook per class)
+        supabase.table("topic_book_links").delete() \
+            .eq("class_id", class_id).eq("user_id", user_id).execute()
         supabase.table("class_books").delete() \
             .eq("class_id", class_id).eq("user_id", user_id).execute()
 
+        # ── Step 1: Use TOC from request (already shown on Screen 6); generate only if missing ──
+        toc = body.get("toc") or []
+        if not isinstance(toc, list):
+            toc = []
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        if not toc:
+            try:
+                toc_resp = client.messages.create(
+                    model="claude-haiku-4-5-20251001",
+                    max_tokens=2000,
+                    messages=[{
+                        "role": "user",
+                        "content": f"""Provide the table of contents (main chapters only) for this book:
+Title: {title}
+Authors: {body.get("authors", "")}
+Publisher: {body.get("publisher", "")}
+Year: {body.get("published_date", "")}
+
+Use actual chapter titles if you know this book, otherwise generate a typical chapter list for the subject. Max 30 chapters.
+Respond ONLY with a JSON array, no markdown:
+[{{"number": 1, "title": "..."}}]"""
+                    }],
+                )
+                toc_raw = toc_resp.content[0].text if toc_resp.content else "[]"
+                m = re_lib.search(r'\[.*\]', toc_raw, re_lib.DOTALL)
+                if m:
+                    toc = json_lib.loads(m.group())
+                    if not isinstance(toc, list):
+                        toc = []
+            except Exception as toc_err:
+                print(f"[SAVE BOOK] TOC generation failed: {toc_err}")
+
+        # ── Step 2: Save book with TOC ──
         result = supabase.table("class_books").insert({
             "user_id": user_id,
             "class_id": class_id,
@@ -2444,10 +2486,138 @@ async def save_class_book(class_id: str, request: Request):
             "page_count": body.get("page_count"),
             "cover_url": body.get("cover_url", ""),
             "description": body.get("description", ""),
+            "toc": toc,
         }).execute()
 
         book_id = result.data[0]["id"] if result.data else None
-        return {"success": True, "book_id": book_id}
+
+        # ── Step 3: Match syllabus topics to book chapters and store links ──
+        linked = 0
+        total_topics = 0
+        fully = 0
+        partially = 0
+        unmatched = 0
+        if book_id and toc:
+            try:
+                topics_res = supabase.table("topics") \
+                    .select("id, title") \
+                    .eq("class_id", class_id).execute()
+                topics = topics_res.data or []
+                total_topics = len(topics)
+                unmatched = total_topics
+
+                if topics:
+                    topics_text = "\n".join(f'{i}: {t.get("title", "")}' for i, t in enumerate(topics))
+                    chapters_text = "\n".join(f'{ch.get("number")}: {ch.get("title", "")}' for ch in toc)
+
+                    match_resp = client.messages.create(
+                        model="claude-haiku-4-5-20251001",
+                        max_tokens=2500,
+                        messages=[{
+                            "role": "user",
+                            "content": f"""You are an AI that maps university syllabus topics to textbook chapters.
+
+Your task:
+- Compare each syllabus topic with the textbook chapter titles.
+- Match using topic meaning, not only exact words.
+- A syllabus topic may match one or more textbook chapters.
+- If multiple chapters are required, return all of them.
+- If no suitable chapter exists for a topic, skip that topic entirely.
+- Never force a match.
+- Return confidence for every match (high, medium, low).
+
+Rules:
+1. Match based on academic meaning.
+2. Prefer exact chapter titles.
+3. If one syllabus topic contains multiple concepts, map all relevant chapters.
+4. Do not assume every topic has a match.
+5. match_type is "full" if the chapters completely cover the topic, "partial" if they cover only part of it.
+6. Use topic_index exactly as given below.
+
+SYLLABUS TOPICS (topic_index: title):
+{topics_text}
+
+TEXTBOOK CHAPTERS (number: title):
+{chapters_text}
+
+Return ONLY valid JSON, no markdown, no explanation:
+{{"matches": [{{"topic_index": 0, "matched_chapters": [{{"number": 12, "title": "Vectors and the Geometry of Space"}}], "match_type": "full", "confidence": "high"}}]}}"""
+                        }],
+                    )
+                    match_raw = match_resp.content[0].text if match_resp.content else "{}"
+
+                    # Extract the outermost JSON object safely
+                    js_start = match_raw.find("{")
+                    js_end = match_raw.rfind("}")
+                    matches = []
+                    if js_start != -1 and js_end > js_start:
+                        try:
+                            parsed = json_lib.loads(match_raw[js_start:js_end + 1])
+                            matches = parsed.get("matches", []) if isinstance(parsed, dict) else []
+                        except Exception as pe:
+                            print(f"[SAVE BOOK] Match JSON parse failed: {pe}")
+
+                    valid_chapters = {ch.get("number"): ch.get("title", "") for ch in toc}
+                    rows = []
+                    seen_topics = {}
+
+                    for mt in matches:
+                        if not isinstance(mt, dict):
+                            continue
+                        ti = mt.get("topic_index")
+                        if not isinstance(ti, int) or ti < 0 or ti >= len(topics):
+                            continue
+                        if ti in seen_topics:
+                            continue  # first entry per topic wins
+                        chapters_list = mt.get("matched_chapters") or []
+                        if not isinstance(chapters_list, list) or not chapters_list:
+                            continue
+                        match_type = mt.get("match_type", "full")
+                        if match_type not in ("full", "partial"):
+                            match_type = "full"
+                        confidence = mt.get("confidence", "medium")
+                        if confidence not in ("high", "medium", "low"):
+                            confidence = "medium"
+
+                        added_any = False
+                        seen_ch = set()
+                        for chd in chapters_list:
+                            if not isinstance(chd, dict):
+                                continue
+                            cn = chd.get("number")
+                            if cn not in valid_chapters or cn in seen_ch:
+                                continue
+                            seen_ch.add(cn)
+                            rows.append({
+                                "user_id": user_id,
+                                "class_id": class_id,
+                                "topic_id": topics[ti]["id"],
+                                "book_id": book_id,
+                                "chapter_number": cn,
+                                "chapter_title": valid_chapters[cn],
+                                "confidence": confidence,
+                                "match_type": match_type,
+                            })
+                            added_any = True
+                        if added_any:
+                            seen_topics[ti] = match_type
+
+                    if rows:
+                        supabase.table("topic_book_links").insert(rows).execute()
+
+                    # Compute counts from actual stored data (never trust AI summary numbers)
+                    linked = len(seen_topics)
+                    fully = sum(1 for v in seen_topics.values() if v == "full")
+                    partially = sum(1 for v in seen_topics.values() if v == "partial")
+                    unmatched = total_topics - linked
+            except Exception as link_err:
+                print(f"[SAVE BOOK] Linking failed: {link_err}")
+
+        return {
+            "success": True, "book_id": book_id,
+            "linked": linked, "total_topics": total_topics,
+            "fully_linked": fully, "partially_linked": partially, "unmatched": unmatched,
+        }
     except Exception as e:
         print(f"[SAVE BOOK] ERROR: {e}")
         return {"success": False, "error": str(e)}
@@ -2524,3 +2694,43 @@ Respond ONLY with a JSON array, nothing else. No markdown, no backticks:
     except Exception as e:
         print(f"[BOOK TOC] ERROR: {e}")
         return {"success": False, "chapters": [], "error": str(e)}
+
+
+# ── Helper: book context for study generation (syllabus = primary, book = secondary) ──
+
+def _get_book_context(user_id: str, topic_id: str) -> str:
+    """If this topic is linked to book chapter(s), return a prompt fragment. Else empty (syllabus only)."""
+    if not topic_id:
+        return ""
+    try:
+        link_res = supabase.table("topic_book_links") \
+            .select("book_id, chapter_number, chapter_title") \
+            .eq("topic_id", topic_id).eq("user_id", user_id) \
+            .order("chapter_number").execute()
+        if not link_res.data:
+            return ""
+        links = link_res.data
+        book_res = supabase.table("class_books") \
+            .select("title, authors") \
+            .eq("id", links[0]["book_id"]).limit(1).execute()
+        if not book_res.data:
+            return ""
+        book = book_res.data[0]
+
+        chapter_parts = [
+            f"Chapter {l.get('chapter_number')} \"{l.get('chapter_title')}\""
+            for l in links
+        ]
+        chapters_str = " and ".join(chapter_parts) if len(chapter_parts) <= 2 \
+            else ", ".join(chapter_parts[:-1]) + f", and {chapter_parts[-1]}"
+
+        return (
+            f"\n\nSECONDARY SOURCE (textbook): This topic corresponds to "
+            f"{chapters_str} of the textbook "
+            f"\"{book.get('title')}\" by {book.get('authors', '')}. "
+            f"Use your knowledge of the content of these chapter(s) to enrich the material with relevant "
+            f"concepts, examples, and details from the book. "
+            f"The syllabus topic remains the PRIMARY source — stay focused on it."
+        )
+    except Exception:
+        return ""

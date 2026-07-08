@@ -11,9 +11,10 @@ interface Props {
   onNext: () => void;
   onBack: () => void;
   book?: any;
+  onTocLoaded?: (chapters: Chapter[]) => void;
 }
 
-export default function Screen6({ onNext, onBack, book }: Props) {
+export default function Screen6({ onNext, onBack, book, onTocLoaded }: Props) {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loadingToc, setLoadingToc] = useState(false);
 
@@ -34,7 +35,10 @@ export default function Screen6({ onNext, onBack, book }: Props) {
           }),
         });
         const data = await res.json();
-        if (data.success && data.chapters) setChapters(data.chapters);
+        if (data.success && data.chapters) {
+          setChapters(data.chapters);
+          onTocLoaded?.(data.chapters);
+        }
       } catch {} finally { setLoadingToc(false); }
     };
     fetchToc();

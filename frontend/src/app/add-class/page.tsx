@@ -54,6 +54,8 @@ export default function AddClassPage() {
   const [className, setClassName] = useState('');
   const [classId,   setClassId]   = useState<string | null>(null);
   const [scannedBook, setScannedBook] = useState<any>(null);
+  const [bookToc, setBookToc] = useState<any[]>([]);
+  const [linkResult, setLinkResult] = useState<{ linked: number; total: number; fully: number; partially: number; unmatched: number } | null>(null);
   const [error,     setError]     = useState('');
   const [loading,   setLoading]   = useState(false);
   const screen7Ref = useRef<Screen7Handle>(null);
@@ -96,15 +98,21 @@ export default function AddClassPage() {
       return;
     }
 
-    // Step 6 right = "Yes, Add This Book" → save book to DB
+    // Step 6 right = "Yes, Add This Book" → save book + link syllabus topics to chapters
     if (step === 6 && classId && scannedBook) {
       setLoading(true);
       try {
-        await api(`/api/classes/${classId}/book`, {
+        const res = await api<{ success: boolean; linked: number; total_topics: number; fully_linked: number; partially_linked: number; unmatched: number }>(`/api/classes/${classId}/book`, {
           method: 'POST',
-          body: scannedBook,
+          body: { ...scannedBook, toc: bookToc },
         });
-        next();
+        setLinkResult({
+          linked: res.linked || 0,
+          total: res.total_topics || 0,
+          fully: res.fully_linked || 0,
+          partially: res.partially_linked || 0,
+          unmatched: res.unmatched || 0,
+        });
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : 'Failed to save book');
       } finally { setLoading(false); }
@@ -142,13 +150,61 @@ export default function AddClassPage() {
     3: <Screen3 onNext={next} onBack={back} classId={classId} />,
     4: <Screen4 onNext={next} onBack={back} classId={classId} />,
     5: <Screen5 onNext={next} onBack={back} onBookFound={(b: any) => { setScannedBook(b); next(); }} />,
-    6: <Screen6 onNext={next} onBack={back} book={scannedBook} />,
+    6: <Screen6 onNext={next} onBack={back} book={scannedBook} onTocLoaded={setBookToc} />,
     7: <Screen7 ref={screen7Ref} onNext={next} onBack={back} classId={classId} />,
     8: <Screen8 onNext={next} onBack={back} classId={classId} />,
     9: <Screen9 onAddAnother={() => { setStep(1); setClassName(''); setClassId(null); }} /> };
 
   return (
     <div className="min-h-screen flex flex-col">
+
+      {/* Book Linked Popup */}
+      {linkResult && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl z-50 p-6 w-[85%] max-w-sm shadow-xl"
+            style={{ animation: 'popIn 0.3s ease-out' }}>
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-2xl">✅</span>
+              </div>
+              <h3 className="text-lg font-extrabold text-gray-900">Textbook linked successfully</h3>
+              <p className="text-sm text-gray-500">
+                Your study materials will now use both your syllabus and textbook.
+              </p>
+              {linkResult.total > 0 && (
+                <>
+                  <p className="text-sm font-bold text-indigo-600">
+                    {linkResult.linked} of {linkResult.total} syllabus topics matched to book chapters
+                  </p>
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                    {linkResult.fully > 0 && (
+                      <span className="text-[11px] font-semibold bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full">
+                        ✅ {linkResult.fully} fully matched
+                      </span>
+                    )}
+                    {linkResult.partially > 0 && (
+                      <span className="text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full">
+                        🔗 {linkResult.partially} partially matched
+                      </span>
+                    )}
+                    {linkResult.unmatched > 0 && (
+                      <span className="text-[11px] font-semibold bg-gray-50 text-gray-500 border border-gray-200 px-2.5 py-1 rounded-full">
+                        ⏭ {linkResult.unmatched} unmatched
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+              <button onClick={() => { setLinkResult(null); next(); }}
+                className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-indigo-700 mt-2">
+                OK
+              </button>
+            </div>
+          </div>
+          <style jsx>{`@keyframes popIn { from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }`}</style>
+        </>
+      )}
 
       {/* ── HEADER ── */}
       <AppHeader right="both" />
