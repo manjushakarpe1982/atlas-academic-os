@@ -2517,22 +2517,23 @@ Respond ONLY with a JSON array, no markdown:
                             "role": "user",
                             "content": f"""You are an AI that maps university syllabus topics to textbook chapters.
 
-Your task:
-- Compare each syllabus topic with the textbook chapter titles.
-- Match using topic meaning, not only exact words.
-- A syllabus topic may match one or more textbook chapters.
-- If multiple chapters are required, return all of them.
-- If no suitable chapter exists for a topic, skip that topic entirely.
-- Never force a match.
-- Return confidence for every match (high, medium, low).
+Your task: for each syllabus topic, return the MINIMUM set of textbook chapters that cover it.
 
 Rules:
-1. Match based on academic meaning.
-2. Prefer exact chapter titles.
-3. If one syllabus topic contains multiple concepts, map all relevant chapters.
-4. Do not assume every topic has a match.
-5. match_type is "full" if the chapters completely cover the topic, "partial" if they cover only part of it.
-6. Use topic_index exactly as given below.
+1. Match based on academic meaning, not only exact words.
+2. If ONE chapter clearly covers the topic, return ONLY that one chapter. Do not add extra chapters.
+3. Return multiple chapters ONLY when the topic genuinely spans concepts from different chapters.
+4. If no chapter meaningfully covers the topic, skip it entirely. NEVER force a match.
+5. NEVER match administrative topics (e.g. "Midterm Exam", "Review", "Final Exam", "Holiday", "Orientation").
+6. confidence: high = certain, medium = likely, low = unsure (be honest).
+7. Use topic_index exactly as given below.
+
+Examples:
+- "The Chain Rule" → Chapter 3 "Differentiation Rules" only (ONE chapter)
+- "Maximum and Minimum Values" → Chapter 4 "Applications of Differentiation" only (ONE chapter)
+- "Parametric Equations and Vector Functions" → Chapter 10 AND Chapter 13 (genuinely spans two chapters)
+- "Inverse Trigonometric Functions" → skip (no dedicated chapter covers it)
+- "Midterm Exam" → skip (administrative)
 
 SYLLABUS TOPICS (topic_index: title):
 {topics_text}
@@ -2541,7 +2542,7 @@ TEXTBOOK CHAPTERS (number: title):
 {chapters_text}
 
 Return ONLY valid JSON, no markdown, no explanation:
-{{"matches": [{{"topic_index": 0, "matched_chapters": [{{"number": 12, "title": "Vectors and the Geometry of Space"}}], "match_type": "full", "confidence": "high"}}]}}"""
+{{"matches": [{{"topic_index": 0, "matched_chapters": [{{"number": 12, "title": "Vectors and the Geometry of Space"}}], "confidence": "high"}}]}}"""
                         }],
                     )
                     match_raw = match_resp.content[0].text if match_resp.content else "{}"
@@ -2572,14 +2573,14 @@ Return ONLY valid JSON, no markdown, no explanation:
                         chapters_list = mt.get("matched_chapters") or []
                         if not isinstance(chapters_list, list) or not chapters_list:
                             continue
-                        match_type = mt.get("match_type", "full")
-                        if match_type not in ("full", "partial"):
-                            match_type = "full"
                         confidence = mt.get("confidence", "medium")
                         if confidence not in ("high", "medium", "low"):
                             confidence = "medium"
+                        if confidence == "low":
+                            continue  # low-confidence matches are not stored — topic stays unmatched
 
-                        added_any = False
+                        # Collect valid, unique chapters first
+                        topic_chapters = []
                         seen_ch = set()
                         for chd in chapters_list:
                             if not isinstance(chd, dict):
@@ -2588,6 +2589,17 @@ Return ONLY valid JSON, no markdown, no explanation:
                             if cn not in valid_chapters or cn in seen_ch:
                                 continue
                             seen_ch.add(cn)
+                            topic_chapters.append(cn)
+
+                        if not topic_chapters:
+                            continue
+
+                        # Deterministic classification (user rules):
+                        # FULL = exactly one chapter covers the topic
+                        # PARTIAL = topic requires two or more chapters
+                        match_type = "full" if len(topic_chapters) == 1 else "partial"
+
+                        for cn in topic_chapters:
                             rows.append({
                                 "user_id": user_id,
                                 "class_id": class_id,
@@ -2598,9 +2610,7 @@ Return ONLY valid JSON, no markdown, no explanation:
                                 "confidence": confidence,
                                 "match_type": match_type,
                             })
-                            added_any = True
-                        if added_any:
-                            seen_topics[ti] = match_type
+                        seen_topics[ti] = match_type
 
                     if rows:
                         supabase.table("topic_book_links").insert(rows).execute()
