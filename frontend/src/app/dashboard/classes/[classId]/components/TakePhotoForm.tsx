@@ -1,6 +1,6 @@
 'use client';
-import { useState, useRef } from 'react';
-import { ArrowLeft, Camera, Info, Loader2, CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Camera, Info, Loader2, CheckCircle2, XCircle, RotateCcw, X, Zap } from 'lucide-react';
 import { API_BASE, getToken } from '@/lib/api';
 
 interface Grade { name: string; score: number | null; total: number | null; category: string; }
@@ -13,7 +13,12 @@ export default function TakePhotoForm({ classId, onBack, onSaved }: Props) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -21,6 +26,69 @@ export default function TakePhotoForm({ classId, onBack, onSaved }: Props) {
     const reader = new FileReader();
     reader.onload = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
+  };
+
+  // ── Scanner camera ──
+  const openCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+      });
+      streamRef.current = stream;
+      setCameraOpen(true);
+      // attach after render
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      }, 50);
+    } catch {
+      // No camera / permission denied → fall back to native file picker
+      fileRef.current?.click();
+    }
+  };
+
+  const closeCamera = () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    setCameraOpen(false);
+  };
+
+  useEffect(() => () => { streamRef.current?.getTracks().forEach(t => t.stop()); }, []);
+
+  const captureFrame = () => {
+    const video = videoRef.current;
+    const container = containerRef.current;
+    const frame = frameRef.current;
+    if (!video || !container || !frame || !video.videoWidth) return;
+
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const cw = container.clientWidth, chh = container.clientHeight;
+    // video rendered with object-cover
+    const scale = Math.max(cw / vw, chh / vh);
+    const dispW = vw * scale, dispH = vh * scale;
+    const offX = (dispW - cw) / 2, offY = (dispH - chh) / 2;
+
+    const fr = frame.getBoundingClientRect();
+    const cr = container.getBoundingClientRect();
+    const fx = fr.left - cr.left, fy = fr.top - cr.top;
+
+    // map frame rect (container coords) → video coords
+    const sx = (fx + offX) / scale;
+    const sy = (fy + offY) / scale;
+    const sw = fr.width / scale;
+    const sh = fr.height / scale;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(sw);
+    canvas.height = Math.round(sh);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    closeCamera();
+    setPreview(dataUrl);
   };
 
   const scanGrade = async () => {
@@ -84,6 +152,49 @@ export default function TakePhotoForm({ classId, onBack, onSaved }: Props) {
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      {/* ── Scanner Camera Overlay ── */}
+      {cameraOpen && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          {/* Live camera */}
+          <div ref={containerRef} className="relative flex-1 overflow-hidden">
+            <video ref={videoRef} playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+
+            {/* Dark mask + document guide frame */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div ref={frameRef} className="relative w-[82%] max-w-[340px]" style={{ aspectRatio: '3 / 4' }}>
+                {/* Corner brackets */}
+                <div className="absolute -top-0.5 -left-0.5 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl" />
+                <div className="absolute -top-0.5 -right-0.5 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl" />
+                <div className="absolute -bottom-0.5 -left-0.5 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl" />
+                <div className="absolute inset-0 border-2 border-white/40 rounded-xl" />
+              </div>
+            </div>
+
+            {/* Hint */}
+            <div className="absolute top-5 left-0 right-0 flex justify-center pointer-events-none">
+              <p className="bg-black/60 text-white text-xs font-semibold px-4 py-2 rounded-full">
+                📄 Place your graded page inside the frame
+              </p>
+            </div>
+
+            {/* Close */}
+            <button onClick={closeCamera}
+              className="absolute top-4 right-4 w-10 h-10 bg-black/60 rounded-full flex items-center justify-center">
+              <X className="w-5 h-5 text-white" />
+            </button>
+          </div>
+
+          {/* Bottom controls */}
+          <div className="bg-black py-6 flex items-center justify-center">
+            <button onClick={captureFrame}
+              className="w-16 h-16 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform">
+              <div className="w-13 h-13 rounded-full border-4 border-black" style={{ width: '52px', height: '52px' }} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="px-4 py-3 border-b border-gray-200 flex items-center gap-3">
         <button onClick={onBack}><ArrowLeft className="w-5 h-5 text-gray-700" /></button>
         <h2 className="text-base font-extrabold text-gray-900">Scan Grade</h2>
@@ -190,7 +301,7 @@ export default function TakePhotoForm({ classId, onBack, onSaved }: Props) {
         ) : (
           <>
             <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleCapture} className="hidden" />
-            <div onClick={() => fileRef.current?.click()} className="border-2 border-dashed border-indigo-300 rounded-2xl py-12 flex flex-col items-center justify-center gap-4 hover:bg-indigo-50 transition-all cursor-pointer">
+            <div onClick={openCamera} className="border-2 border-dashed border-indigo-300 rounded-2xl py-12 flex flex-col items-center justify-center gap-4 hover:bg-indigo-50 transition-all cursor-pointer">
               <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center"><Camera className="w-8 h-8 text-indigo-600" /></div>
               <div className="text-center px-6">
                 <p className="text-lg font-extrabold text-gray-900">Scan Grade</p>
