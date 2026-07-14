@@ -51,6 +51,7 @@ export default function CalendarPage() {
   const defaultPlatform = savedSchool === 'arkansas' ? 'blackboard' : 'canvas';
 
   const [platform, setPlatform] = useState(defaultPlatform);
+  const [howToIdx, setHowToIdx] = useState(0);
   const [feedUrl,  setFeedUrl]  = useState('');
 
   const go = (s: CalStep) => setStep(s);
@@ -59,7 +60,7 @@ export default function CalendarPage() {
     if (step === 1) { go(2); return; }
     if (step === 2) { go(3); return; }
     if (step === 3) { if (feedUrl.trim()) go(5); return; }
-    if (step === 4) { go(3); return; }          // "I've copied" → back to paste URL
+    if (step === 4) { if (howToIdx < 4) setHowToIdx(howToIdx + 1); else go(3); return; }  // Next through steps, then back to paste URL
     if (step === 6) { router.push('/dashboard'); return; }
     if (step === 7) { router.push('/dashboard'); return; }
     if (step === 8) { go(3); return; }           // Try Again → back to URL screen
@@ -69,12 +70,14 @@ export default function CalendarPage() {
     if (step === 1) { router.push('/dashboard'); return; }  // Skip → dashboard
     if (step === 2) { go(1); return; }
     if (step === 3) { go(2); return; }
-    if (step === 4) { go(3); return; }
+    if (step === 4) { if (howToIdx > 0) setHowToIdx(howToIdx - 1); else go(3); return; }
     if (step === 7) { go(2); return; }           // "Connect Calendar Later" → back to platform
     if (step === 8) { go(2); return; }           // "Go Back" → back to platform
   };
 
-  const btn = BUTTONS[step];
+  const btn = step === 4
+    ? { left: 'Back', right: howToIdx < 4 ? 'Next \u2192' : "I've copied the URL" }
+    : BUTTONS[step];
   const showProgress = step <= 6;
 
   return (
@@ -98,13 +101,13 @@ export default function CalendarPage() {
           <CalScreen3
             onNext={(url) => { setFeedUrl(url); go(5); }}
             onBack={() => go(2)}
-            onHowTo={() => go(4)}
+            onHowTo={() => { setHowToIdx(0); go(4); }}
             platform={platform}
             url={feedUrl}
             setUrl={setFeedUrl}
           />
         )}
-        {step === 4 && <CalScreen4 onBack={() => go(3)} onDone={() => go(3)} platform={platform} />}
+        {step === 4 && <CalScreen4 idx={howToIdx} platform={platform} />}
         {step === 5 && <CalScreen5 onDone={() => go(6)} onError={() => go(8)} platform={platform} feedUrl={feedUrl} />}
         {step === 6 && <CalScreen6 onNext={() => router.push('/dashboard')} />}
         {step === 7 && <CalScreen7 onDashboard={() => router.push('/dashboard')} onConnect={() => go(2)} />}

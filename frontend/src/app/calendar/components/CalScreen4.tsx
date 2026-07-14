@@ -1,73 +1,136 @@
 'use client';
-import { ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
+import { Lock } from 'lucide-react';
 import { Phone } from './shared';
 
-interface Props { onBack: () => void; onDone: () => void; platform: string; }
+interface Props { idx: number; platform: string; }
 
-export default function CalScreen4({ onBack, onDone, platform }: Props) {
-  const isPlatformCanvas = platform !== 'blackboard';
-  const platformName = isPlatformCanvas ? 'Canvas' : 'Blackboard';
+const CANVAS_STEPS = [
+  {
+    title: 'Open canvas.tamu.edu and log in.',
+    desc: 'Go to canvas.tamu.edu and sign in with your NetID and password.',
+    img: 'https://res.cloudinary.com/mview/image/upload/atlas/calendar-c-1.webp',
+  },
+  {
+    title: 'Click Calendar in the left menu.',
+    desc: 'The Calendar icon is in the left sidebar navigation.',
+    img: 'https://res.cloudinary.com/mview/image/upload/atlas/calendar-c-2.webp',
+  },
+  {
+    title: 'Scroll to the bottom of the right sidebar and click Calendar Feed.',
+    desc: 'You will find the "Calendar Feed" link below the small calendars list.',
+    img: 'https://res.cloudinary.com/mview/image/upload/atlas/calendar-c-3.webp',
+  },
+  {
+    title: 'Copy the link that appears.',
+    desc: 'It starts with https://canvas.tamu.edu/feeds/calendars/.',
+    img: 'https://res.cloudinary.com/mview/image/upload/atlas/calendar-c-4.webp',
+    note: 'Use this link in any calendar application that supports the iCal format.',
+  },
+  {
+    title: 'Paste it here in Atlas and click Continue.',
+    desc: 'Paste the copied Calendar Feed URL into the field on the previous screen.',
+    img: 'https://res.cloudinary.com/mview/image/upload/atlas/calendar-c-5.webp',
+  },
+];
 
-  const steps = isPlatformCanvas ? [
-    { num: 1, text: 'Open Canvas and go to Calendar' },
-    { num: 2, text: 'Click on "Calendar Feed" in the left menu' },
-    { num: 3, text: 'Copy the Calendar Feed URL' },
-    { num: 4, text: 'Paste the URL in Atlas and click Continue' },
-  ] : [
-    { num: 1, text: 'Open Blackboard and log in' },
-    { num: 2, text: 'Open the Calendar from the menu' },
-    { num: 3, text: 'Find "Get External Calendar Link"' },
-    { num: 4, text: 'Copy the iCal link and paste it in Atlas' },
-  ];
+const BLACKBOARD_STEPS = [
+  {
+    title: 'Open learn.uark.edu and log in.',
+    desc: 'Go to learn.uark.edu and sign in with your university credentials.',
+    img: 'https://res.cloudinary.com/mview/image/upload/atlas/calendar-b-1.webp',
+  },
+  {
+    title: 'Open the Calendar.',
+    desc: 'Find Calendar in the main Blackboard menu.',
+    img: 'https://res.cloudinary.com/mview/image/upload/atlas/calendar-b-2.webp',
+  },
+  {
+    title: 'Find the Calendar Settings / "Get External Calendar Link" option.',
+    desc: 'It is located inside the calendar settings panel.',
+    img: 'https://res.cloudinary.com/mview/image/upload/atlas/calendar-b-3.webp',
+  },
+  {
+    title: 'Copy the iCal link it generates.',
+    desc: 'Click Copy Link once the external calendar link appears.',
+    img: 'https://res.cloudinary.com/mview/image/upload/atlas/calendar-b-4.webp',
+    note: 'This is a private link. Do not share it with others.',
+  },
+  {
+    title: 'Paste it here in Atlas and click Continue.',
+    desc: 'Paste the copied iCal link into the field on the previous screen.',
+    img: 'https://res.cloudinary.com/mview/image/upload/atlas/calendar-b-5.webp',
+  },
+];
+
+export default function CalScreen4({ idx, platform }: Props) {
+  const isCanvas = platform !== 'blackboard';
+  const steps = isCanvas ? CANVAS_STEPS : BLACKBOARD_STEPS;
+  const platformLabel = isCanvas ? 'Canvas (Texas A&M)' : 'Blackboard (University of Arkansas)';
+  const platformIcon = isCanvas ? '🟥' : '⬛';
+
+  const step = steps[Math.min(idx, steps.length - 1)];
 
   return (
     <Phone>
-      <div className="flex flex-col min-h-[520px]">
-        <div className="flex items-center px-5 pt-2 pb-3">
-          <button onClick={onBack} className="text-gray-400 hover:text-gray-600">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        </div>
+      <div className="flex flex-col min-h-[560px] pb-20">
 
-        <div className="px-5 flex-1">
-          <h1 className="text-xl font-extrabold text-gray-900 mb-1">
-            How to find your<br />Calendar Feed URL
-          </h1>
-          <p className="text-sm text-gray-400 mb-6">
-            Follow these simple steps for {platformName}:
-          </p>
-
-          {/* Steps */}
-          <div className="space-y-4">
-            {steps.map((s, i) => (
-              <div key={s.num} className="flex items-start gap-4">
-                {/* Step connector */}
-                <div className="flex flex-col items-center flex-shrink-0">
-                  <div className="w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-extrabold">{s.num}</span>
-                  </div>
-                  {i < steps.length - 1 && <div className="w-0.5 h-6 bg-indigo-200 mt-1" />}
-                </div>
-                {/* Step text + placeholder screenshot */}
-                <div className="flex-1 pb-2">
-                  <p className="text-sm font-semibold text-gray-800 mb-2">{s.text}</p>
-                  {/* Screenshot placeholder */}
-                  <div className="w-full h-10 bg-gray-100 rounded-xl border border-gray-200 flex items-center justify-center">
-                    <span className="text-xs text-gray-400">Step {s.num} screenshot</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5  pb-3">
+          <div className="w-10 h-10 bg-red-50 border border-red-100 rounded-full flex items-center justify-center text-lg flex-shrink-0">
+            {platformIcon}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-extrabold text-gray-900">{platformLabel}</p>
+            <p className="text-[11px] text-gray-400">Follow these steps to get your calendar feed URL.</p>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-5 pb-6 mt-4">
-          <button onClick={onDone}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl text-sm transition-all shadow-md">
-            I&apos;ve copied the URL
-          </button>
+        {/* Progress dots */}
+        <div className="flex items-center px-6 mb-4">
+          {steps.map((_, i) => (
+            <div key={i} className="flex items-center flex-1 last:flex-none">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-extrabold flex-shrink-0 transition-all ${
+                i === idx ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                : i < idx ? 'bg-indigo-100 text-indigo-600'
+                : 'bg-gray-100 text-gray-400'
+              }`}>
+                {i + 1}
+              </div>
+              {i < steps.length - 1 && (
+                <div className={`flex-1 h-0.5 mx-1 ${i < idx ? 'bg-indigo-300' : 'bg-gray-200'}`} />
+              )}
+            </div>
+          ))}
         </div>
+
+        {/* Step content */}
+        <div className="px-5 flex-1">
+          <p className="text-xs font-bold text-indigo-600 mb-1">Step {idx + 1} of {steps.length}</p>
+          <h1 className="text-lg font-bold text-gray-900 leading-snug mb-1.5">{step.title}</h1>
+          <p className="text-sm text-gray-500 leading-relaxed mb-4">{step.desc}</p>
+
+          {/* Screenshot */}
+          <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm mb-3">
+            <Image
+              src={step.img}
+              alt={`Step ${idx + 1}`}
+              width={340}
+              height={220}
+              className="w-full object-contain bg-gray-50"
+            />
+          </div>
+
+          {/* Optional note */}
+          {step.note && (
+            <div className="flex items-start gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2.5 mb-3">
+              <Lock className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-indigo-700 leading-snug">{step.note}</p>
+            </div>
+          )}
+        </div>
+
+
       </div>
     </Phone>
   );
