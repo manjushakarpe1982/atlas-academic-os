@@ -394,3 +394,73 @@ async def upload_profile_picture(file: UploadFile = File(...), request: Request 
     except Exception as e:
         print(f"[ProfilePictureUpload] Error: {e}")
         raise HTTPException(500, f"Upload failed: {str(e)}")
+
+
+# ── POST /api/auth/google ───────────────────────────────────────────────────
+# Exchanges a Supabase OAuth session token for our own app JWT.
+# The frontend callback page sends the Supabase access_token here after
+# Google sign-in; we verify it with Supabase, find-or-create the user in
+# OUR users table, and return the same response shape as email login.
+
+class GoogleAuthRequest(BaseModel):
+    supabase_token: str
+
+@router.post("/google")
+async def google_auth(req: GoogleAuthRequest):
+    if not req.supabase_token:
+        raise HTTPException(400, "supabase_token required")
+
+    # 1. Verify the token with Supabase and get the Google user
+    try:
+        sb_user_res = supabase.auth.get_user(req.supabase_token)
+        sb_user = sb_user_res.user
+    except Exception as e:
+        print(f"[Google Auth] Supabase verification failed: {e}")
+        raise HTTPException(401, "Invalid Google session. Please try again.")
+
+    if not sb_user or not sb_user.email:
+        raise HTTPException(401, "Could not get your Google account email.")
+
+    email = sb_user.email.lower().strip()
+    meta = sb_user.user_metadata or {}
+    full_name = (meta.get("full_name") or meta.get("name") or email.split("@")[0]).strip()
+
+    # 2. Find or create the user in OUR users table
+    try:
+        existing = supabase.table("users").select("*").eq("email", email).execute()
+    except Exception as e:
+        raise HTTPException(500, f"Database error: {e}")
+
+    if existing.data:
+        user = existing.data[0]
+        # Update last login
+        try:
+            supabase.table("users").update({
+                "last_login_at": datetime.utcnow().isoformat()
+            }).eq("id", user["id"]).execute()
+        except Exception:
+            pass
+    else:
+        try:
+            result = supabase.table("users").insert({
+                "full_name":      full_name,
+                "email":          email,
+                "password_hash":  "",          # OAuth user — no password
+                "email_verified": True,        # Google verified it
+                "school":         None,
+                "acknowledged_at": None,
+                "ack_version":    None,
+            }).execute()
+            if not result.data:
+                raise HTTPException(500, "Failed to create user")
+            user = result.data[0]
+            print(f"[Google Auth] Created new user: {email}")
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(500, f"Failed to create account: {e}")
+
+    # 3. Issue OUR OWN JWT (same as email login)
+    token = create_token(str(user["id"]), user["email"])
+    print(f"[Google Auth] Success: {email}")
+    return _user_response(user, token)

@@ -67,9 +67,17 @@ export default function SignupPage() {
     }
   };
 
-  const handleGoogle = () => {
-    // TODO: implement Google OAuth
-    router.push('/school-selection');
+  const handleGoogle = async () => {
+    try {
+      const { createClient } = await import('@/lib/supabase');
+      const supabase = createClient();
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+    } catch {
+      setError('Could not start Google sign-in. Please try again.');
+    }
   };
 
   const inp = (v?: boolean) =>
