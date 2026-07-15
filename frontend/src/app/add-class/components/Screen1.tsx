@@ -1,8 +1,12 @@
 'use client';
 // Screen 1 — Add Class Intro + class name input
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { BookOpen } from 'lucide-react';
 import { Phone } from './shared';
+import { api } from '@/lib/api';
+
+const ORDINALS = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth'];
 
 interface Props {
   onNext:       () => void;
@@ -18,6 +22,17 @@ const FEATURES = [
 ];
 
 export default function Screen1({ className, setClassName }: Props) {
+  const [ordinal, setOrdinal] = useState('First');
+
+  useEffect(() => {
+    api<{ classes: any[] }>('/api/classes')
+      .then((r) => {
+        const count = r.classes?.length || 0;
+        setOrdinal(count < ORDINALS.length ? ORDINALS[count] : 'Next');
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <Phone>
       <div className="flex flex-col bg-white ">
@@ -44,7 +59,7 @@ export default function Screen1({ className, setClassName }: Props) {
             Let&apos;s add your
           </h1>
           <h1 className="text-2xl font-extrabold text-indigo-600 leading-tight mb-3">
-            first class
+            {ordinal} Class
           </h1>
           <p className="text-sm text-gray-500 leading-relaxed">
             Upload your syllabus and Atlas will do most of the work.
@@ -66,28 +81,35 @@ export default function Screen1({ className, setClassName }: Props) {
           </div>
         </div>
 
-        {/* ── Feature list ── */}
-        <div className="px-5 space-y-2">
-          {FEATURES.map(f => (
-            <div key={f.text}
-              className="flex items-center gap-3 bg-indigo-50/60 rounded-xl px-4 py-3 border border-indigo-100/50">
-              {/* Indigo circle check */}
-              <div className="w-5 h-5 rounded-full border-2 border-indigo-500 flex items-center justify-center flex-shrink-0">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full" />
-              </div>
-              {/* Text with partial indigo highlight */}
-              <p className="text-sm text-gray-600">
-                {f.text.split(f.highlight).map((part, i, arr) => (
-                  <span key={i}>
-                    {part}
-                    {i < arr.length - 1 && (
-                      <span className="text-indigo-600 font-semibold">{f.highlight}</span>
-                    )}
-                  </span>
-                ))}
-              </p>
+        {/* ── Feature list — one card ── */}
+        <div className="px-5">
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50/60 border border-indigo-100 rounded-lg p-4">
+            <p className="text-sm font-extrabold text-indigo-500 uppercase tracking-wider mb-3">
+              ✨ What Atlas does for you
+            </p>
+            <div className="space-y-3">
+              {FEATURES.map((f, i) => (
+                <div key={f.text} className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white rounded-lg shadow-sm flex items-center justify-center text-base flex-shrink-0">
+                    {['🤖', '📅', '🎯'][i]}
+                  </div>
+                  <p className="text-sm text-gray-600 flex-1">
+                    {f.text.split(f.highlight).map((part, j, arr) => (
+                      <span key={j}>
+                        {part}
+                        {j < arr.length - 1 && (
+                          <span className="text-indigo-600 font-bold">{f.highlight}</span>
+                        )}
+                      </span>
+                    ))}
+                  </p>
+                  {i < FEATURES.length && (
+                    <span className="text-green-500 text-sm flex-shrink-0">✓</span>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
 
       </div>
